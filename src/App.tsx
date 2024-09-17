@@ -11,43 +11,51 @@ import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/Shared/ProtectedRoute";
+import { AuthContextProvider } from "./contexts/AuthProvider";
+import AppLayout from "./layout/AppLayout";
 
 export default function App() {
   return (
-    <ThemeProvider>
-      {" "}
-      <Router>
-        <Routes>
-          {/* Public Pages */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/faq" element={<FAQPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+    <AuthContextProvider>
+      <ThemeProvider>
+        <Router>
+          <Routes>
+            <Route element={<AppLayout />}>
+              {/* Public Pages */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/faq" element={<FAQPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
-          {/* Authentication Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+              {/* Authentication Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+            </Route>
 
-          {/* Professor Protected Routes */}
-          <Route element={<ProtectedRoute allowedRoles={["professor"]} />}>
-            {/* <Route path="/professor/dashboard" element={<ProfessorDashboard />} /> */}
-            {/* <Route path="/professor/upload" element={<FileUpload />} /> */}
-            {/* <Route path="/professor/quizzes" element={<QuizManagement />} /> */}
-            {/* <Route path="/professor/profile" element={<Profile />} /> */}
-          </Route>
+            {/* Professor Protected Routes */}
+            <Route element={<AppLayout />}>
+              <Route element={<ProtectedRoute allowedRoles={["professor"]} />}>
+                {/* <Route path="/professor/dashboard" element={<ProfessorDashboard />} /> */}
+                {/* <Route path="/professor/upload" element={<FileUpload />} /> */}
+                {/* <Route path="/professor/quizzes" element={<QuizManagement />} /> */}
+                {/* <Route path="/professor/profile" element={<Profile />} /> */}
+              </Route>
+            </Route>
 
-          {/* Student Protected Routes */}
-          <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
-            {/* <Route path="/student/dashboard" element={<StudentDashboard />} /> */}
-            {/* <Route path="/student/quiz/:quizId" element={<QuizPlayer />} /> */}
-            {/* <Route path="/student/leaderboard" element={<Leaderboard />} /> */}
-            {/* <Route path="/student/profile" element={<Profile />} /> */}
-          </Route>
+            {/* Student Protected Routes */}
+            <Route element={<AppLayout />}>
+              <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
+                {/* <Route path="/student/dashboard" element={<StudentDashboard />} /> */}
+                {/* <Route path="/student/quiz/:quizId" element={<QuizPlayer />} /> */}
+                {/* <Route path="/student/leaderboard" element={<Leaderboard />} /> */}
+                {/* <Route path="/student/profile" element={<Profile />} /> */}
+              </Route>
+            </Route>
 
-          {/* Shared Protected Routes */}
-          {/* <Route
+            {/* Shared Protected Routes */}
+            {/* <Route
             path="/account-settings"
             element={
               <ProtectedRoute allowedRoles={["professor", "student"]}>
@@ -56,10 +64,11 @@ export default function App() {
             }
           /> */}
 
-          {/* Catch-all Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+            {/* Catch-all Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+      </ThemeProvider>
+    </AuthContextProvider>
   );
 }
