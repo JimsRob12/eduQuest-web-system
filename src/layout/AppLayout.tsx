@@ -6,13 +6,13 @@ import { ModeToggle } from "@/components/Shared/theme-toggle";
 
 function AppLayout() {
   return (
-    <div className="h-screen w-screen bg-zinc-50 px-6 text-zinc-900 md:px-12 lg:px-16 dark:bg-zinc-900 dark:text-zinc-50">
+    <div className="h-screen w-screen bg-zinc-50 px-6 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:px-12 lg:px-16">
       <Navbar />
       <ModeToggle />
       <main>
         <Outlet />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

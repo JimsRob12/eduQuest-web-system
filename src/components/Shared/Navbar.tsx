@@ -72,7 +72,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div
-        className={`absolute left-0 top-[5rem] z-10 w-full bg-zinc-50 text-zinc-900 transition-transform duration-500 ease-in-out dark:bg-zinc-900 dark:text-zinc-50 ${
+        className={`absolute left-0 top-[5rem] z-10 h-full w-full bg-zinc-50 text-zinc-900 transition-transform duration-500 ease-in-out dark:bg-zinc-900 dark:text-zinc-50 ${
           isMenuOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >

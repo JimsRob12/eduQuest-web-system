@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 import { ThemeProvider } from "./contexts/ThemeProvider";
-import LandingPage from "./components/Public/LandingPage";
+import LandingPage from "./components/Public/Landing/LandingPage";
 import AboutPage from "./components/Public/AboutPage";
 import FAQPage from "./components/Public/FAQPage";
 import ContactPage from "./components/Public/ContactPage";
