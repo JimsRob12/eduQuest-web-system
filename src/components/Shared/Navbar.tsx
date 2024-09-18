@@ -40,7 +40,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="relative z-20 flex w-full items-center justify-between bg-zinc-50 py-4 dark:bg-zinc-900">
+      <nav className="relative z-50 flex w-full items-center justify-between bg-zinc-50 py-4 dark:bg-zinc-900">
         <ul className="flex items-center gap-8">
           <NavLink to="/" onClick={closeMenu}>
             <img src="/edu-quest-logo.png" alt="Logo" className="w-14" />
@@ -72,7 +72,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div
-        className={`absolute left-0 top-[5rem] z-10 h-full w-full bg-zinc-50 text-zinc-900 transition-transform duration-500 ease-in-out dark:bg-zinc-900 dark:text-zinc-50 ${
+        className={`absolute left-0 top-[5rem] z-40 h-full w-full bg-zinc-50 text-zinc-900 transition-transform duration-500 ease-in-out dark:bg-zinc-900 dark:text-zinc-50 ${
           isMenuOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >

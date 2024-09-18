@@ -9,7 +9,7 @@ function AppLayout() {
     <div className="flex h-screen w-screen flex-col bg-zinc-50 px-6 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:px-12 lg:px-16">
       <Navbar />
       {/* <ModeToggle /> */}
-      <main className="h-full">
+      <main className="h-full w-full">
         <Outlet />
       </main>
       {/* <Footer /> */}

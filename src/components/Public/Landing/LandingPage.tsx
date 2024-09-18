@@ -1,6 +1,8 @@
 import { motion, Variants } from "framer-motion";
-import CallToActionButtons from "./CallToActionButtons";
+
 import Header from "./Header";
+import CallToActionButtons from "./CallToActionButtons";
+import ExploreFeatures from "./ExploreFeatures";
 
 const staggerContainer: Variants = {
   hidden: { opacity: 1 },
@@ -15,7 +17,7 @@ const staggerContainer: Variants = {
 export default function LandingPage() {
   return (
     <>
-      <motion.section
+      <motion.div
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
@@ -23,7 +25,8 @@ export default function LandingPage() {
       >
         <Header />
         <CallToActionButtons />
-      </motion.section>
+      </motion.div>
+      <ExploreFeatures />
     </>
   );
 }
