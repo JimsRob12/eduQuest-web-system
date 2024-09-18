@@ -1,5 +1,4 @@
 import { motion, Variants } from "framer-motion";
-import { NavLink } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -25,6 +24,13 @@ const staggerContainer: Variants = {
   },
 };
 
+const scrollToSection = (id: string) => {
+  const element = document.getElementById(id);
+  if (element) {
+    element.scrollIntoView({ behavior: "smooth" });
+  }
+};
+
 export default function CallToActionButtons() {
   return (
     <motion.div
@@ -33,7 +39,7 @@ export default function CallToActionButtons() {
       variants={staggerContainer}
       className="flex flex-col gap-2 md:flex-row"
     >
-      <NavLink to="/explore">
+      <button onClick={() => scrollToSection("explore")}>
         <motion.div custom={0} variants={buttonFadeIn}>
           <Button className="relative flex h-fit w-60 items-center gap-1 rounded-md px-6 py-3 text-lg font-normal shadow-[-4px_4px_0px_#3b1b55] transition-all duration-300 hover:-translate-x-1 hover:translate-y-1 hover:shadow-none dark:shadow-[-4px_4px_0px_#aaa4b1] dark:hover:shadow-none md:w-full">
             Explore <ChevronRight />
@@ -46,8 +52,8 @@ export default function CallToActionButtons() {
             />
           </Button>
         </motion.div>
-      </NavLink>
-      <NavLink to="/faq">
+      </button>
+      <button onClick={() => scrollToSection("faq")}>
         <motion.div custom={1} variants={buttonFadeIn}>
           <Button
             variant="secondary"
@@ -56,7 +62,7 @@ export default function CallToActionButtons() {
             Learn More <ChevronRight />
           </Button>
         </motion.div>
-      </NavLink>
+      </button>
     </motion.div>
   );
 }
