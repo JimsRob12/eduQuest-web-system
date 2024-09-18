@@ -37,10 +37,6 @@ export default function Header() {
           We combine learning and fun with AI-generated quizzes for students and
           educators. Upload files, and let AI do the rest.
         </p>
-        <img
-          src="/arrow-to-sign.png"
-          className="absolute -bottom-16 left-12 z-10 hidden w-24 rotate-90 md:block"
-        />
       </div>
     </div>
   );

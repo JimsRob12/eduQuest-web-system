@@ -3,9 +3,9 @@ import Header from "./Header";
 
 export default function LandingPage() {
   return (
-    <div className="my-8 flex h-full w-full flex-col items-center space-y-8">
+    <section className="my-8 flex h-[calc(100%-12rem)] w-full flex-col items-center justify-center space-y-8">
       <Header />
       <CallToActionButtons />
-    </div>
+    </section>
   );
 }
