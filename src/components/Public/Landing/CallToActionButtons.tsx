@@ -1,6 +1,7 @@
 import { motion, Variants } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NavLink } from "react-router-dom";
 
 const buttonFadeIn: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -53,7 +54,7 @@ export default function CallToActionButtons() {
           </Button>
         </motion.div>
       </button>
-      <button onClick={() => scrollToSection("faq")}>
+      <NavLink to="/faq">
         <motion.div custom={1} variants={buttonFadeIn}>
           <Button
             variant="secondary"
@@ -62,7 +63,7 @@ export default function CallToActionButtons() {
             Learn More <ChevronRight />
           </Button>
         </motion.div>
-      </button>
+      </NavLink>
     </motion.div>
   );
 }
