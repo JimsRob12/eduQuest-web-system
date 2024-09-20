@@ -37,7 +37,7 @@ export default function ExploreFeatures() {
   return (
     <div
       id="explore"
-      className="-mx-6 w-screen bg-zinc-50 px-6 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16"
+      className="-mx-6 w-screen bg-zinc-50 px-6 py-24 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16"
     >
       <Timeline data={data} />
     </div>

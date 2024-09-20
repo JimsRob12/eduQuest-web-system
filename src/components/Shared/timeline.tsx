@@ -12,11 +12,19 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
 
-  useEffect(() => {
+  const updateHeight = () => {
     if (ref.current) {
       const rect = ref.current.getBoundingClientRect();
       setHeight(rect.height);
     }
+  };
+
+  useEffect(() => {
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+    };
   }, [ref]);
 
   const { scrollYProgress } = useScroll({
@@ -32,7 +40,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
       className="h-full w-full bg-zinc-50 font-sans dark:bg-zinc-900"
       ref={containerRef}
     >
-      <div className="mx-auto max-w-7xl px-4 pt-24 md:px-8 lg:px-10">
+      <div className="mx-auto max-w-7xl px-4 md:px-8 lg:px-10">
         <h2 className="mb-4 max-w-xl text-lg font-bold text-black dark:text-white md:text-4xl">
           Learning{" "}
           <span className="rounded-xl bg-purple-900 px-2 text-purple-50">

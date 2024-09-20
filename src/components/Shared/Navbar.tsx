@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Menu, X } from "lucide-react";
+import { ModeToggle } from "./theme-toggle";
 
 const NAV_ITEMS = [
   { path: "/about", label: "About" },
@@ -52,6 +53,7 @@ export default function Navbar() {
           </li>
         </ul>
         <ul className="flex items-center gap-2">
+          <ModeToggle />
           <li className="hidden gap-2 md:flex">
             {AUTH_ITEMS.map(({ path, label, variant }) => (
               <NavLink key={path} to={path} onClick={closeMenu}>

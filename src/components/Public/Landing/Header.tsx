@@ -1,4 +1,9 @@
-import { motion, Variants } from "framer-motion";
+import {
+  motion,
+  Variants,
+  useViewportScroll,
+  useTransform,
+} from "framer-motion";
 import { Sparkles } from "lucide-react";
 
 const textFadeIn: Variants = {
@@ -48,6 +53,9 @@ const splitText = (text: string) => {
 };
 
 export default function Header() {
+  const { scrollY } = useViewportScroll();
+  const rotate = useTransform(scrollY, [0, 300], [0, 360]);
+
   return (
     <motion.div
       initial="hidden"
@@ -67,6 +75,7 @@ export default function Header() {
               custom={2}
               variants={elementFadeIn}
               className="absolute -left-4 top-2 size-4 fill-yellow-500 text-yellow-500 md:-left-6 md:size-6"
+              style={{ rotate }}
             >
               <Sparkles />
             </motion.div>
