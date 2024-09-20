@@ -41,7 +41,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
       ref={containerRef}
     >
       <div className="mx-auto max-w-7xl px-4 md:px-8 lg:px-10">
-        <h2 className="mb-4 max-w-xl text-lg font-bold text-black dark:text-white md:text-4xl">
+        <h2 className="mb-2 max-w-xl text-lg font-bold text-black dark:text-white md:mb-4 md:text-4xl">
           Learning{" "}
           <span className="rounded-xl bg-purple-900 px-2 text-purple-50">
             Smarter

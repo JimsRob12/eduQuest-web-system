@@ -3,6 +3,8 @@ import { motion, Variants } from "framer-motion";
 import Header from "./Header";
 import CallToActionButtons from "./CallToActionButtons";
 import ExploreFeatures from "./ExploreFeatures";
+import Recap from "./Recap";
+import { BlogCarousel } from "./BlogsCarousel";
 
 const staggerContainer: Variants = {
   hidden: { opacity: 1 },
@@ -14,6 +16,17 @@ const staggerContainer: Variants = {
   },
 };
 
+const wiggle: Variants = {
+  animate: {
+    rotate: [0, 7, -5, 5, -5, 0],
+    transition: {
+      duration: 5,
+      repeat: Infinity,
+      repeatType: "loop",
+    },
+  },
+};
+
 export default function LandingPage() {
   return (
     <>
@@ -21,44 +34,26 @@ export default function LandingPage() {
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
-        className="my-8 flex h-[calc(100%-12rem)] w-full flex-col items-center justify-center space-y-8"
+        className="relative my-8 flex h-[calc(100%-12rem)] w-full flex-col items-center justify-center space-y-8"
       >
+        <motion.img
+          src="/eyy.png"
+          className="absolute -bottom-3 right-14 z-10 w-16 md:bottom-8 md:right-28 md:w-44"
+          variants={wiggle}
+          animate="animate"
+        />
+        <img
+          src="/eyy-extension.png"
+          className="absolute -bottom-12 -right-10 z-0 w-32 md:-right-28 md:w-80"
+          // variants={slightWiggle}
+          // animate="animate"
+        />
         <Header />
         <CallToActionButtons />
       </motion.div>
       <ExploreFeatures />
-      <div className="-mx-6 w-screen bg-zinc-50 px-6 py-24 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16">
-        <div className="mx-auto max-w-7xl space-y-6 rounded-xl bg-purple-500 px-8 py-8 text-purple-50 md:px-12 lg:px-16">
-          <div className="flex items-center justify-center gap-4">
-            <div className="rounded-full border border-zinc-900 px-4 text-xs text-zinc-900">
-              create
-            </div>
-            <div className="rounded-xl border border-zinc-900 bg-zinc-900 px-4 font-black text-zinc-50 shadow-[0px_4px_0px_#f0f0f0]">
-              eduQuest
-            </div>
-            <div className="rounded-full border border-zinc-900 px-4 text-xs text-zinc-900">
-              learn
-            </div>
-          </div>
-          <h1 className="text-center text-5xl font-black md:text-7xl">
-            <span className="flex items-center justify-center gap-2 text-zinc-900">
-              <img src="/flower.png" className="w-10" />
-              let's get
-              <img src="/flower.png" className="w-10" />
-            </span>
-            <span className="relative z-20">started now</span>
-          </h1>
-          <CallToActionButtons
-            align="center"
-            hideArrow
-            firstButtonNavLink="NavLink"
-            firstButtonText="Sign up"
-            firstButtonTo="/signup"
-            secondButtonText="Login"
-            secondButtonTo="/login"
-          />
-        </div>
-      </div>
+      <BlogCarousel />
+      <Recap />
     </>
   );
 }

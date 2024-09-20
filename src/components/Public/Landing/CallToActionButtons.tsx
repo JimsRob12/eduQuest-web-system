@@ -65,7 +65,7 @@ export default function CallToActionButtons({
       }`}
     >
       {firstButtonNavLink === "button" ? (
-        <button onClick={() => scrollToSection("explore")}>
+        <div onClick={() => scrollToSection("explore")}>
           <motion.div custom={0} variants={buttonFadeIn}>
             <Button className="relative flex h-fit w-60 items-center gap-1 rounded-md px-6 py-3 text-lg font-normal shadow-[-4px_4px_0px_#3b1b55] transition-all duration-300 hover:-translate-x-1 hover:translate-y-1 hover:shadow-none dark:shadow-[-4px_4px_0px_#aaa4b1] dark:hover:shadow-none md:w-full">
               {firstButtonText} <ChevronRight />
@@ -78,7 +78,7 @@ export default function CallToActionButtons({
               />
             </Button>
           </motion.div>
-        </button>
+        </div>
       ) : (
         <NavLink to={firstButtonTo}>
           <motion.div custom={0} variants={buttonFadeIn}>
