@@ -70,7 +70,7 @@ const AboutPage: React.FC = () => {
       animate="visible"
       exit="exit"
       variants={containerVariants}
-      className="mt-8 px-4 md:px-16 lg:px-24"
+      className="mt-8"
     >
       <motion.header variants={itemVariants}>
         <h1 className="text-xs text-purple-900 dark:text-purple-50 md:text-sm">
