@@ -3,7 +3,7 @@ import CallToActionButtons from "./CallToActionButtons";
 export default function Recap() {
   return (
     <div className="-mx-6 w-screen bg-zinc-50 px-6 py-24 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16">
-      <div className="mx-auto max-w-7xl space-y-6 rounded-xl bg-purple-500 px-8 py-8 text-purple-50 md:px-12 lg:px-16">
+      <div className="mx-auto space-y-6 rounded-xl bg-purple-500 py-8 text-purple-50">
         <div className="flex items-center justify-center gap-4">
           <div className="rounded-full border border-zinc-900 px-4 text-xs text-zinc-900">
             create

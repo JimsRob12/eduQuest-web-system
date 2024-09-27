@@ -1,47 +1,103 @@
-import { createContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import {
+  getInitialSession,
+  signInWithEmail,
+  signInWithGoogle,
+  signOut,
+} from "@/services/api/apiAuth";
 
 interface User {
   id: string;
   email: string;
-  role: "professor" | "student";
+  // role: "professor" | "student";
 }
 
 interface AuthContextProps {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  googleLogin: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextProps | null>(null);
 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
+
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
+
+  const signInWithEmailMutation = useMutation({
+    mutationFn: signInWithEmail,
+    onSuccess: (data) => {
+      const { session } = data;
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          // role: "student",
+        });
+        queryClient.invalidateQueries({ queryKey: ["session"] });
+      }
+    },
+  });
+
+  const signInWithGoogleMutation = useMutation({
+    mutationFn: signInWithGoogle,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+    },
+  });
+
+  const signOutMutation = useMutation({
+    mutationFn: signOut,
+    onSuccess: () => {
+      setUser(null);
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+    },
+  });
+
+  useEffect(() => {
+    const fetchInitialSession = async () => {
+      const session = await getInitialSession();
+      if (session) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          // role: "student", // Example role, adjust based on your app logic
+        });
+      }
+    };
+    fetchInitialSession();
+  }, []);
 
   const login = async (email: string, password: string) => {
-    // Temporary simulation of login
-    if (email === "professor@test.com" && password === "password123") {
-      setUser({
-        id: "1",
-        email: "professor@test.com",
-        role: "professor",
-      });
-    } else if (email === "student@test.com" && password === "password123") {
-      setUser({
-        id: "2",
-        email: "student@test.com",
-        role: "student",
-      });
-    } else {
-      throw new Error("Invalid email or password");
-    }
+    await signInWithEmailMutation.mutateAsync({ email, password });
   };
 
-  const logout = () => {
-    setUser(null);
+  const googleLogin = async () => {
+    await signInWithGoogleMutation.mutateAsync();
+  };
+
+  const logout = async () => {
+    await signOutMutation.mutateAsync();
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );
