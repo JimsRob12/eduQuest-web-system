@@ -87,6 +87,7 @@ export default function Navbar() {
                 <DropdownMenu
                   open={isDropdownOpen}
                   onOpenChange={setIsDropdownOpen}
+                  modal={false}
                 >
                   <DropdownMenuTrigger asChild>
                     <div
@@ -97,7 +98,7 @@ export default function Navbar() {
                       {isDropdownOpen ? <X size={20} /> : <Menu size={20} />}
                     </div>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" sideOffset={4}>
+                  <DropdownMenuContent align="end" sideOffset={10}>
                     <DropdownMenuLabel className="flex flex-col">
                       <p className="flex gap-1">{user.name}</p>
                       <p className="text-xs font-normal">{user.email}</p>
