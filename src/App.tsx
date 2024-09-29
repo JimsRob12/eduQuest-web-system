@@ -15,6 +15,7 @@ import ProtectedRoute from "./components/Shared/ProtectedRoute";
 import { AuthContextProvider } from "./contexts/AuthProvider";
 import AppLayout from "./layout/AppLayout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import PublicRoute from "./components/Shared/PublicRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,17 +34,19 @@ export default function App() {
           <Router>
             <Routes>
               <Route element={<AppLayout />}>
-                {/* Public Pages */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/faq" element={<FAQPage />} />
-                <Route path="/contact" element={<ContactPage />} />
-                <Route path="/terms" element={<TermsPage />} />
-                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route element={<PublicRoute />}>
+                  {/* Public Pages */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/faq" element={<FAQPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
-                {/* Authentication Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
+                  {/* Authentication Routes */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                </Route>
               </Route>
 
               {/* Professor Protected Routes */}
