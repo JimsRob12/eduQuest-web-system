@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   createContext,
   useContext,
@@ -8,9 +9,11 @@ import {
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   getInitialSession,
+  handleSessionChange,
   signInWithEmail,
   signInWithGoogle,
   signOut,
+  signUpWithEmail,
 } from "@/services/api/apiAuth";
 
 interface User {
@@ -21,6 +24,8 @@ interface User {
 
 interface AuthContextProps {
   user: User | null;
+  signUp: (email: string, password: string) => Promise<void>;
+  googleSignUp: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   googleLogin: () => Promise<void>;
   logout: () => Promise<void>;
@@ -39,6 +44,28 @@ export const useAuth = () => {
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
+
+  const signUpMutation = useMutation({
+    mutationFn: signUpWithEmail,
+    onSuccess: (data) => {
+      if (data.session) {
+        handleSessionChange(data.session).then((session) => {
+          if (session?.user) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+            });
+            queryClient.invalidateQueries({ queryKey: ["session"] });
+          }
+        });
+      } else {
+        console.error("Sign up error: Session is null");
+      }
+    },
+    onError: (error: any) => {
+      console.error("Sign up error:", error.message);
+    },
+  });
 
   const signInWithEmailMutation = useMutation({
     mutationFn: signInWithEmail,
@@ -84,6 +111,14 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     fetchInitialSession();
   }, []);
 
+  const signUp = async (email: string, password: string) => {
+    await signUpMutation.mutateAsync({ email, password });
+  };
+
+  const googleSignUp = async () => {
+    await signInWithGoogleMutation.mutateAsync();
+  };
+
   const login = async (email: string, password: string) => {
     await signInWithEmailMutation.mutateAsync({ email, password });
   };
@@ -97,7 +132,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, googleLogin, logout }}>
+    <AuthContext.Provider
+      value={{ user, signUp, googleSignUp, login, googleLogin, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
