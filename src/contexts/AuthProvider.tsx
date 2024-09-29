@@ -15,10 +15,12 @@ import {
   signOut,
   signUpWithEmail,
 } from "@/services/api/apiAuth";
+import toast from "react-hot-toast";
 
 interface User {
   id: string;
   email: string;
+  name: string;
   // role: "professor" | "student";
 }
 
@@ -54,6 +56,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             setUser({
               id: session.user.id,
               email: session.user.email!,
+              name: session.user.user_metadata.name || "",
             });
             queryClient.invalidateQueries({ queryKey: ["session"] });
           }
@@ -75,6 +78,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         setUser({
           id: session.user.id,
           email: session.user.email!,
+          name: session.user.user_metadata.name || "",
           // role: "student",
         });
         queryClient.invalidateQueries({ queryKey: ["session"] });
@@ -93,6 +97,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     mutationFn: signOut,
     onSuccess: () => {
       setUser(null);
+      toast.success("Successfully Logged Out");
       queryClient.invalidateQueries({ queryKey: ["session"] });
     },
   });
@@ -104,6 +109,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         setUser({
           id: session.user.id,
           email: session.user.email!,
+          name: session.user.user_metadata.name || "",
           // role: "student", // Example role, adjust based on your app logic
         });
       }

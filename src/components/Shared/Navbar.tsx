@@ -1,15 +1,35 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Button } from "../ui/button";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, Plus, X } from "lucide-react";
 import { ModeToggle } from "./theme-toggle";
+import { useAuth } from "@/contexts/AuthProvider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
-const NAV_ITEMS = [
+const PUBLIC_NAV_ITEMS = [
   { path: "/about", label: "About" },
   { path: "/contact", label: "Contact" },
   { path: "/faq", label: "FAQ" },
   { path: "/terms", label: "Terms" },
   { path: "/privacy", label: "Privacy Policy" },
+];
+
+const AUTH_NAV_ITEMS = [
+  { path: "/home", label: "Home" },
+  { path: "/activity", label: "Activity" },
+  { path: "/reports", label: "Reports" },
+];
+
+const AUTH_NAV_ITEMS2 = [
+  { path: "/profile", label: "Profile" },
+  { path: "/settings", label: "Settings" },
 ];
 
 const AUTH_ITEMS: {
@@ -29,6 +49,10 @@ const AUTH_ITEMS: {
 
 export default function Navbar() {
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  const navItems = user ? AUTH_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const closeMenu = () => setMenuOpen(false);
@@ -47,7 +71,7 @@ export default function Navbar() {
             <img src="/edu-quest-logo.png" alt="Logo" className="w-14" />
           </NavLink>
           <li className="hidden items-center gap-4 md:flex">
-            {NAV_ITEMS.map(({ path, label }) => (
+            {navItems.map(({ path, label }) => (
               <NavItem key={path} to={path} label={label} />
             ))}
           </li>
@@ -55,11 +79,45 @@ export default function Navbar() {
         <ul className="flex items-center gap-2">
           <ModeToggle />
           <li className="hidden gap-2 md:flex">
-            {AUTH_ITEMS.map(({ path, label, variant }) => (
-              <NavLink key={path} to={path} onClick={closeMenu}>
-                <Button variant={variant}>{label}</Button>
-              </NavLink>
-            ))}
+            {user ? (
+              <>
+                <Button className="gap-1 px-3">
+                  <Plus size={16} /> Create Quiz
+                </Button>
+                <DropdownMenu
+                  open={isDropdownOpen}
+                  onOpenChange={setIsDropdownOpen}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <div
+                      className={`flex size-8 cursor-pointer items-center justify-center rounded-full bg-gray-200 p-1 transition-transform duration-300 ease-in-out dark:bg-purple-800 ${
+                        isDropdownOpen ? "rotate-180" : "rotate-0"
+                      }`}
+                    >
+                      {isDropdownOpen ? <X size={20} /> : <Menu size={20} />}
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" sideOffset={4}>
+                    <DropdownMenuLabel className="flex flex-col">
+                      <p className="flex gap-1">{user.name}</p>
+                      <p className="text-xs font-normal">{user.email}</p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    <DropdownMenuItem>Settings</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => logout()}>
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              AUTH_ITEMS.map(({ path, label, variant }) => (
+                <NavLink key={path} to={path} onClick={closeMenu}>
+                  <Button variant={variant}>{label}</Button>
+                </NavLink>
+              ))
+            )}
           </li>
           <div
             className={`block cursor-pointer transition-transform duration-300 ease-in-out md:hidden ${
@@ -78,20 +136,37 @@ export default function Navbar() {
           isMenuOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >
-        <div className="mx-8 mt-2 space-y-8 border-t-2 pt-8 md:mx-12 lg:mx-16">
+        <div
+          className={`mx-8 mt-2 border-t-2 pt-8 md:mx-12 lg:mx-16 ${!user ? "space-y-8" : "space-y-4"}`}
+        >
           <ul className="flex flex-col gap-4">
-            {NAV_ITEMS.map(({ path, label }) => (
+            {navItems.map(({ path, label }) => (
               <NavItem key={path} to={path} label={label} />
             ))}
           </ul>
-          <ul className="flex w-full flex-col items-center gap-4">
-            {AUTH_ITEMS.map(({ path, label, variant }) => (
-              <NavLink key={path} to={path} onClick={closeMenu}>
-                <Button variant={variant} className="h-fit w-64 py-3">
-                  {label}
-                </Button>
-              </NavLink>
-            ))}
+          <ul
+            className={`flex flex-col gap-4 ${!user && "w-full items-center"}`}
+          >
+            {user ? (
+              <>
+                {AUTH_NAV_ITEMS2.map(({ path, label }) => (
+                  <NavLink key={path} to={path}>
+                    {label}
+                  </NavLink>
+                ))}
+                <button className="flex w-fit items-center gap-1">
+                  <LogOut size={18} onClick={() => logout()} /> Log Out
+                </button>
+              </>
+            ) : (
+              AUTH_ITEMS.map(({ path, label, variant }) => (
+                <NavLink key={path} to={path} onClick={closeMenu}>
+                  <Button variant={variant} className="h-fit w-64 py-3">
+                    {label}
+                  </Button>
+                </NavLink>
+              ))
+            )}
           </ul>
         </div>
       </div>

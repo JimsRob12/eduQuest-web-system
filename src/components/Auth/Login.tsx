@@ -58,6 +58,7 @@ const Login: React.FC = () => {
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       await login(data.email, data.password);
+      toast.success("Successfully Logged In!");
     } catch (err: any) {
       toast.error(err.message);
     }
