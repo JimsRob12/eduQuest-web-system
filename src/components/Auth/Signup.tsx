@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from "react";
+import React, { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -8,6 +8,7 @@ import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { IconBrandGoogle } from "@tabler/icons-react";
 import toast from "react-hot-toast";
+import ReCAPTCHA from "react-google-recaptcha";
 
 import {
   Form,
@@ -47,6 +48,8 @@ const itemVariants = {
 
 const Signup: React.FC = () => {
   const { signUp, googleSignUp } = useAuth();
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,9 +59,24 @@ const Signup: React.FC = () => {
     },
   });
 
+  const onRecaptchaChange = (token: string | null) => {
+    setRecaptchaToken(token);
+  };
+
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
+      if (!recaptchaToken) {
+        toast.error("Please complete the reCAPTCHA verification.");
+        return;
+      }
+
       await signUp(data.email, data.password);
+      toast.success(
+        "Successfully signed up! Please check your email for confirmation.",
+      );
+
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -153,6 +171,14 @@ const Signup: React.FC = () => {
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={import.meta.env.VITE_GOOGLE_RECAPTCHA_SITE_KEY}
+                onChange={onRecaptchaChange}
               />
             </motion.div>
 

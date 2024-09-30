@@ -187,7 +187,7 @@ export default function ContactPage() {
                 type="submit"
                 className="w-full bg-purple-50 text-purple-900 shadow hover:bg-purple-50/90 dark:bg-purple-900 dark:text-purple-50 dark:hover:bg-purple-900/90"
               >
-                Sent to us
+                Send to us
               </Button>
             </motion.form>
           </Form>
