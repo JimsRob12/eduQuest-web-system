@@ -29,45 +29,38 @@ export const signUpWithEmail = async ({
   password,
 }: {
   email: string;
-  password: string;  
+  password: string;
 }) => {
- 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: {        
+      data: {
         full_name: "",
         school: "",
-        avatar_url : "",
-        role: "",        
+        avatar_url: "",
+        role: "",
       },
     },
   });
   if (error) throw new Error(error.message);
- 
+
   return data;
 };
 
 export const signInWithGoogle = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    
   });
   if (error) throw new Error(error.message);
   return true;
 };
 
 export const handleSessionChange = async (session: Session) => {
-  if (session?.user?.id) {    
-    const existingUser = await checkEmailExists(
-      session.user.email || ""      
-    );
-    if (!existingUser) {      
-      await insertNewAccount(
-        session.user.id,
-        session.user.email || ""        
-      );
+  if (session?.user?.id) {
+    const existingUser = await checkEmailExists(session.user.email || "");
+    if (!existingUser) {
+      await insertNewAccount(session.user.id, session.user.email || "");
     }
   }
   return session;
@@ -83,60 +76,59 @@ export const updateUser = async ({
   full_name,
   school,
   avatar_url,
-  role
 }: {
-  full_name: string,
-  school: string,
-  avatar_url: string,
-  role: string, 
+  full_name: string;
+  school: string;
+  avatar_url: string;
 }) => {
-
   const { data, error } = await supabase.auth.updateUser({
-    data: { 
+    data: {
       full_name: full_name,
       school: school,
-      avatar_url : avatar_url,
-      role: role,    }
-  })
+      avatar_url: avatar_url,
+    },
+  });
 
   if (error) throw new Error(error.message);
 
   return data;
-}
+};
 
-export const updatePassword = async ({
-  password
-} : {
-  password: string
-}) => {
+export const updateRole = async ({ role }: { role: string }) => {
+  const { data, error } = await supabase.auth.updateUser({
+    data: {
+      role: role,
+    },
+  });
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+export const updatePassword = async ({ password }: { password: string }) => {
   const { data, error } = await supabase.auth.updateUser({
     password: password,
-    nonce: '123456'
-  })
-  
+    nonce: "123456",
+  });
+
   if (error) throw new Error(error.message);
 
   return data;
-}
+};
 
-export const updateEmail = async ({
-  email
-} : {
-  email: string
-}) => {
-
+export const updateEmail = async ({ email }: { email: string }) => {
   const { data, error } = await supabase.auth.updateUser({
-    email: email
-  })
-  
+    email: email,
+  });
+
   if (error) throw new Error(error.message);
 
   return data;
-}
+};
 
 export const getUser = async () => {
-
-  if (!getInitialSession()) return null
+  if (!getInitialSession()) return null;
 
   const { data, error } = await supabase.auth.getUser();
 
@@ -144,4 +136,4 @@ export const getUser = async () => {
 
   const user = data?.user;
   return user;
-}
+};

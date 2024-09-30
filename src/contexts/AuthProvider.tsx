@@ -14,6 +14,7 @@ import {
   signInWithGoogle,
   signOut,
   signUpWithEmail,
+  updateRole,
 } from "@/services/api/apiAuth";
 import toast from "react-hot-toast";
 
@@ -28,7 +29,7 @@ interface AuthContextProps {
   user: User | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
-  setUserRole: (role: "professor" | "student") => void;
+  setUserRole: (role: "professor" | "student") => Promise<void>;
   googleSignUp: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   googleLogin: () => Promise<void>;
@@ -50,22 +51,12 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
+  // Mutation for signing up with email
   const signUpMutation = useMutation({
     mutationFn: signUpWithEmail,
     onMutate: () => setLoading(true),
     onSuccess: (data) => {
       if (data.session) {
-        // handleSessionChange(data.session).then((session) => {
-        //   if (session?.user) {
-        //     setUser({
-        //       id: session.user.id,
-        //       email: session.user.email!,
-        //       name: session.user.user_metadata.name || "",
-        //       role: session.user.user_metadata.role || null,
-        //     });
-        //     queryClient.invalidateQueries({ queryKey: ["session"] });
-        //   }
-        // });
         queryClient.invalidateQueries({ queryKey: ["session"] });
       } else {
         toast.error("Sign up error: Session is null");
@@ -73,10 +64,11 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     },
     onSettled: () => setLoading(false),
     onError: (error: any) => {
-      toast.error("Sign up error:", error.message);
+      toast.error(`Sign up error: ${error.message}`);
     },
   });
 
+  // Mutation for signing in with email
   const signInWithEmailMutation = useMutation({
     mutationFn: signInWithEmail,
     onMutate: () => setLoading(true),
@@ -95,6 +87,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     onSettled: () => setLoading(false),
   });
 
+  // Mutation for Google sign-in
   const signInWithGoogleMutation = useMutation({
     mutationFn: signInWithGoogle,
     onMutate: () => setLoading(true),
@@ -104,6 +97,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     onSettled: () => setLoading(false),
   });
 
+  // Mutation for signing out
   const signOutMutation = useMutation({
     mutationFn: signOut,
     onMutate: () => setLoading(true),
@@ -115,6 +109,29 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     onSettled: () => setLoading(false),
   });
 
+  // Mutation for updating the user role
+  const updateUserRoleMutation = useMutation({
+    mutationFn: updateRole,
+    onMutate: () => setLoading(true),
+    onSuccess: (data, variables) => {
+      if (user) {
+        setUser({
+          ...user,
+          role: ["professor", "student"].includes(variables.role)
+            ? (variables.role as "professor" | "student")
+            : null,
+        });
+        toast.success(`User role updated to ${variables.role}`);
+        queryClient.invalidateQueries({ queryKey: ["session"] });
+      }
+    },
+    onSettled: () => setLoading(false),
+    onError: (error: any) => {
+      toast.error(`Role update error: ${error.message}`);
+    },
+  });
+
+  // Fetch initial session when component mounts
   useEffect(() => {
     const fetchInitialSession = async () => {
       setLoading(true);
@@ -140,10 +157,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     await signInWithGoogleMutation.mutateAsync();
   };
 
-  const setUserRole = (role: "professor" | "student") => {
-    if (user) {
-      setUser({ ...user, role });
-    }
+  // Function to update the user's role
+  const setUserRole = async (role: "professor" | "student") => {
+    await updateUserRoleMutation.mutateAsync({ role });
   };
 
   const login = async (email: string, password: string) => {
