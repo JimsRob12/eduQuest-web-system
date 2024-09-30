@@ -1,5 +1,7 @@
+// TODO: Add a rolebased on create quiz button
+
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Loader2, Menu, Plus, X } from "lucide-react";
 import { ModeToggle } from "./theme-toggle";
@@ -12,6 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { useMutation } from "@tanstack/react-query";
+import { createQuiz } from "@/services/api/apiQuiz";
 
 const PUBLIC_NAV_ITEMS = [
   { path: "/about", label: "About" },
@@ -48,11 +52,25 @@ const AUTH_ITEMS: {
 ];
 
 export default function Navbar() {
+  const { user, logout, loading } = useAuth();
+  const navigate = useNavigate();
+
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { user, logout, loading } = useAuth();
 
   const navItems = user ? AUTH_NAV_ITEMS : PUBLIC_NAV_ITEMS;
+
+  const { mutate: createNewQuiz, isPending: isCreatingQuiz } = useMutation({
+    mutationFn: () => createQuiz(user.id),
+    onSuccess: (data) => {
+      if (data) {
+        navigate(`/professor/quiz/${data.id}/type-selection`);
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to create quiz:", error);
+    },
+  });
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const closeMenu = () => setMenuOpen(false);
@@ -81,8 +99,18 @@ export default function Navbar() {
           <li className="hidden gap-2 md:flex">
             {user ? (
               <>
-                <Button className="gap-1 px-3">
-                  <Plus size={16} /> Create Quiz
+                <Button
+                  onClick={() => createNewQuiz()}
+                  className="gap-1 px-3"
+                  disabled={isCreatingQuiz}
+                >
+                  {isCreatingQuiz ? (
+                    "Creating..."
+                  ) : (
+                    <>
+                      <Plus size={16} /> Create Quiz
+                    </>
+                  )}
                 </Button>
                 <DropdownMenu
                   open={isDropdownOpen}

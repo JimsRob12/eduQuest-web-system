@@ -20,12 +20,14 @@ import StudentDashboard from "./components/Auth/Student/student-dashboard";
 import ProfessorDashboard from "./components/Auth/Professor/professor-dashboard";
 import RoleAssignment from "./components/Auth/RoleAssignment";
 import RoleAssignmentRoute from "./components/Shared/RoleAssignmentRoute";
+import QuestionTypeSelection from "./components/Auth/Professor/Quiz/quiz-type-selection";
+import AddQuestion from "./components/Auth/Professor/Quiz/quiz-add-question";
+import CustomizeQuiz from "./components/Auth/Professor/Quiz/quiz-customize";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 0,
-      // refetchOnWindowFocus: false,
     },
   },
 });
@@ -64,9 +66,19 @@ export default function App() {
                       path="/professor/dashboard"
                       element={<ProfessorDashboard />}
                     />
-                    {/* <Route path="/professor/upload" element={<FileUpload />} /> */}
-                    {/* <Route path="/professor/quizzes" element={<QuizManagement />} /> */}
-                    {/* <Route path="/professor/profile" element={<Profile />} /> */}
+                    <Route path="/tite" element={<AboutPage />} />
+                    <Route
+                      path="/professor/quiz/:quizId/type-selection"
+                      element={<QuestionTypeSelection />}
+                    />
+                    <Route
+                      path="/professor/quiz/:quizId/add-question/:type"
+                      element={<AddQuestion />}
+                    />
+                    <Route
+                      path="/professor/quiz/:quizId/customize"
+                      element={<CustomizeQuiz />}
+                    />
                   </Route>
 
                   {/* Student Protected Routes */}
@@ -77,9 +89,6 @@ export default function App() {
                       path="/student/dashboard"
                       element={<StudentDashboard />}
                     />
-                    {/* <Route path="/student/quiz/:quizId" element={<QuizPlayer />} /> */}
-                    {/* <Route path="/student/leaderboard" element={<Leaderboard />} /> */}
-                    {/* <Route path="/student/profile" element={<Profile />} /> */}
                   </Route>
                 </Route>
               </Route>
