@@ -51,16 +51,17 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     mutationFn: signUpWithEmail,
     onSuccess: (data) => {
       if (data.session) {
-        handleSessionChange(data.session).then((session) => {
-          if (session?.user) {
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              name: session.user.user_metadata.name || "",
-            });
-            queryClient.invalidateQueries({ queryKey: ["session"] });
-          }
-        });
+        // handleSessionChange(data.session).then((session) => {
+        //   if (session?.user) {
+        //     setUser({
+        //       id: session.user.id,
+        //       email: session.user.email!,
+        //       name: session.user.user_metadata.name || "",
+        //     });
+        //     queryClient.invalidateQueries({ queryKey: ["session"] });
+        //   }
+        // });
+        queryClient.invalidateQueries({ queryKey: ["session"] });
       } else {
         console.error("Sign up error: Session is null");
       }

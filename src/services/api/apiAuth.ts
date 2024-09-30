@@ -29,45 +29,44 @@ export const signUpWithEmail = async ({
   password,
 }: {
   email: string;
-  password: string;
+  password: string;  
 }) => {
-  const existingStudent = await checkEmailExists(email, "students");
-  if (existingStudent) {
-    throw new Error("Email already exists in the students table.");
-  }
-
+ 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {        
+        full_name: "",
+        school: "",
+        avatar_url : "",
+        role: "",        
+      },
+    },
   });
   if (error) throw new Error(error.message);
-
-  if (data.user) {
-    await insertNewAccount(data.user.id, data.user.email || "", "students");
-  }
-
+ 
   return data;
 };
 
 export const signInWithGoogle = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
+    
   });
   if (error) throw new Error(error.message);
   return true;
 };
 
 export const handleSessionChange = async (session: Session) => {
-  if (session?.user?.id) {
-    const existingStudent = await checkEmailExists(
-      session.user.email || "",
-      "students",
+  if (session?.user?.id) {    
+    const existingUser = await checkEmailExists(
+      session.user.email || ""      
     );
-    if (!existingStudent) {
+    if (!existingUser) {      
       await insertNewAccount(
         session.user.id,
-        session.user.email || "",
-        "students",
+        session.user.email || ""        
       );
     }
   }
@@ -79,3 +78,17 @@ export const signOut = async () => {
   if (error) throw new Error(error.message);
   return true;
 };
+
+export const updateUser = async ({
+  full_name,
+  school,
+  avatar_url,
+  role
+}: {
+  full_name: string,
+  school: string,
+  avatar_url: string,
+  role: string, 
+}) => {
+
+}
