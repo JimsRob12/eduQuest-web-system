@@ -2,11 +2,10 @@
 import supabase from "../supabase";
 
 export const checkEmailExists = async (
-  email: string,
-  table: string,
+  email: string  
 ): Promise<any | undefined> => {
   const { data, error } = await supabase
-    .from(table)
+    .from("user")
     .select("id")
     .eq("email", email)
     .single();

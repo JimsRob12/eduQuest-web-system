@@ -2,12 +2,11 @@ import supabase from "../supabase";
 
 export const insertNewAccount = async (
   userId: string,
-  userEmail: string,
-  table: string,
+  userEmail: string,  
 ): Promise<void> => {
   const { error: insertError } = await supabase
-    .from(table)
-    .insert([{ id: userId, email: userEmail }]);
+    .from("user")
+    .insert([{ auth_id: userId, email: userEmail }]);
 
   if (insertError) {
     console.error("Failed to create student profile:", insertError);
