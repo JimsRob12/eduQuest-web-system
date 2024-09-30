@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Button } from "../ui/button";
-import { LogOut, Menu, Plus, X } from "lucide-react";
+import { Loader2, Menu, Plus, X } from "lucide-react";
 import { ModeToggle } from "./theme-toggle";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
@@ -50,7 +50,7 @@ const AUTH_ITEMS: {
 export default function Navbar() {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
 
   const navItems = user ? AUTH_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
@@ -107,7 +107,7 @@ export default function Navbar() {
                     <DropdownMenuItem>Profile</DropdownMenuItem>
                     <DropdownMenuItem>Settings</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => logout()}>
-                      Log out
+                      {loading ? "Logging out.." : "Log out"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -155,8 +155,18 @@ export default function Navbar() {
                     {label}
                   </NavLink>
                 ))}
-                <button className="flex w-fit items-center gap-1">
-                  <LogOut size={18} onClick={() => logout()} /> Log Out
+                <button
+                  className="flex w-fit items-center gap-1"
+                  onClick={() => logout()}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Logging out..
+                    </>
+                  ) : (
+                    "Log out"
+                  )}
                 </button>
               </>
             ) : (

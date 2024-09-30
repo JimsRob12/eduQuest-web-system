@@ -16,6 +16,10 @@ import { AuthContextProvider } from "./contexts/AuthProvider";
 import AppLayout from "./layout/AppLayout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import PublicRoute from "./components/Shared/PublicRoute";
+import StudentDashboard from "./components/Auth/Student/student-dashboard";
+import ProfessorDashboard from "./components/Auth/Professor/professor-dashboard";
+import RoleAssignment from "./components/Auth/RoleAssignment";
+import RoleAssignmentRoute from "./components/Shared/RoleAssignmentRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,25 +53,34 @@ export default function App() {
                 </Route>
               </Route>
 
-              {/* Professor Protected Routes */}
               <Route element={<AppLayout />}>
-                <Route
-                  element={<ProtectedRoute allowedRoles={["professor"]} />}
-                >
-                  {/* <Route path="/professor/dashboard" element={<ProfessorDashboard />} /> */}
-                  {/* <Route path="/professor/upload" element={<FileUpload />} /> */}
-                  {/* <Route path="/professor/quizzes" element={<QuizManagement />} /> */}
-                  {/* <Route path="/professor/profile" element={<Profile />} /> */}
-                </Route>
-              </Route>
+                <Route path="/role-assignment" element={<RoleAssignment />} />
+                <Route element={<RoleAssignmentRoute />}>
+                  <Route
+                    element={<ProtectedRoute allowedRoles={["professor"]} />}
+                  >
+                    {/* Professor Protected Routes */}
+                    <Route
+                      path="/professor/dashboard"
+                      element={<ProfessorDashboard />}
+                    />
+                    {/* <Route path="/professor/upload" element={<FileUpload />} /> */}
+                    {/* <Route path="/professor/quizzes" element={<QuizManagement />} /> */}
+                    {/* <Route path="/professor/profile" element={<Profile />} /> */}
+                  </Route>
 
-              {/* Student Protected Routes */}
-              <Route element={<AppLayout />}>
-                <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
-                  {/* <Route path="/student/dashboard" element={<StudentDashboard />} /> */}
-                  {/* <Route path="/student/quiz/:quizId" element={<QuizPlayer />} /> */}
-                  {/* <Route path="/student/leaderboard" element={<Leaderboard />} /> */}
-                  {/* <Route path="/student/profile" element={<Profile />} /> */}
+                  {/* Student Protected Routes */}
+                  <Route
+                    element={<ProtectedRoute allowedRoles={["student"]} />}
+                  >
+                    <Route
+                      path="/student/dashboard"
+                      element={<StudentDashboard />}
+                    />
+                    {/* <Route path="/student/quiz/:quizId" element={<QuizPlayer />} /> */}
+                    {/* <Route path="/student/leaderboard" element={<Leaderboard />} /> */}
+                    {/* <Route path="/student/profile" element={<Profile />} /> */}
+                  </Route>
                 </Route>
               </Route>
 

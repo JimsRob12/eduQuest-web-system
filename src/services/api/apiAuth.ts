@@ -91,4 +91,57 @@ export const updateUser = async ({
   role: string, 
 }) => {
 
+  const { data, error } = await supabase.auth.updateUser({
+    data: { 
+      full_name: full_name,
+      school: school,
+      avatar_url : avatar_url,
+      role: role,    }
+  })
+
+  if (error) throw new Error(error.message);
+
+  return data;
+}
+
+export const updatePassword = async ({
+  password
+} : {
+  password: string
+}) => {
+  const { data, error } = await supabase.auth.updateUser({
+    password: password,
+    nonce: '123456'
+  })
+  
+  if (error) throw new Error(error.message);
+
+  return data;
+}
+
+export const updateEmail = async ({
+  email
+} : {
+  email: string
+}) => {
+
+  const { data, error } = await supabase.auth.updateUser({
+    email: email
+  })
+  
+  if (error) throw new Error(error.message);
+
+  return data;
+}
+
+export const getUser = async () => {
+
+  if (!getInitialSession()) return null
+
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) throw new Error(error.message);
+
+  const user = data?.user;
+  return user;
 }

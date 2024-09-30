@@ -21,12 +21,14 @@ interface User {
   id: string;
   email: string;
   name: string;
-  // role: "professor" | "student";
+  role: "professor" | "student" | null;
 }
 
 interface AuthContextProps {
   user: User | null;
+  loading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
+  setUserRole: (role: "professor" | "student") => void;
   googleSignUp: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   googleLogin: () => Promise<void>;
@@ -45,10 +47,12 @@ export const useAuth = () => {
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const signUpMutation = useMutation({
     mutationFn: signUpWithEmail,
+    onMutate: () => setLoading(true),
     onSuccess: (data) => {
       if (data.session) {
         // handleSessionChange(data.session).then((session) => {
@@ -57,22 +61,25 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         //       id: session.user.id,
         //       email: session.user.email!,
         //       name: session.user.user_metadata.name || "",
+        //       role: session.user.user_metadata.role || null,
         //     });
         //     queryClient.invalidateQueries({ queryKey: ["session"] });
         //   }
         // });
         queryClient.invalidateQueries({ queryKey: ["session"] });
       } else {
-        console.error("Sign up error: Session is null");
+        toast.error("Sign up error: Session is null");
       }
     },
+    onSettled: () => setLoading(false),
     onError: (error: any) => {
-      console.error("Sign up error:", error.message);
+      toast.error("Sign up error:", error.message);
     },
   });
 
   const signInWithEmailMutation = useMutation({
     mutationFn: signInWithEmail,
+    onMutate: () => setLoading(true),
     onSuccess: (data) => {
       const { session } = data;
       if (session?.user) {
@@ -80,40 +87,47 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           id: session.user.id,
           email: session.user.email!,
           name: session.user.user_metadata.name || "",
-          // role: "student",
+          role: session.user.user_metadata.role || null,
         });
         queryClient.invalidateQueries({ queryKey: ["session"] });
       }
     },
+    onSettled: () => setLoading(false),
   });
 
   const signInWithGoogleMutation = useMutation({
     mutationFn: signInWithGoogle,
+    onMutate: () => setLoading(true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["session"] });
     },
+    onSettled: () => setLoading(false),
   });
 
   const signOutMutation = useMutation({
     mutationFn: signOut,
+    onMutate: () => setLoading(true),
     onSuccess: () => {
       setUser(null);
       toast.success("Successfully Logged Out");
       queryClient.invalidateQueries({ queryKey: ["session"] });
     },
+    onSettled: () => setLoading(false),
   });
 
   useEffect(() => {
     const fetchInitialSession = async () => {
+      setLoading(true);
       const session = await getInitialSession();
       if (session) {
         setUser({
           id: session.user.id,
           email: session.user.email!,
           name: session.user.user_metadata.name || "",
-          // role: "student", // Example role, adjust based on your app logic
+          role: session.user.user_metadata.role || null,
         });
       }
+      setLoading(false);
     };
     fetchInitialSession();
   }, []);
@@ -124,6 +138,12 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
 
   const googleSignUp = async () => {
     await signInWithGoogleMutation.mutateAsync();
+  };
+
+  const setUserRole = (role: "professor" | "student") => {
+    if (user) {
+      setUser({ ...user, role });
+    }
   };
 
   const login = async (email: string, password: string) => {
@@ -140,7 +160,16 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, signUp, googleSignUp, login, googleLogin, logout }}
+      value={{
+        user,
+        loading,
+        signUp,
+        googleSignUp,
+        setUserRole,
+        login,
+        googleLogin,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,12 +1,12 @@
-import { useContext } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { AuthContext } from "@/contexts/AuthProvider";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const PublicRoute = () => {
-  const authContext = useContext(AuthContext);
+  const { user } = useAuth();
 
-  if (authContext && authContext.user) {
-    return <Navigate to="/" />;
+  // use role based routing
+  if (user) {
+    return <Navigate to="/student/dashboard" />;
   }
 
   return <Outlet />;
