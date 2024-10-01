@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import supabase from "../supabase";
 import { v4 as uuidv4 } from "uuid";
 import { qgen } from "./apiUrl";
@@ -69,8 +70,70 @@ export async function updateQuizType(quizId: string, questionType: string) {
     .single();
 
   if (error) {
-    console.error("Error updating quiz type:", error);
-    return null;
+    throw new Error(`Error updating quiz type: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function updateQuizSettings(updateData: {
+  title: string;
+  quizId: string;
+  description: string;
+  subject: string;
+  cover_image?: File;
+}): Promise<any> {
+  const { quizId, title, description, subject, cover_image } = updateData;
+  let coverImageUrl = null;
+
+  console.log(quizId, title, description, subject, cover_image);
+
+  if (cover_image) {
+    const fileExt = cover_image.name.split(".").pop();
+    const fileName = `${quizId}_cover.${fileExt}`;
+    const { error: uploadError } = await supabase.storage
+      .from("images")
+      .upload(fileName, cover_image);
+
+    if (uploadError) {
+      throw new Error(`Error uploading cover image: ${uploadError.message}`);
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("images")
+      .getPublicUrl(fileName);
+
+    coverImageUrl = urlData.publicUrl;
+  }
+
+  const updateObject: any = {};
+  if (title !== undefined) updateObject.title = title;
+  if (description !== undefined) updateObject.description = description;
+  if (subject !== undefined) updateObject.subject = subject;
+  if (coverImageUrl) updateObject.cover_image = coverImageUrl;
+
+  const { data, error } = await supabase
+    .from("quiz")
+    .update(updateObject)
+    .eq("quiz_id", quizId)
+    .single();
+
+  if (error) {
+    throw new Error(`Error updating quiz: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function updateQuizTitle(quizId: string, title: string) {
+  const { data, error } = await supabase
+    .from("quiz")
+    .update({ title })
+    .eq("quiz_id", quizId)
+    .single();
+
+  if (error) {
+    throw new Error(`Error updating quiz title: ${error.message}`);
   }
 
   return data;

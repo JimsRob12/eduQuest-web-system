@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 
 import Footer from "@/components/Shared/Footer";
@@ -7,10 +8,13 @@ import QuizNavbar from "@/components/Auth/Professor/Quiz/quiz-navbar";
 
 function AppLayout() {
   const { user } = useAuth();
+  const [isProfessorQuizRoute, setIsProfessorQuizRoute] = useState(false);
 
-  const isProfessor = user?.role === "professor";
-  const isProfessorQuizRoute =
-    location.pathname.startsWith("/professor/quiz") && isProfessor;
+  useEffect(() => {
+    const isProfessor = user?.role === "professor";
+    const isQuizRoute = location.pathname.startsWith("/professor/quiz");
+    setIsProfessorQuizRoute(isProfessor && isQuizRoute);
+  }, [user, location.pathname]);
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-zinc-50 px-6 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:px-12 lg:px-16">
