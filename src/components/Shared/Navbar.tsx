@@ -1,5 +1,3 @@
-// TODO: Add a rolebased on create quiz button
-
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -55,7 +53,6 @@ const AUTH_ITEMS: {
 export default function Navbar() {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
-
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -74,7 +71,7 @@ export default function Navbar() {
       }
     },
     onError: (error) => {
-      toast.error(`Failed to create quiz: , ${error.message}`);
+      toast.error(`Failed to create quiz: ${error.message}`);
     },
   });
 
@@ -86,6 +83,8 @@ export default function Navbar() {
       {label}
     </NavLink>
   );
+
+  const isProfessor = user?.role === "professor";
 
   return (
     <>
@@ -105,19 +104,21 @@ export default function Navbar() {
           <li className="hidden gap-2 md:flex">
             {user ? (
               <>
-                <Button
-                  onClick={() => createNewQuiz()}
-                  className="gap-1 px-3"
-                  disabled={isCreatingQuiz}
-                >
-                  {isCreatingQuiz ? (
-                    "Creating..."
-                  ) : (
-                    <>
-                      <Plus size={16} /> Create Quiz
-                    </>
-                  )}
-                </Button>
+                {isProfessor && (
+                  <Button
+                    onClick={() => createNewQuiz()}
+                    className="gap-1 px-3"
+                    disabled={isCreatingQuiz}
+                  >
+                    {isCreatingQuiz ? (
+                      "Creating..."
+                    ) : (
+                      <>
+                        <Plus size={16} /> Create Quiz
+                      </>
+                    )}
+                  </Button>
+                )}
                 <DropdownMenu
                   open={isDropdownOpen}
                   onOpenChange={setIsDropdownOpen}

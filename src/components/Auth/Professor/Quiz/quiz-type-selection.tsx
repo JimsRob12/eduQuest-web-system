@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import QuizTypeModal from "./quiz-type-modal";
 
 export default function QuestionTypeSelection() {

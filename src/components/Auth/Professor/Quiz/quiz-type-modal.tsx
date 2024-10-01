@@ -7,6 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import { Check, LucideIcon, RectangleEllipsis, Scale } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { updateQuizType } from "@/services/api/apiQuiz";
 
 function QuestionTypeOption({
   icon: Icon,
@@ -38,8 +40,31 @@ export default function QuizTypeModal({
   const navigate = useNavigate();
   const { quizId } = useParams();
 
+  // Create a mutation function
+  const updateQuizTypeMutation = useMutation({
+    mutationFn: ({
+      quizId,
+      questionType,
+    }: {
+      quizId: string;
+      questionType: string;
+    }) => updateQuizType(quizId, questionType),
+    onSuccess: (data, variables) => {
+      navigate(
+        `/professor/quiz/${variables.quizId}/add-question/${variables.questionType}`,
+      );
+    },
+    onError: (error) => {
+      console.error("Error updating quiz type:", error);
+    },
+  });
+
   function handleSelect(type: string) {
-    navigate(`/professor/quiz/${quizId}/add-question/${type}`);
+    if (quizId) {
+      updateQuizTypeMutation.mutate({ quizId, questionType: type });
+    } else {
+      console.error("Quiz ID is undefined");
+    }
   }
 
   const questionTypes = [
