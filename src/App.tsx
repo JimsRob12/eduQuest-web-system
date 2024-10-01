@@ -54,7 +54,10 @@ export default function App() {
                   <Route path="/signup" element={<Signup />} />
                 </Route>
               </Route>
-
+              <Route
+                path="/professor/quiz/:quizId/add-question/:type"
+                element={<AddQuestion />}
+              />
               <Route element={<AppLayout />}>
                 <Route path="/role-assignment" element={<RoleAssignment />} />
                 <Route element={<RoleAssignmentRoute />}>
