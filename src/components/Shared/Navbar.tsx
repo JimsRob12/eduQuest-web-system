@@ -16,6 +16,7 @@ import {
 } from "../ui/dropdown-menu";
 import { useMutation } from "@tanstack/react-query";
 import { createQuiz } from "@/services/api/apiQuiz";
+import toast from "react-hot-toast";
 
 const PUBLIC_NAV_ITEMS = [
   { path: "/about", label: "About" },
@@ -61,14 +62,19 @@ export default function Navbar() {
   const navItems = user ? AUTH_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   const { mutate: createNewQuiz, isPending: isCreatingQuiz } = useMutation({
-    mutationFn: () => createQuiz(user.id),
+    mutationFn: () => {
+      if (user) {
+        return createQuiz(user.id);
+      }
+      throw new Error("User is not authenticated");
+    },
     onSuccess: (data) => {
       if (data) {
-        navigate(`/professor/quiz/${data.id}/type-selection`);
+        navigate(`/professor/quiz/${data.quiz_id}/type-selection`);
       }
     },
     onError: (error) => {
-      console.error("Failed to create quiz:", error);
+      toast.error(`Failed to create quiz: , ${error.message}`);
     },
   });
 

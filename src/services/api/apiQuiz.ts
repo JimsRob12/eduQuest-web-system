@@ -2,14 +2,13 @@ import supabase from "../supabase";
 import { v4 as uuidv4 } from "uuid";
 
 interface QuizData {
-  id: string;
+  quiz_id: string;
   owner_id: string;
   status: string;
 }
 
 export async function createQuiz(ownerId: string): Promise<QuizData | null> {
   const newQuizId = uuidv4();
-
   const { data, error } = await supabase
     .from("quiz")
     .insert({
@@ -17,6 +16,7 @@ export async function createQuiz(ownerId: string): Promise<QuizData | null> {
       owner_id: ownerId,
       status: "draft",
     })
+    .select()
     .single();
 
   if (error) {
@@ -24,5 +24,6 @@ export async function createQuiz(ownerId: string): Promise<QuizData | null> {
     return null;
   }
 
+  console.log("Quiz created:", data);
   return data;
 }

@@ -1,11 +1,16 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 
-const RoleAssignmentRoute: React.FC = () => {
+interface RoleAssignmentRouteProps {
+  children: ReactNode;
+}
+
+const RoleAssignmentRoute: React.FC<RoleAssignmentRouteProps> = ({
+  children,
+}) => {
   const { user, loading } = useAuth();
 
-  console.log(user?.role);
   if (loading) return <div>Loading...</div>;
 
   if (!user) {
@@ -16,7 +21,7 @@ const RoleAssignmentRoute: React.FC = () => {
     return <Navigate to="/role-assignment" />;
   }
 
-  return <Navigate to={`/${user.role}/dashboard`} />;
+  return <>{children}</>;
 };
 
 export default RoleAssignmentRoute;

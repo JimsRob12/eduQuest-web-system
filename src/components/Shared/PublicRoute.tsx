@@ -1,15 +1,25 @@
-import { Navigate, Outlet } from "react-router-dom";
+import React, { ReactNode } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 
-const PublicRoute = () => {
-  const { user } = useAuth();
+interface PublicRouteProps {
+  children: ReactNode;
+}
 
-  // use role based routing
+const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
+  const { user } = useAuth();
+  const location = useLocation();
+
   if (user) {
-    return <Navigate to="/student/dashboard" />;
+    const destination =
+      location.state?.from ||
+      (user.role === "professor"
+        ? "/professor/dashboard"
+        : "/student/dashboard");
+    return <Navigate to={destination} replace />;
   }
 
-  return <Outlet />;
+  return <>{children}</>;
 };
 
 export default PublicRoute;

@@ -147,6 +147,24 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     };
     fetchInitialSession();
+
+    const { data: authListener } = handleSessionChange((session) => {
+      if (session) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          name: session.user.user_metadata.name || "",
+          role: session.user.user_metadata.role || null,
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
