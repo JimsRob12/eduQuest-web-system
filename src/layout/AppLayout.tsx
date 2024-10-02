@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 import Footer from "@/components/Shared/Footer";
 import Navbar from "@/components/Shared/Navbar";
@@ -8,6 +8,7 @@ import QuizNavbar from "@/components/Auth/Professor/Quiz/quiz-navbar";
 
 function AppLayout() {
   const { user } = useAuth();
+  const location = useLocation();
   const [isProfessorQuizRoute, setIsProfessorQuizRoute] = useState(false);
 
   useEffect(() => {

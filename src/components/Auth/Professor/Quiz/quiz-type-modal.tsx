@@ -5,7 +5,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Check, LucideIcon, RectangleEllipsis, Scale } from "lucide-react";
+import {
+  Check,
+  LucideIcon,
+  RectangleEllipsis,
+  Scale,
+  Loader2,
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { updateQuizType } from "@/services/api/apiQuiz";
@@ -15,16 +21,29 @@ function QuestionTypeOption({
   title,
   description,
   onClick,
+  disabled,
+  isLoading,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
   onClick: () => void;
+  disabled: boolean;
+  isLoading: boolean;
 }) {
   return (
-    <div onClick={onClick} className="cursor-pointer">
+    <div
+      onClick={disabled ? undefined : onClick}
+      className={`transform cursor-pointer rounded-lg p-4 transition-transform hover:scale-105 hover:bg-gradient-to-r hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg ${
+        disabled ? "cursor-not-allowed opacity-50" : ""
+      }`}
+    >
       <h3 className="flex items-center gap-2 font-bold">
-        <Icon className="rounded bg-purple-700 p-1 text-white" size={20} />
+        {isLoading ? (
+          <Loader2 className="animate-spin rounded text-white" size={20} />
+        ) : (
+          <Icon className="rounded bg-purple-700 p-1 text-white" size={20} />
+        )}
         {title}
       </h3>
       <p className="mt-1 text-xs opacity-60">{description}</p>
@@ -40,7 +59,6 @@ export default function QuizTypeModal({
   const navigate = useNavigate();
   const { quizId } = useParams();
 
-  // Create a mutation function
   const updateQuizTypeMutation = useMutation({
     mutationFn: ({
       quizId,
@@ -105,6 +123,11 @@ export default function QuizTypeModal({
               title={title}
               description={description}
               onClick={() => handleSelect(type)}
+              disabled={updateQuizTypeMutation.isPending}
+              isLoading={
+                updateQuizTypeMutation.isPending &&
+                updateQuizTypeMutation.variables?.questionType === type
+              }
             />
           ))}
         </div>

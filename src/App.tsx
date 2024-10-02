@@ -27,6 +27,7 @@ import ProfessorDashboard from "./components/Auth/Professor/professor-dashboard"
 import QuestionTypeSelection from "./components/Auth/Professor/Quiz/quiz-type-selection";
 import AddQuestion from "./components/Auth/Professor/Quiz/quiz-add-question";
 import CustomizeQuiz from "./components/Auth/Professor/Quiz/quiz-customize";
+import QuizGenerate from "./components/Auth/Professor/Quiz/quiz-generate-quiz";
 
 // Define route configurations
 const publicRoutes = [
@@ -42,6 +43,7 @@ const publicRoutes = [
 
 const professorRoutes = [
   { path: "/professor/dashboard", element: <ProfessorDashboard /> },
+  { path: "/professor/quiz/:quizId/generate-quiz", element: <QuizGenerate /> },
   {
     path: "/professor/quiz/:quizId/type-selection",
     element: <QuestionTypeSelection />,
