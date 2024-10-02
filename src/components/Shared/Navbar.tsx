@@ -58,22 +58,22 @@ export default function Navbar() {
 
   const navItems = user ? AUTH_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
-  const { mutate: createNewQuiz, isPending: isCreatingQuiz } = useMutation({
-    mutationFn: () => {
-      if (user) {
-        return createQuiz(user.id);
-      }
-      throw new Error("User is not authenticated");
-    },
-    onSuccess: (data) => {
-      if (data) {
-        navigate(`/professor/quiz/${data.quiz_id}/type-selection`);
-      }
-    },
-    onError: (error) => {
-      toast.error(`Failed to create quiz: ${error.message}`);
-    },
-  });
+  // const { mutate: createNewQuiz, isPending: isCreatingQuiz } = useMutation({
+  //   mutationFn: () => {
+  //     if (user) {
+  //       return createQuiz(user.id);
+  //     }
+  //     throw new Error("User is not authenticated");
+  //   },
+  //   onSuccess: (data) => {
+  //     if (data) {
+  //       navigate(`/professor/quiz/${data.quiz_id}/type-selection`);
+  //     }
+  //   },
+  //   onError: (error) => {
+  //     toast.error(`Failed to create quiz: ${error.message}`);
+  //   },
+  // });
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const closeMenu = () => setMenuOpen(false);
@@ -106,17 +106,17 @@ export default function Navbar() {
               <>
                 {isProfessor && (
                   <Button
-                    onClick={() => createNewQuiz()}
+                    onClick={() => navigate("/professor/quiz/generate-quiz")}
                     className="gap-1 px-3"
-                    disabled={isCreatingQuiz}
+                    // disabled={isCreatingQuiz}
                   >
-                    {isCreatingQuiz ? (
+                    {/* {isCreatingQuiz ? (
                       "Creating..."
                     ) : (
-                      <>
-                        <Plus size={16} /> Create Quiz
-                      </>
-                    )}
+                      <> */}
+                    <Plus size={16} /> Create Quiz
+                    {/* </> */}
+                    {/* )} */}
                   </Button>
                 )}
                 <DropdownMenu

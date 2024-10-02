@@ -83,7 +83,7 @@ const Login: React.FC = () => {
   const handleGoogleSignIn = async () => {
     try {
       await googleLogin();
-      toast.success("Successfully Logged In with Google!");
+      // toast.success("Successfully Logged In with Google!");
     } catch (err: any) {
       toast.error(err.message);
     }

@@ -9,12 +9,17 @@ import {
 } from "../ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/contexts/AuthProvider";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   role: z.enum(["professor", "student"]),
 });
 
 export default function RoleAssignment() {
+  const { setUserRole } = useAuth();
+  const navigate = useNavigate();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -23,13 +28,17 @@ export default function RoleAssignment() {
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log(data);
+    setUserRole(data.role);
+    navigate(
+      data.role === "professor" ? "/professor/dashboard" : "/student/dashboard",
+    );
   }
 
   function handleRoleSelect(role: "professor" | "student") {
     form.setValue("role", role);
     form.handleSubmit(onSubmit)();
   }
+
   return (
     <div className="flex h-[calc(100%-5rem)] w-full flex-col items-center justify-center space-y-8">
       <div className="flex w-full flex-col items-center justify-center">
