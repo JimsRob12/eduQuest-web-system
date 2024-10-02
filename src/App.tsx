@@ -28,6 +28,7 @@ import QuestionTypeSelection from "./components/Auth/Professor/Quiz/quiz-type-se
 import AddQuestion from "./components/Auth/Professor/Quiz/quiz-add-question";
 import CustomizeQuiz from "./components/Auth/Professor/Quiz/quiz-customize";
 import QuizGenerate from "./components/Auth/Professor/Quiz/quiz-generate-quiz";
+import MaxQuestionsSelector from "./components/Auth/Professor/Quiz/quiz-questions-selector";
 
 // Define route configurations
 const publicRoutes = [
@@ -47,6 +48,10 @@ const professorRoutes = [
   {
     path: "/professor/quiz/:quizId/type-selection",
     element: <QuestionTypeSelection />,
+  },
+  {
+    path: "/professor/quiz/:quizId/:type/max-questions-selector",
+    element: <MaxQuestionsSelector />,
   },
   {
     path: "/professor/quiz/:quizId/add-question/:type",

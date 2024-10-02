@@ -69,7 +69,7 @@ export default function QuizTypeModal({
     }) => updateQuizType(quizId, questionType),
     onSuccess: (data, variables) => {
       navigate(
-        `/professor/quiz/${variables.quizId}/add-question/${variables.questionType}`,
+        `/professor/quiz/${variables.quizId}/${variables.questionType}/max-questions-selector`,
       );
     },
     onError: (error) => {

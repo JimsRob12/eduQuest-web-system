@@ -76,6 +76,20 @@ export async function updateQuizType(quizId: string, questionType: string) {
   return data;
 }
 
+export async function updateQuizMaxItems(quizId: string, maxItems: number) {
+  const { data, error } = await supabase
+    .from("quiz")
+    .update({ max_items: maxItems })
+    .eq("quiz_id", quizId)
+    .single();
+
+  if (error) {
+    throw new Error(`Error updating quiz max items: ${error.message}`);
+  }
+
+  return data;
+}
+
 export async function updateQuizSettings(updateData: {
   title: string;
   quizId: string;
