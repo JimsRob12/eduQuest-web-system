@@ -22,7 +22,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!user.role) {
-    return <>{children}</>;
+    return <Navigate to="/role-assignment" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
