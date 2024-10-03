@@ -294,6 +294,21 @@ export async function getQuestions(
   return questions && questions.length > 0 ? questions : null;
 }
 
+export async function getQuestion(
+  questionId: string,
+): Promise<QuizQuestions | null> {
+  const { data, error } = await supabase
+    .from("quiz_questions")
+    .select()
+    .eq("quiz_question_id", questionId)
+    .single();
+
+  console.log(data);
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function updateBulkPointsAndTime(
   quizId: string,
   bulkPoints: string,

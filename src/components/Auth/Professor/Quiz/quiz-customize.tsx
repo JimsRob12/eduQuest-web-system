@@ -6,7 +6,7 @@ import {
   updateSingleQuestion,
 } from "@/services/api/apiQuiz";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   DragDropContext,
   Droppable,
@@ -49,6 +49,7 @@ const iconMapping = {
 };
 
 export default function CustomizeQuiz() {
+  const navigate = useNavigate();
   const { quizId } = useParams<{ quizId: string }>();
   const [questions, setQuestions] = useState<QuizQuestions[]>([]);
   const [bulkPoints, setBulkPoints] = useState<string>("1");
@@ -404,8 +405,8 @@ export default function CustomizeQuiz() {
                                   <button
                                     className="flex h-fit w-fit items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 dark:border-zinc-800"
                                     onClick={() =>
-                                      console.log(
-                                        `Editing question with id: ${q.quiz_question_id}`,
+                                      navigate(
+                                        `/professor/quiz/${quizId}/question/${q.quiz_question_id}/edit`,
                                       )
                                     }
                                   >
