@@ -70,8 +70,10 @@ export default function CustomizeQuiz() {
   });
 
   useEffect(() => {
-    if (quizQuestionsData) {
-      setQuestions(quizQuestionsData);
+    if (quizQuestionsData && Array.isArray(quizQuestionsData)) {
+      setQuestions(quizQuestionsData.sort((a, b) => a.order - b.order));
+    } else {
+      setQuestions([]);
     }
   }, [quizQuestionsData]);
 
@@ -183,10 +185,9 @@ export default function CustomizeQuiz() {
   if (isPending) return <div>Loading...</div>;
   if (isError) return <div>Error loading questions</div>;
 
-  const totalPoints = questions.reduce(
-    (total, q) => total + (q.points ?? 0),
-    0,
-  );
+  const totalPoints = Array.isArray(questions)
+    ? questions.reduce((total, q) => total + (q.points ?? 0), 0)
+    : 0;
 
   return (
     <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-[300px_1fr]">
@@ -284,7 +285,7 @@ export default function CustomizeQuiz() {
           {questions.length} Question{questions.length !== 1 && "s"}{" "}
           <span className="font-normal opacity-60">({totalPoints} points)</span>
         </h2>
-        {questions.length > 0 ? (
+        {Array.isArray(questions) && questions.length > 0 ? (
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="questions" type="group">
               {(provided) => (
