@@ -20,7 +20,9 @@ function AppLayout() {
   return (
     <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-zinc-50 px-6 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:px-12 lg:px-16">
       {isProfessorQuizRoute ? <QuizNavbar /> : <Navbar />}
-      <main className="h-full w-full">
+      <main
+        className={`h-full w-full ${isProfessorQuizRoute && "-mx-6 w-screen bg-zinc-200 px-6 dark:bg-zinc-800 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16"}`}
+      >
         <Outlet />
       </main>
       {/* <Footer /> */}

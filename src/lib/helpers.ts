@@ -33,3 +33,29 @@ export function formatTimeAgo(date: Date) {
     return `${decades} decade${decades === 1 ? "" : "s"} ago`;
   }
 }
+
+export function formatQuestionType(type: string) {
+  switch (type) {
+    case "boolean":
+      return "True or False";
+    case "mcq":
+      return "Multiple Choice";
+    case "short":
+      return "Fill in the Blank";
+    default:
+      return type;
+  }
+}
+
+export function questionTypeIcon(type: string) {
+  switch (type) {
+    case "boolean":
+      return "Scale";
+    case "mcq":
+      return "Check";
+    case "short":
+      return "RectangleEllipsis";
+    default:
+      return "HelpCircle";
+  }
+}

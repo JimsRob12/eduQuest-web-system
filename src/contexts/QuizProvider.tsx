@@ -75,6 +75,7 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
             ? generatedQuestions.map((question) => ({
                 quiz_id: quizId,
                 question: question.question,
+                question_type: question.question_type,
                 right_answer: question.right_answer,
                 distractor: question.distractor
                   ? [...question.distractor, question.right_answer]

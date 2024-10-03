@@ -22,13 +22,15 @@ export interface Quiz {
 }
 
 export interface QuizQuestions {
-  id: string;
+  quiz_question_id: string;
   quiz_id: string;
   right_answer: string;
   question: string;
-  distractor: string[];
+  distractor?: string[];
   time: number;
-  image_url: string;
+  image_url?: string;
+  points?: number;
+  question_type: string;
 }
 
 export enum Subject {

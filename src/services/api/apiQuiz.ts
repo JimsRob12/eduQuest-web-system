@@ -237,7 +237,7 @@ export async function createQuestions(
     let filename = "";
 
     if (quizQuestion.image_url) {
-      filename = `avatar-${quizId}-${quizQuestion.id}-${Math.random()}`;
+      filename = `avatar-${quizId}-${quizQuestion.quiz_question_id}-${Math.random()}`;
 
       const { error: storageError } = await supabase.storage
         .from("images")
@@ -276,6 +276,25 @@ export async function getQuestions(
   const { data, error } = await supabase
     .from("quiz_questions")
     .select()
+    .eq("quiz_id", quizId);
+
+  if (error) throw new Error(error.message);
+  const questions: QuizQuestions[] | null = data || [];
+
+  return questions && questions.length > 0 ? questions : null;
+}
+
+export async function updateBulkPointsAndTime(
+  quizId: string,
+  bulkPoints: string,
+  bulkTime: string,
+): Promise<QuizQuestions[] | null> {
+  const { data, error } = await supabase
+    .from("quiz_questions")
+    .update({
+      points: bulkPoints,
+      time: bulkTime,
+    })
     .eq("quiz_id", quizId);
 
   if (error) throw new Error(error.message);
