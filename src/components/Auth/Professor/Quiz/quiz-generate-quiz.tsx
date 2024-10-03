@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useDropzone, FileRejection } from "react-dropzone";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { z } from "zod";
 import { ArrowDownCircle, FileIcon, X } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { QuizContext } from "@/contexts/QuizProvider";
+import { useQuiz } from "@/contexts/QuizProvider";
 
 const formSchema = z.object({
   pdf: z.instanceof(File).refine((file) => file.type === "application/pdf", {
@@ -27,7 +27,7 @@ const formSchema = z.object({
 export default function QuizGenerate() {
   const navigate = useNavigate();
   const { quizId } = useParams();
-  const { fileData, setFileData } = useContext(QuizContext);
+  const { quizData, setQuizData } = useQuiz();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,25 +36,24 @@ export default function QuizGenerate() {
     },
   });
 
-  // Effect to set the file from context when component mounts
   useEffect(() => {
-    if (fileData?.file) {
-      form.setValue("pdf", fileData.file);
+    if (quizData.file) {
+      form.setValue("pdf", quizData.file);
     }
-  }, [fileData, form]);
+  }, [quizData.file, form]);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       if (acceptedFiles[0]) {
         const file = acceptedFiles[0];
         form.setValue("pdf", file);
-        setFileData({ file, name: file.name, size: file.size });
+        setQuizData((prevData) => ({ ...prevData, file }));
       }
       if (fileRejections.length > 0) {
         toast.error("Invalid file type. Please upload a PDF file.");
       }
     },
-    [form, setFileData],
+    [form, setQuizData],
   );
 
   const {
@@ -73,7 +72,7 @@ export default function QuizGenerate() {
 
   const removeFile = () => {
     form.setValue("pdf", undefined);
-    setFileData(null);
+    setQuizData((prevData) => ({ ...prevData, file: null }));
   };
 
   return (

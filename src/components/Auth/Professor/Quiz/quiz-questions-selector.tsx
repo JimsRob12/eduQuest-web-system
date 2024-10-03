@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { useParams } from "react-router-dom";
-import { updateQuizMaxItems } from "@/services/api/apiQuiz";
 import toast from "react-hot-toast";
+import { useQuiz } from "@/contexts/QuizProvider";
 
 const MAX_QUESTIONS_OPTIONS = [5, 10, 15, 20];
 
@@ -13,19 +12,9 @@ export default function MaxQuestionsSelector() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [customValue, setCustomValue] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { quizId } = useParams();
-
-  const updateMaxItemsMutation = useMutation({
-    mutationFn: ({ quizId, maxItems }: { quizId: string; maxItems: number }) =>
-      updateQuizMaxItems(quizId, maxItems),
-    onSuccess: () => {
-      toast.success("Quiz limit updated successfully!");
-      // add the api call to generate the quiz here
-    },
-    onError: (error) => {
-      toast.error(`Error updating quiz limit: ${error.message}`);
-    },
-  });
+  const { quizData, updateQuiz } = useQuiz();
 
   const handleOptionClick = (value: number) => {
     setSelectedOption(value);
@@ -45,11 +34,33 @@ export default function MaxQuestionsSelector() {
     setSelectedOption(null);
   };
 
-  const handleSubmit = () => {
-    if (quizId && selectedOption) {
-      updateMaxItemsMutation.mutate({ quizId, maxItems: selectedOption });
+  const handleSubmit = async () => {
+    if (selectedOption && quizId) {
+      setIsLoading(true);
+      try {
+        // Update quizData with the selected number of questions
+        quizData.maxQuestions = selectedOption;
+
+        // Call updateQuiz to update the existing quiz
+        const updatedQuizId = await updateQuiz(quizId, selectedOption);
+
+        if (updatedQuizId) {
+          toast.success("Quiz updated successfully!");
+          // You might want to redirect to the updated quiz page or update the UI
+        } else {
+          toast.error("Failed to update quiz");
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(`Error updating quiz: ${error.message}`);
+        } else {
+          toast.error("Error updating quiz");
+        }
+      } finally {
+        setIsLoading(false);
+      }
     } else {
-      console.error("Quiz ID is undefined or no option selected");
+      console.error("No option selected or quiz ID not found");
     }
   };
 
@@ -73,7 +84,7 @@ export default function MaxQuestionsSelector() {
               onClick={() => handleOptionClick(option)}
               variant={"outline"}
               className={`rounded-lg p-4 py-6 text-white shadow-lg transition-transform hover:scale-105 ${selectedOption === option ? "bg-gradient-to-r from-purple-500 to-indigo-500" : ""}`}
-              disabled={updateMaxItemsMutation.isPending}
+              disabled={isLoading}
             >
               <span className="text-white">{option} Questions</span>
             </Button>
@@ -89,7 +100,7 @@ export default function MaxQuestionsSelector() {
               ? "bg-white text-purple-600"
               : "bg-purple-700 hover:bg-purple-800"
           }`}
-          disabled={updateMaxItemsMutation.isPending}
+          disabled={isLoading}
         >
           Custom Challenge
         </Button>
@@ -102,7 +113,7 @@ export default function MaxQuestionsSelector() {
             onClick={() =>
               setCustomValue(Math.max(1, parseInt(customValue) - 1).toString())
             }
-            disabled={updateMaxItemsMutation.isPending}
+            disabled={isLoading}
           >
             <Minus size={14} />
           </button>
@@ -112,14 +123,14 @@ export default function MaxQuestionsSelector() {
             onChange={handleCustomInputChange}
             placeholder="Enter number of questions"
             className="mx-2 w-fit text-center font-semibold"
-            disabled={updateMaxItemsMutation.isPending}
+            disabled={isLoading}
           />
           <button
             className="rounded-lg bg-zinc-900 p-1 text-white dark:bg-zinc-50 dark:text-black"
             onClick={() =>
               setCustomValue((parseInt(customValue) + 1).toString())
             }
-            disabled={updateMaxItemsMutation.isPending}
+            disabled={isLoading}
           >
             <Plus size={14} />
           </button>
@@ -131,11 +142,12 @@ export default function MaxQuestionsSelector() {
           onClick={handleSubmit}
           className="px-6 py-3 font-bold"
           variant={"secondary"}
-          disabled={!selectedOption || updateMaxItemsMutation.isPending}
+          disabled={!selectedOption || isLoading}
         >
-          {updateMaxItemsMutation.isPending ? (
+          {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating Quiz...
             </>
           ) : (
             <>Generate the Challenge!</>

@@ -114,6 +114,7 @@ export default function QuizNavbar() {
         <Button
           className="flex gap-1 text-xs"
           variant="secondary"
+          // disable this if there are no questions, temporary disable for testing
           disabled={!quiz.question_type}
         >
           <Play size={14} />

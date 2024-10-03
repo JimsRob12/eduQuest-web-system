@@ -5,45 +5,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Check,
-  LucideIcon,
-  RectangleEllipsis,
-  Scale,
-  Loader2,
-} from "lucide-react";
+import { Check, LucideIcon, RectangleEllipsis, Scale } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
-import { updateQuizType } from "@/services/api/apiQuiz";
+import { useQuiz } from "@/contexts/QuizProvider";
 
 function QuestionTypeOption({
   icon: Icon,
   title,
   description,
   onClick,
-  disabled,
-  isLoading,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
   onClick: () => void;
-  disabled: boolean;
-  isLoading: boolean;
 }) {
   return (
     <div
-      onClick={disabled ? undefined : onClick}
-      className={`transform cursor-pointer rounded-lg p-4 transition-transform hover:scale-105 hover:bg-gradient-to-r hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg ${
-        disabled ? "cursor-not-allowed opacity-50" : ""
-      }`}
+      onClick={onClick}
+      className={`transform cursor-pointer rounded-lg p-4 transition-transform hover:scale-105 hover:bg-gradient-to-r hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg`}
     >
       <h3 className="flex items-center gap-2 font-bold">
-        {isLoading ? (
-          <Loader2 className="animate-spin rounded text-white" size={20} />
-        ) : (
-          <Icon className="rounded bg-purple-700 p-1 text-white" size={20} />
-        )}
+        <Icon className="rounded bg-purple-700 p-1 text-white" size={20} />
         {title}
       </h3>
       <p className="mt-1 text-xs opacity-60">{description}</p>
@@ -58,32 +41,12 @@ export default function QuizTypeModal({
 }) {
   const navigate = useNavigate();
   const { quizId } = useParams();
+  const { setQuizData } = useQuiz();
 
-  const updateQuizTypeMutation = useMutation({
-    mutationFn: ({
-      quizId,
-      questionType,
-    }: {
-      quizId: string;
-      questionType: string;
-    }) => updateQuizType(quizId, questionType),
-    onSuccess: (data, variables) => {
-      navigate(
-        `/professor/quiz/${variables.quizId}/${variables.questionType}/max-questions-selector`,
-      );
-    },
-    onError: (error) => {
-      console.error("Error updating quiz type:", error);
-    },
-  });
-
-  function handleSelect(type: string) {
-    if (quizId) {
-      updateQuizTypeMutation.mutate({ quizId, questionType: type });
-    } else {
-      console.error("Quiz ID is undefined");
-    }
-  }
+  const handleSelect = (type: string) => {
+    setQuizData((prev) => ({ ...prev, questionType: type }));
+    navigate(`/professor/quiz/${quizId}/${type}/max-questions-selector`);
+  };
 
   const questionTypes = [
     {
@@ -91,21 +54,21 @@ export default function QuizTypeModal({
       title: "Multiple Choice",
       description:
         "Check for retention by asking students to pick one or more correct answers. Use text, images, or math equations to spice things up!",
-      type: "multiple-choice",
+      type: "mcq",
     },
     {
       icon: Scale,
       title: "True/False",
       description:
         "Assess students' understanding with simple true or false questions. Great for quick checks and straightforward topics.",
-      type: "true-false",
+      type: "boolean",
     },
     {
       icon: RectangleEllipsis,
-      title: "Fill in the Blank",
+      title: "Identification",
       description:
-        "Evaluate students' knowledge by having them fill in the missing words or phrases. Ideal for testing comprehension and recall.",
-      type: "fill-in-the-blank",
+        "Evaluate students' knowledge by having them identify key concepts, terms, or phrases. Ideal for testing comprehension and recall.",
+      type: "short",
     },
   ];
 
@@ -123,11 +86,6 @@ export default function QuizTypeModal({
               title={title}
               description={description}
               onClick={() => handleSelect(type)}
-              disabled={updateQuizTypeMutation.isPending}
-              isLoading={
-                updateQuizTypeMutation.isPending &&
-                updateQuizTypeMutation.variables?.questionType === type
-              }
             />
           ))}
         </div>

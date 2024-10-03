@@ -213,6 +213,7 @@ export async function generateQuestions(
     formData.append("pdf", file);
     formData.append("question_type", questionType);
     formData.append("num_questions", numQuestions);
+    console.log(file, questionType, numQuestions);
 
     const generateQuestions = await axios.post(qgen, formData, {
       headers: {
@@ -240,11 +241,14 @@ export async function generateQuestions(
       //   ]
       // }
 
+      console.log("Generated questions:", generateQuestions.data.questions);
       return generateQuestions.data.questions;
     } else {
+      console.log("Error generating questions:", generateQuestions);
       throw new Error("Something went wrong! Please try again later.");
     }
   } catch {
+    console.log("Error generating questions:", generateQuestions);
     throw new Error("Something went wrong! Please try again later.");
   }
 }
