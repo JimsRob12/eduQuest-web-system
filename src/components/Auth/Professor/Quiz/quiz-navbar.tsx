@@ -3,7 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Play, Save, Settings } from "lucide-react";
-import { getQuizById, updateQuizTitle } from "@/services/api/apiQuiz";
+import {
+  getQuestions,
+  getQuizById,
+  updateQuizTitle,
+} from "@/services/api/apiQuiz";
 import { Quiz } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -29,6 +33,18 @@ export default function QuizNavbar() {
         throw new Error("Quiz not found");
       }
       return data as unknown as Quiz;
+    },
+    enabled: !!quizId,
+  });
+
+  const { data: questions } = useQuery({
+    queryKey: ["questions", quizId],
+    queryFn: async () => {
+      const data = await getQuestions(quizId!);
+      if (!data) {
+        throw new Error("Questions not found");
+      }
+      return data;
     },
     enabled: !!quizId,
   });
@@ -75,7 +91,7 @@ export default function QuizNavbar() {
   if (isError) return <div>Error loading quiz data</div>;
 
   return (
-    <div className="-mx-6 flex w-screen items-center justify-between px-6 py-4 shadow-xl md:-mx-12 lg:-mx-16">
+    <div className="-mx-6 flex w-screen flex-wrap items-center justify-between px-6 py-4 shadow-xl md:-mx-12 lg:-mx-16">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate(-1)}>
           <ChevronLeft className="rounded border p-1" />
@@ -99,7 +115,7 @@ export default function QuizNavbar() {
           </h1>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="mt-2 flex gap-2 sm:mt-0">
         <Dialog>
           <DialogTrigger asChild>
             <Button className="flex gap-1 text-xs" variant="outline">
@@ -114,8 +130,7 @@ export default function QuizNavbar() {
         <Button
           className="flex gap-1 text-xs"
           variant="secondary"
-          // disable this if there are no questions, temporary disable for testing
-          disabled={!quiz.question_type}
+          disabled={!questions || questions.length === 0}
         >
           <Play size={14} />
           Preview

@@ -6,35 +6,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useQuiz } from "@/contexts/QuizProvider";
 import { MultiStepLoader } from "@/components/Shared/MultiStepLoader";
+import { getLoadingStates } from "@/lib/helpers";
 
 const MAX_QUESTIONS_OPTIONS = [5, 10, 15, 20];
-
-const loadingStates = [
-  {
-    text: "Initializing quiz setup...",
-  },
-  {
-    text: "Fetching question templates...",
-  },
-  {
-    text: "Generating multiple-choice questions...",
-  },
-  {
-    text: "Creating true/false questions...",
-  },
-  {
-    text: "Formulating identification questions...",
-  },
-  {
-    text: "Compiling quiz data...",
-  },
-  {
-    text: "Finalizing quiz structure...",
-  },
-  {
-    text: "Almost done! Wrapping up...",
-  },
-];
 
 export default function MaxQuestionsSelector() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -94,7 +68,7 @@ export default function MaxQuestionsSelector() {
   return (
     <div className="flex h-[calc(100%-5rem)] w-full flex-col justify-center">
       <MultiStepLoader
-        loadingStates={loadingStates}
+        loadingStates={getLoadingStates(quizData?.questionType || "")}
         loading={isLoading}
         duration={2000}
       />

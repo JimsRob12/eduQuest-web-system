@@ -59,3 +59,51 @@ export function questionTypeIcon(type: string) {
       return "HelpCircle";
   }
 }
+
+export function getLoadingStates(questionType: string) {
+  switch (questionType) {
+    case "multiple-choice":
+      return [
+        { text: "Initializing quiz setup..." },
+        { text: "Loading question templates..." },
+        { text: "Fetching multiple-choice question pool..." },
+        { text: "Randomizing question selection..." },
+        { text: "Generating question text..." },
+        { text: "Adding answer choices..." },
+        { text: "Reviewing multiple-choice questions..." },
+        { text: "Finalizing quiz data..." },
+        { text: "Almost done! Wrapping up..." },
+      ];
+    case "true-false":
+      return [
+        { text: "Initializing quiz setup..." },
+        { text: "Loading question templates..." },
+        { text: "Fetching true/false question pool..." },
+        { text: "Generating true/false statements..." },
+        { text: "Setting up correct answers..." },
+        { text: "Reviewing true/false questions..." },
+        { text: "Finalizing quiz data..." },
+        { text: "Almost done! Wrapping up..." },
+      ];
+    case "identification":
+      return [
+        { text: "Initializing quiz setup..." },
+        { text: "Loading question templates..." },
+        { text: "Fetching identification question pool..." },
+        { text: "Generating question prompts..." },
+        { text: "Reviewing identification questions..." },
+        { text: "Finalizing quiz data..." },
+        { text: "Almost done! Wrapping up..." },
+      ];
+    default:
+      return [
+        { text: "Initializing quiz setup..." },
+        { text: "Loading question templates..." },
+        { text: "Fetching question pool..." },
+        { text: "Generating questions..." },
+        { text: "Compiling quiz data..." },
+        { text: "Finalizing quiz structure..." },
+        { text: "Almost done! Wrapping up..." },
+      ];
+  }
+}

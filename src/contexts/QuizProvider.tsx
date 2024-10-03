@@ -72,16 +72,25 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
         .from("quiz_questions")
         .insert(
           Array.isArray(generatedQuestions)
-            ? generatedQuestions.map((question, index) => ({
-                quiz_id: quizId,
-                question: question.question,
-                question_type: question.question_type,
-                right_answer: question.right_answer,
-                distractor: question.distractor
-                  ? [...question.distractor, question.right_answer]
-                  : null,
-                order: index + 1,
-              }))
+            ? generatedQuestions.map((question, index) => {
+                const distractors = question.distractor
+                  ? [...question.distractor]
+                  : [];
+                const randomIndex = Math.floor(
+                  Math.random() * (distractors.length + 1),
+                );
+                distractors.splice(randomIndex, 0, question.right_answer);
+
+                return {
+                  quiz_id: quizId,
+                  question: question.question,
+                  question_type: question.question_type,
+                  right_answer: question.right_answer,
+                  points: 1,
+                  distractor: distractors,
+                  order: index + 1,
+                };
+              })
             : [],
         );
 
