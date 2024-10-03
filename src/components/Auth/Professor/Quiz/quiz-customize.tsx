@@ -54,7 +54,7 @@ export default function CustomizeQuiz() {
   const queryClient = useQueryClient();
 
   const {
-    data: quizQuestionsData = [],
+    data: quizQuestionsData,
     isPending,
     isError,
   } = useQuery<QuizQuestions[], Error>({
@@ -284,127 +284,133 @@ export default function CustomizeQuiz() {
           {questions.length} Question{questions.length !== 1 && "s"}{" "}
           <span className="font-normal opacity-60">({totalPoints} points)</span>
         </h2>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="questions" type="group">
-            {(provided) => (
-              <ul
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="space-y-4"
-              >
-                {questions.map((q, index) => (
-                  <Draggable
-                    key={q.quiz_question_id}
-                    draggableId={q.quiz_question_id}
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <li
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`rounded-lg bg-white p-4 shadow dark:bg-zinc-900 ${
-                          snapshot.isDragging ? "opacity-50" : ""
-                        }`}
-                      >
-                        <div className="mb-2 flex justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <div {...provided.dragHandleProps}>
-                              <GripVertical className="size-6 cursor-move rounded-md border border-zinc-200 p-1 dark:border-zinc-800" />
+        {questions.length > 0 ? (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="questions" type="group">
+              {(provided) => (
+                <ul
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="space-y-4"
+                >
+                  {questions.map((q, index) => (
+                    <Draggable
+                      key={q.quiz_question_id}
+                      draggableId={q.quiz_question_id}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <li
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`rounded-lg bg-white p-4 shadow dark:bg-zinc-900 ${
+                            snapshot.isDragging ? "opacity-50" : ""
+                          }`}
+                        >
+                          <div className="mb-2 flex justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <div {...provided.dragHandleProps}>
+                                <GripVertical className="size-6 cursor-move rounded-md border border-zinc-200 p-1 dark:border-zinc-800" />
+                              </div>
+                              <div className="flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 dark:border-zinc-800">
+                                {React.createElement(
+                                  iconMapping[
+                                    questionTypeIcon(q.question_type)
+                                  ],
+                                  { size: 12 },
+                                )}
+                                <p>{index + 1}.</p>{" "}
+                                <p>{formatQuestionType(q.question_type)}</p>
+                              </div>
+                              <Select
+                                onValueChange={(value) =>
+                                  updateSingle({
+                                    questionId: q.quiz_question_id,
+                                    points: value,
+                                  })
+                                }
+                                defaultValue={q.points?.toString()}
+                              >
+                                <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
+                                  <SelectValue placeholder="Points" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel>Points</SelectLabel>
+                                    {[1, 2, 3, 5, 10].map((value) => (
+                                      <SelectItem
+                                        key={value}
+                                        value={value.toString()}
+                                      >
+                                        {value} point{value !== 1 && "s"}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                              <Select
+                                onValueChange={(value) =>
+                                  updateSingle({
+                                    questionId: q.quiz_question_id,
+                                    time: value,
+                                  })
+                                }
+                                defaultValue={q.time?.toString()}
+                              >
+                                <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
+                                  <SelectValue placeholder="Time" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel>Time</SelectLabel>
+                                    {[10, 15, 20, 30, 60].map((value) => (
+                                      <SelectItem
+                                        key={value}
+                                        value={value.toString()}
+                                      >
+                                        {value} second{value !== 1 && "s"}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
                             </div>
-                            <div className="flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 dark:border-zinc-800">
-                              {React.createElement(
-                                iconMapping[questionTypeIcon(q.question_type)],
-                                { size: 12 },
-                              )}
-                              <p>{index + 1}.</p>{" "}
-                              <p>{formatQuestionType(q.question_type)}</p>
-                            </div>
-                            <Select
-                              onValueChange={(value) =>
-                                updateSingle({
-                                  questionId: q.quiz_question_id,
-                                  points: value,
-                                })
-                              }
-                              defaultValue={q.points?.toString()}
-                            >
-                              <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
-                                <SelectValue placeholder="Points" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  <SelectLabel>Points</SelectLabel>
-                                  {[1, 2, 3, 5, 10].map((value) => (
-                                    <SelectItem
-                                      key={value}
-                                      value={value.toString()}
-                                    >
-                                      {value} point{value !== 1 && "s"}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            <Select
-                              onValueChange={(value) =>
-                                updateSingle({
-                                  questionId: q.quiz_question_id,
-                                  time: value,
-                                })
-                              }
-                              defaultValue={q.time?.toString()}
-                            >
-                              <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
-                                <SelectValue placeholder="Time" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  <SelectLabel>Time</SelectLabel>
-                                  {[10, 15, 20, 30, 60].map((value) => (
-                                    <SelectItem
-                                      key={value}
-                                      value={value.toString()}
-                                    >
-                                      {value} second{value !== 1 && "s"}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
                           </div>
-                        </div>
-                        <span>{q.question}</span>
-                        <div className="mt-2 space-x-2">
-                          <Button
-                            variant="outline"
-                            onClick={() =>
-                              console.log(
-                                `Editing question with id: ${q.quiz_question_id}`,
-                              )
-                            }
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() =>
-                              console.log(
-                                `Deleting question with id: ${q.quiz_question_id}`,
-                              )
-                            }
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </li>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </ul>
-            )}
-          </Droppable>
-        </DragDropContext>
+                          <span>{q.question}</span>
+                          <div className="mt-2 space-x-2">
+                            <Button
+                              variant="outline"
+                              onClick={() =>
+                                console.log(
+                                  `Editing question with id: ${q.quiz_question_id}`,
+                                )
+                              }
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() =>
+                                console.log(
+                                  `Deleting question with id: ${q.quiz_question_id}`,
+                                )
+                              }
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </li>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </ul>
+              )}
+            </Droppable>
+          </DragDropContext>
+        ) : (
+          <p>No Questions Available</p>
+        )}
         <Button
           onClick={() => console.log("Adding a new question")}
           className="mt-4"
