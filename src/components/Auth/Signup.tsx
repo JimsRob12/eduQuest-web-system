@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { z } from "zod";
@@ -50,6 +49,7 @@ const Signup: React.FC = () => {
   const { signUp, googleSignUp } = useAuth();
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,12 +64,14 @@ const Signup: React.FC = () => {
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    try {
-      if (!recaptchaToken) {
-        toast.error("Please complete the reCAPTCHA verification.");
-        return;
-      }
+    if (!recaptchaToken) {
+      toast.error("Please complete the reCAPTCHA verification.");
+      return;
+    }
 
+    setIsSigningUp(true);
+
+    try {
       await signUp(data.email, data.password);
       toast.success(
         "Successfully signed up! Please check your email for confirmation.",
@@ -77,17 +79,31 @@ const Signup: React.FC = () => {
 
       recaptchaRef.current?.reset();
       setRecaptchaToken(null);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unknown error occurred.");
+      }
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    setIsSigningUp(true);
+
     try {
       await googleSignUp();
       toast.success("Successfully signed up with Google!");
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unknown error occurred.");
+      }
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
@@ -183,8 +199,8 @@ const Signup: React.FC = () => {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Button type="submit" className="w-full">
-                Register
+              <Button type="submit" className="w-full" disabled={isSigningUp}>
+                {isSigningUp ? "Registering..." : "Register"}
               </Button>
             </motion.div>
 
@@ -196,9 +212,10 @@ const Signup: React.FC = () => {
                 }}
                 className="flex w-full gap-2"
                 variant={"outline"}
+                disabled={isSigningUp}
               >
                 <IconBrandGoogle />
-                Sign up with Google
+                {isSigningUp ? "Signing up..." : "Sign up with Google"}
               </Button>
             </motion.div>
           </motion.form>
