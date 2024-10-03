@@ -1,7 +1,18 @@
-import React, { useState } from "react";
-import { getQuestions, updateBulkPointsAndTime } from "@/services/api/apiQuiz";
+import React, { useEffect, useState } from "react";
+import {
+  getQuestions,
+  updateBulkPointsAndTime,
+  updateQuestionOrder,
+  updateSingleQuestion,
+} from "@/services/api/apiQuiz";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "react-beautiful-dnd";
 import {
   Select,
   SelectContent,
@@ -16,12 +27,12 @@ import { Input } from "@/components/ui/input";
 import { QuizQuestions } from "@/lib/types";
 import { toast } from "react-hot-toast";
 import {
-  Grip,
   Loader2,
   Scale,
   Check,
   RectangleEllipsis,
   HelpCircle,
+  GripVertical,
 } from "lucide-react";
 import { formatQuestionType, questionTypeIcon } from "@/lib/helpers";
 
@@ -34,6 +45,7 @@ const iconMapping = {
 
 export default function CustomizeQuiz() {
   const { quizId } = useParams<{ quizId: string }>();
+  const [questions, setQuestions] = useState<QuizQuestions[]>([]);
   const [bulkPoints, setBulkPoints] = useState<string>("");
   const [bulkTime, setBulkTime] = useState<string>("30");
   const [customPoints, setCustomPoints] = useState<boolean>(false);
@@ -42,7 +54,7 @@ export default function CustomizeQuiz() {
   const queryClient = useQueryClient();
 
   const {
-    data: quizQuestions = [],
+    data: quizQuestionsData = [],
     isPending,
     isError,
   } = useQuery<QuizQuestions[], Error>({
@@ -52,10 +64,16 @@ export default function CustomizeQuiz() {
       if (!data) {
         throw new Error("Quiz not found");
       }
-      return data as unknown as QuizQuestions[];
+      return data.sort((a, b) => a.order - b.order) as QuizQuestions[];
     },
     enabled: !!quizId,
   });
+
+  useEffect(() => {
+    if (quizQuestionsData) {
+      setQuestions(quizQuestionsData);
+    }
+  }, [quizQuestionsData]);
 
   const { mutate: updateBulk, isPending: isUpdatingBulk } = useMutation({
     mutationFn: () => updateBulkPointsAndTime(quizId!, bulkPoints, bulkTime),
@@ -65,6 +83,40 @@ export default function CustomizeQuiz() {
     },
     onError: (error: Error) => {
       toast.error(error.message);
+    },
+  });
+
+  const { mutate: updateSingle } = useMutation({
+    mutationFn: (params: {
+      questionId: string;
+      points?: string;
+      time?: string;
+    }) =>
+      updateSingleQuestion(
+        quizId!,
+        params.questionId,
+        params.points,
+        params.time,
+      ),
+    onSuccess: () => {
+      toast.success("Question updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: reorderQuestions } = useMutation({
+    mutationFn: (newOrder: { id: string; order: number }[]) =>
+      updateQuestionOrder(quizId!, newOrder),
+    onSuccess: () => {
+      toast.success("Question order updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update question order");
+      console.error(error);
+      queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
     },
   });
 
@@ -96,16 +148,48 @@ export default function CustomizeQuiz() {
     </div>
   );
 
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, type } = result;
+
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    )
+      return;
+
+    if (type === "group") {
+      const reorderedQuestions = Array.from(questions);
+      const [reorderedItem] = reorderedQuestions.splice(source.index, 1);
+      reorderedQuestions.splice(destination.index, 0, reorderedItem);
+
+      const updatedQuestions = reorderedQuestions.map((item, index) => ({
+        ...item,
+        order: index + 1,
+      }));
+
+      setQuestions(updatedQuestions);
+
+      reorderQuestions(
+        updatedQuestions.map((item) => ({
+          id: item.quiz_question_id,
+          order: item.order,
+        })),
+      );
+    }
+  };
+
   if (isPending) return <div>Loading...</div>;
   if (isError) return <div>Error loading questions</div>;
 
-  const totalPoints = quizQuestions.reduce(
+  const totalPoints = questions.reduce(
     (total, q) => total + (q.points ?? 0),
     0,
   );
 
   return (
-    <div className="mt-8 grid grid-cols-[300px_1fr] gap-4">
+    <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-[300px_1fr]">
       <div className="h-fit rounded-lg bg-zinc-50 p-5 dark:bg-zinc-900">
         <h2 className="mb-4 text-lg font-bold">Bulk Update Questions</h2>
         <div className="space-y-4">
@@ -197,105 +281,130 @@ export default function CustomizeQuiz() {
       </div>
       <div>
         <h2 className="mb-3 text-xl font-bold">
-          {quizQuestions.length} Question{quizQuestions.length !== 1 && "s"}{" "}
+          {questions.length} Question{questions.length !== 1 && "s"}{" "}
           <span className="font-normal opacity-60">({totalPoints} points)</span>
         </h2>
-        <ul className="space-y-4">
-          {quizQuestions.map((q, index) => (
-            <li
-              key={q.quiz_question_id}
-              className="rounded-lg bg-white p-4 shadow dark:bg-zinc-900"
-            >
-              <div className="mb-2 flex justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <Grip className="size-6 rounded-md border border-zinc-200 py-1 dark:border-zinc-800" />
-                  <div className="flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 dark:border-zinc-800">
-                    {React.createElement(
-                      iconMapping[questionTypeIcon(q.question_type)],
-                      { size: 12 },
-                    )}
-                    <p>{index + 1}.</p>{" "}
-                    <p>{formatQuestionType(q.question_type)}</p>
-                  </div>
-                  <Select
-                    onValueChange={(value) => {
-                      if (value === "custom") {
-                        setCustomTime(true);
-                        setBulkTime("");
-                      } else {
-                        setBulkTime(value);
-                      }
-                    }}
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="questions" type="group">
+            {(provided) => (
+              <ul
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-4"
+              >
+                {questions.map((q, index) => (
+                  <Draggable
+                    key={q.quiz_question_id}
+                    draggableId={q.quiz_question_id}
+                    index={index}
                   >
-                    <Select
-                      onValueChange={(value) => {
-                        if (value === "custom") {
-                          setCustomPoints(true);
-                          setBulkPoints("");
-                        } else {
-                          setBulkPoints(value);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
-                        <SelectValue placeholder="Points" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Points per Question</SelectLabel>
-                          {[1, 2, 3, 5, 10].map((value) => (
-                            <SelectItem key={value} value={value.toString()}>
-                              {value} point{value !== 1 && "s"}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="custom">Custom</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
-                      <SelectValue placeholder="Time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Time per Question</SelectLabel>
-                        {[10, 15, 20, 30, 60].map((value) => (
-                          <SelectItem key={value} value={value.toString()}>
-                            {value} second{value !== 1 && "s"}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="custom">Custom</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div></div>
-              </div>
-              <span>{q.question}</span>
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    console.log(
-                      `Editing question with id: ${q.quiz_question_id}`,
-                    )
-                  }
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() =>
-                    console.log(
-                      `Deleting question with id: ${q.quiz_question_id}`,
-                    )
-                  }
-                >
-                  Delete
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                    {(provided, snapshot) => (
+                      <li
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`rounded-lg bg-white p-4 shadow dark:bg-zinc-900 ${
+                          snapshot.isDragging ? "opacity-50" : ""
+                        }`}
+                      >
+                        <div className="mb-2 flex justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <div {...provided.dragHandleProps}>
+                              <GripVertical className="size-6 cursor-move rounded-md border border-zinc-200 p-1 dark:border-zinc-800" />
+                            </div>
+                            <div className="flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 dark:border-zinc-800">
+                              {React.createElement(
+                                iconMapping[questionTypeIcon(q.question_type)],
+                                { size: 12 },
+                              )}
+                              <p>{index + 1}.</p>{" "}
+                              <p>{formatQuestionType(q.question_type)}</p>
+                            </div>
+                            <Select
+                              onValueChange={(value) =>
+                                updateSingle({
+                                  questionId: q.quiz_question_id,
+                                  points: value,
+                                })
+                              }
+                              defaultValue={q.points?.toString()}
+                            >
+                              <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
+                                <SelectValue placeholder="Points" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  <SelectLabel>Points</SelectLabel>
+                                  {[1, 2, 3, 5, 10].map((value) => (
+                                    <SelectItem
+                                      key={value}
+                                      value={value.toString()}
+                                    >
+                                      {value} point{value !== 1 && "s"}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                            <Select
+                              onValueChange={(value) =>
+                                updateSingle({
+                                  questionId: q.quiz_question_id,
+                                  time: value,
+                                })
+                              }
+                              defaultValue={q.time?.toString()}
+                            >
+                              <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
+                                <SelectValue placeholder="Time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  <SelectLabel>Time</SelectLabel>
+                                  {[10, 15, 20, 30, 60].map((value) => (
+                                    <SelectItem
+                                      key={value}
+                                      value={value.toString()}
+                                    >
+                                      {value} second{value !== 1 && "s"}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <span>{q.question}</span>
+                        <div className="mt-2 space-x-2">
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              console.log(
+                                `Editing question with id: ${q.quiz_question_id}`,
+                              )
+                            }
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() =>
+                              console.log(
+                                `Deleting question with id: ${q.quiz_question_id}`,
+                              )
+                            }
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </li>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </ul>
+            )}
+          </Droppable>
+        </DragDropContext>
         <Button
           onClick={() => console.log("Adding a new question")}
           className="mt-4"

@@ -31,6 +31,7 @@ export interface QuizQuestions {
   image_url?: string;
   points?: number;
   question_type: string;
+  order: number;
 }
 
 export enum Subject {

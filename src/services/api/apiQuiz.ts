@@ -133,14 +133,24 @@ export async function getQuizzesByOwnerId(
 ): Promise<Quiz[] | null> {
   const { data, error } = await supabase
     .from("quiz")
-    .select("*, quiz_questions(*)")
-    .eq("owner_id", ownerId);
+    .select(
+      `
+      *,
+      quiz_questions (
+        *
+      )
+    `,
+    )
+    .eq("owner_id", ownerId)
+    .order("order", {
+      referencedTable: "quiz_questions",
+      ascending: false,
+    });
 
   if (error) {
     console.error("Error fetching quizzes:", error);
     return null;
   }
-
   return data;
 }
 
@@ -151,8 +161,8 @@ export async function deleteQuiz(
   const response = await supabase
     .from("quiz")
     .delete()
-    .eq("ownerId", ownerId)
-    .eq("ownerId", quizId);
+    .eq("owner_id", ownerId)
+    .eq("quiz_id", quizId);
 
   if (response.status !== 204) throw new Error("Quiz not deleted!");
 
@@ -301,4 +311,48 @@ export async function updateBulkPointsAndTime(
   const questions: QuizQuestions[] | null = data || [];
 
   return questions && questions.length > 0 ? questions : null;
+}
+
+export async function updateSingleQuestion(
+  quizId: string,
+  questionId: string,
+  points?: string,
+  time?: string,
+): Promise<QuizQuestions | null> {
+  const { data, error } = await supabase
+    .from("quiz_questions")
+    .update({
+      points: points ? parseInt(points) : undefined,
+      time: time ? parseInt(time) : undefined,
+    })
+    .eq("quiz_id", quizId)
+    .eq("quiz_question_id", questionId)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateQuestionOrder(
+  quizId: string,
+  newOrder: { id: string; order: number }[],
+) {
+  const updates = newOrder.map(({ id, order }) =>
+    supabase
+      .from("quiz_questions")
+      .update({ order })
+      .eq("quiz_question_id", id)
+      .eq("quiz_id", quizId),
+  );
+
+  const results = await Promise.all(updates);
+
+  const errors = results.filter((result) => result.error);
+
+  if (errors.length > 0) {
+    console.error("Errors updating question order:", errors);
+    throw new Error("Failed to update one or more question orders");
+  }
+
+  return results.map((result) => result.data).flat();
 }

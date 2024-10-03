@@ -72,7 +72,7 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
         .from("quiz_questions")
         .insert(
           Array.isArray(generatedQuestions)
-            ? generatedQuestions.map((question) => ({
+            ? generatedQuestions.map((question, index) => ({
                 quiz_id: quizId,
                 question: question.question,
                 question_type: question.question_type,
@@ -80,6 +80,7 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
                 distractor: question.distractor
                   ? [...question.distractor, question.right_answer]
                   : null,
+                order: index + 1,
               }))
             : [],
         );

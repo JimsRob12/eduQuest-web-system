@@ -12,14 +12,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteQuiz } from "@/services/api/apiQuiz";
+import toast from "react-hot-toast";
 
 interface QuizCardProps {
   quiz: Quiz;
   user: User;
   onEdit: (quizId: string) => void;
+  onDelete: (quizId: string) => void;
 }
 
-const QuizCard: React.FC<QuizCardProps> = ({ quiz, user, onEdit }) => (
+const QuizCard: React.FC<QuizCardProps> = ({
+  quiz,
+  user,
+  onEdit,
+  onDelete,
+}) => (
   <div key={quiz.quiz_id} className="my-2 flex gap-4 rounded border p-3">
     <img
       src={quiz.cover_image || "/edu-quest-logo.png"}
@@ -51,7 +60,11 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, user, onEdit }) => (
           <EllipsisVertical size={18} />
         </PopoverTrigger>
         <PopoverContent side="left" align="start" className="h-fit w-fit p-0">
-          <Button variant="link" className="gap-1">
+          <Button
+            variant="link"
+            className="gap-1"
+            onClick={() => onDelete(quiz.quiz_id)}
+          >
             <Trash size={16} />
             Delete
           </Button>
@@ -64,11 +77,9 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, user, onEdit }) => (
 
 export default function ProfessorDashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { quizzes = [], isPending, isError } = useGetQuizzes();
-
-  if (isPending) return <Loader />;
-  if (isError) return <p>Error loading quizzes.</p>;
 
   const safeQuizzes: Quiz[] = Array.isArray(quizzes) ? quizzes : [quizzes];
   const activeQuizzes = safeQuizzes.filter(
@@ -78,9 +89,27 @@ export default function ProfessorDashboard() {
     (quiz: Quiz) => quiz.status === "draft",
   );
 
+  const { mutate: mutateDeleteQuiz } = useMutation({
+    mutationFn: async (quizId: string) => deleteQuiz(user!.id, quizId),
+    onSuccess: () => {
+      toast.success("Quiz deleted successfully.");
+      queryClient.invalidateQueries({ queryKey: ["quizzes", user!.id] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleEditQuiz = (quizId: string) => {
     navigate(`/professor/quiz/${quizId}/customize`);
   };
+
+  const handleDeleteQuiz = (quizId: string) => {
+    mutateDeleteQuiz(quizId);
+  };
+
+  if (isPending) return <Loader />;
+  if (isError) return <p>Error loading quizzes.</p>;
 
   return (
     <div className="p-4">
@@ -101,6 +130,7 @@ export default function ProfessorDashboard() {
                 quiz={quiz}
                 user={user!}
                 onEdit={handleEditQuiz}
+                onDelete={handleDeleteQuiz}
               />
             ))
           ) : (
@@ -115,6 +145,7 @@ export default function ProfessorDashboard() {
                 quiz={quiz}
                 user={user!}
                 onEdit={handleEditQuiz}
+                onDelete={handleDeleteQuiz}
               />
             ))
           ) : (
