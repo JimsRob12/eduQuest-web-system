@@ -33,8 +33,8 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
   const updateQuiz = async (quizId: string, maxQuestions: number) => {
     try {
       // Step 1: Update the quiz in the quiz table
-      console.log(quizId, maxQuestions, quizData.questionType);
-      const { data: updatedQuizData, error: quizError } = await supabase
+      // console.log(quizId, maxQuestions, quizData.questionType);
+      const { error: quizError } = await supabase
         .from("quiz")
         .update({
           max_items: maxQuestions,
@@ -45,7 +45,7 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
         .single();
 
       if (quizError) throw quizError;
-      console.log("Quiz updated:", updatedQuizData);
+      // console.log("Quiz updated:", updatedQuizData);
 
       // Step 2: Generate new questions
       if (!quizData.file || !quizData.questionType) {
@@ -58,7 +58,7 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
         maxQuestions.toString(),
       );
 
-      console.log("Generated questions:", generatedQuestions);
+      // console.log("Generated questions:", generatedQuestions);
       // Step 3: Delete existing questions for this quiz
       const { error: deleteError } = await supabase
         .from("quiz_questions")

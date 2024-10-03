@@ -17,13 +17,7 @@ import {
   updateRole,
 } from "@/services/api/apiAuth";
 import toast from "react-hot-toast";
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: "professor" | "student" | null;
-}
+import { User } from "@/lib/types";
 
 interface AuthContextProps {
   user: User | null;

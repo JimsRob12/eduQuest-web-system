@@ -3,29 +3,9 @@ import supabase from "../supabase";
 import { v4 as uuidv4 } from "uuid";
 import { qgen } from "./apiUrl";
 import axios from "axios";
+import { Quiz, QuizQuestions } from "@/lib/types";
 
-interface QuizData {
-  quiz_id: string;
-  owner_id: string;
-  status: string;
-  title: string;
-  subject: string;
-  description: string;
-  total_points: string;
-  question_type: string;
-}
-
-interface QuizQuestions {
-  id: string;
-  quiz_id: string;
-  right_answer: string;
-  question: string;
-  distractor: string[];
-  time: number;
-  image_url: string;
-}
-
-export async function createQuiz(ownerId: string): Promise<QuizData | null> {
+export async function createQuiz(ownerId: string): Promise<Quiz | null> {
   const newQuizId = uuidv4();
   const { data, error } = await supabase
     .from("quiz")
@@ -43,11 +23,11 @@ export async function createQuiz(ownerId: string): Promise<QuizData | null> {
     return null;
   }
 
-  console.log("Quiz created:", data);
+  // console.log("Quiz created:", data);
   return data;
 }
 
-export async function getQuizById(quizId: string): Promise<QuizData | null> {
+export async function getQuizById(quizId: string): Promise<Quiz | null> {
   const { data, error } = await supabase
     .from("quiz")
     .select()
@@ -128,8 +108,8 @@ export async function updateQuizTitle(quizId: string, title: string) {
 export async function editQuiz(
   ownerId: string,
   quizId: string,
-  quizData: QuizData,
-): Promise<QuizData | null> {
+  quizData: Quiz,
+): Promise<Quiz | null> {
   const { data, error } = await supabase
     .from("quiz")
     .update({
@@ -144,26 +124,30 @@ export async function editQuiz(
     .select();
 
   if (error) throw new Error(error.message);
-  const quiz: QuizData | null =
-    data && data.length > 0 ? (data[0] as QuizData) : null;
+  const quiz: Quiz | null = data && data.length > 0 ? (data[0] as Quiz) : null;
   return quiz ? quiz : null;
 }
 
-export async function getQuiz(ownerId: string): Promise<QuizData[] | null> {
+export async function getQuizzesByOwnerId(
+  ownerId: string,
+): Promise<Quiz[] | null> {
   const { data, error } = await supabase
     .from("quiz")
-    .select()
-    .eq("ownerId", ownerId);
+    .select("*, quiz_questions(*)")
+    .eq("owner_id", ownerId);
 
-  if (error) throw new Error(error.message);
-  const quiz: QuizData[] | null = data || [];
-  return quiz && quiz.length > 0 ? quiz : null;
+  if (error) {
+    console.error("Error fetching quizzes:", error);
+    return null;
+  }
+
+  return data;
 }
 
 export async function deleteQuiz(
   ownerId: string,
   quizId: string,
-): Promise<QuizData | boolean> {
+): Promise<Quiz | boolean> {
   const response = await supabase
     .from("quiz")
     .delete()
