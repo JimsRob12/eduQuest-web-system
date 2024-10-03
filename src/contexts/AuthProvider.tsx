@@ -48,13 +48,11 @@ export const useAuth = () => {
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   // Mutation for signing up with email
   const signUpMutation = useMutation({
     mutationFn: signUpWithEmail,
-    onMutate: () => setLoading(true),
     onSuccess: (data) => {
       if (data.session) {
         queryClient.invalidateQueries({ queryKey: ["session"] });
@@ -62,7 +60,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         toast.error("Sign up error: Session is null");
       }
     },
-    onSettled: () => setLoading(false),
     onError: (error: any) => {
       toast.error(`Sign up error: ${error.message}`);
     },
@@ -71,7 +68,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   // Mutation for signing in with email
   const signInWithEmailMutation = useMutation({
     mutationFn: signInWithEmail,
-    onMutate: () => setLoading(true),
     onSuccess: (data) => {
       const { session } = data;
       if (session?.user) {
@@ -84,35 +80,28 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         queryClient.invalidateQueries({ queryKey: ["session"] });
       }
     },
-    onSettled: () => setLoading(false),
   });
 
   // Mutation for Google sign-in
   const signInWithGoogleMutation = useMutation({
     mutationFn: signInWithGoogle,
-    onMutate: () => setLoading(true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["session"] });
     },
-    onSettled: () => setLoading(false),
   });
 
   // Mutation for signing out
   const signOutMutation = useMutation({
     mutationFn: signOut,
-    onMutate: () => setLoading(true),
     onSuccess: () => {
       setUser(null);
-      toast.success("Successfully Logged Out");
       queryClient.invalidateQueries({ queryKey: ["session"] });
     },
-    onSettled: () => setLoading(false),
   });
 
   // Mutation for updating the user role
   const updateUserRoleMutation = useMutation({
     mutationFn: updateRole,
-    onMutate: () => setLoading(true),
     onSuccess: (data, variables) => {
       if (user) {
         setUser({
@@ -121,11 +110,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             ? (variables.role as "professor" | "student")
             : null,
         });
-        toast.success(`User role updated to ${variables.role}`);
         queryClient.invalidateQueries({ queryKey: ["session"] });
       }
     },
-    onSettled: () => setLoading(false),
     onError: (error: any) => {
       toast.error(`Role update error: ${error.message}`);
     },
@@ -134,7 +121,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   // Fetch initial session when component mounts
   useEffect(() => {
     const fetchInitialSession = async () => {
-      setLoading(true);
       const session = await getInitialSession();
       if (session) {
         setUser({
@@ -144,7 +130,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           role: session.user.user_metadata.role || null,
         });
       }
-      setLoading(false);
     };
     fetchInitialSession();
 
@@ -159,7 +144,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUser(null);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -191,6 +175,13 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     await signOutMutation.mutateAsync();
   };
+
+  const loading =
+    signUpMutation.isPending ||
+    signInWithEmailMutation.isPending ||
+    signInWithGoogleMutation.isPending ||
+    signOutMutation.isPending ||
+    updateUserRoleMutation.isPending;
 
   return (
     <AuthContext.Provider

@@ -62,34 +62,6 @@ export async function getQuizById(quizId: string): Promise<QuizData | null> {
   return data;
 }
 
-export async function updateQuizType(quizId: string, questionType: string) {
-  const { data, error } = await supabase
-    .from("quiz")
-    .update({ question_type: questionType })
-    .eq("quiz_id", quizId)
-    .single();
-
-  if (error) {
-    throw new Error(`Error updating quiz type: ${error.message}`);
-  }
-
-  return data;
-}
-
-export async function updateQuizMaxItems(quizId: string, maxItems: number) {
-  const { data, error } = await supabase
-    .from("quiz")
-    .update({ max_items: maxItems })
-    .eq("quiz_id", quizId)
-    .single();
-
-  if (error) {
-    throw new Error(`Error updating quiz max items: ${error.message}`);
-  }
-
-  return data;
-}
-
 export async function updateQuizSettings(updateData: {
   title: string;
   quizId: string;
@@ -213,7 +185,6 @@ export async function generateQuestions(
     formData.append("pdf", file);
     formData.append("question_type", questionType);
     formData.append("num_questions", numQuestions);
-    console.log(file, questionType, numQuestions);
 
     const generateQuestions = await axios.post(qgen, formData, {
       headers: {
@@ -241,10 +212,8 @@ export async function generateQuestions(
       //   ]
       // }
 
-      console.log("Generated questions:", generateQuestions.data.questions);
       return generateQuestions.data.questions;
     } else {
-      console.log("Error generating questions:", generateQuestions);
       throw new Error("Something went wrong! Please try again later.");
     }
   } catch {

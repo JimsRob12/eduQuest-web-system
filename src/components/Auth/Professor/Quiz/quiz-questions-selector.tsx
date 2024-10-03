@@ -2,11 +2,39 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Minus, Plus } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useQuiz } from "@/contexts/QuizProvider";
+import { MultiStepLoader } from "@/components/Shared/MultiStepLoader";
 
 const MAX_QUESTIONS_OPTIONS = [5, 10, 15, 20];
+
+const loadingStates = [
+  {
+    text: "Initializing quiz setup...",
+  },
+  {
+    text: "Fetching question templates...",
+  },
+  {
+    text: "Generating multiple-choice questions...",
+  },
+  {
+    text: "Creating true/false questions...",
+  },
+  {
+    text: "Formulating identification questions...",
+  },
+  {
+    text: "Compiling quiz data...",
+  },
+  {
+    text: "Finalizing quiz structure...",
+  },
+  {
+    text: "Almost done! Wrapping up...",
+  },
+];
 
 export default function MaxQuestionsSelector() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -15,6 +43,7 @@ export default function MaxQuestionsSelector() {
   const [isLoading, setIsLoading] = useState(false);
   const { quizId } = useParams();
   const { quizData, updateQuiz } = useQuiz();
+  const navigate = useNavigate();
 
   const handleOptionClick = (value: number) => {
     setSelectedOption(value);
@@ -38,15 +67,13 @@ export default function MaxQuestionsSelector() {
     if (selectedOption && quizId) {
       setIsLoading(true);
       try {
-        // Update quizData with the selected number of questions
         quizData.maxQuestions = selectedOption;
 
-        // Call updateQuiz to update the existing quiz
         const updatedQuizId = await updateQuiz(quizId, selectedOption);
 
         if (updatedQuizId) {
           toast.success("Quiz updated successfully!");
-          // You might want to redirect to the updated quiz page or update the UI
+          navigate(`/professor/quiz/${quizId}/customize`);
         } else {
           toast.error("Failed to update quiz");
         }
@@ -66,6 +93,11 @@ export default function MaxQuestionsSelector() {
 
   return (
     <div className="flex h-[calc(100%-5rem)] w-full flex-col justify-center">
+      <MultiStepLoader
+        loadingStates={loadingStates}
+        loading={isLoading}
+        duration={2000}
+      />
       <h2 className="text-xl font-bold md:text-3xl">
         Set Your Students' Next Challenge!
       </h2>
@@ -83,7 +115,7 @@ export default function MaxQuestionsSelector() {
               key={option}
               onClick={() => handleOptionClick(option)}
               variant={"outline"}
-              className={`rounded-lg p-4 py-6 text-white shadow-lg transition-transform hover:scale-105 ${selectedOption === option ? "bg-gradient-to-r from-purple-500 to-indigo-500" : ""}`}
+              className={`rounded-lg p-4 py-6 text-black shadow-lg transition-transform hover:scale-105 dark:text-white ${selectedOption === option ? "bg-gradient-to-r from-purple-500 to-indigo-500" : ""}`}
               disabled={isLoading}
             >
               <span className="text-white">{option} Questions</span>

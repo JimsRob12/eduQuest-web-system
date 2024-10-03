@@ -76,7 +76,6 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
                 quiz_id: quizId,
                 question: question.question,
                 right_answer: question.right_answer,
-                question_type: quizData.questionType,
                 distractor: question.distractor
                   ? [...question.distractor, question.right_answer]
                   : null,

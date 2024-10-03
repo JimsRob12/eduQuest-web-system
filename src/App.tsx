@@ -53,11 +53,11 @@ const professorRoutes = [
     path: "/professor/quiz/:quizId/:type/max-questions-selector",
     element: <MaxQuestionsSelector />,
   },
+  { path: "/professor/quiz/:quizId/customize", element: <CustomizeQuiz /> },
   {
     path: "/professor/quiz/:quizId/add-question/:type",
     element: <AddQuestion />,
   },
-  { path: "/professor/quiz/:quizId/customize", element: <CustomizeQuiz /> },
 ];
 
 const studentRoutes = [
