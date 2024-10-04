@@ -31,13 +31,18 @@ export default function QuizEditQuestionNavbar() {
     questionType,
     points,
     time,
+    rightAnswer,
     hasUnsavedChanges,
     updateQuestionType,
     updatePoints,
     updateTime,
+    resetToInitialState,
   } = useQuestionEdit();
 
   const handleBack = () => {
+    if (hasUnsavedChanges) {
+      resetToInitialState();
+    }
     navigate(-1);
   };
 
@@ -136,7 +141,7 @@ export default function QuizEditQuestionNavbar() {
         <Button
           className="flex gap-1 text-xs"
           variant="default"
-          disabled={!hasUnsavedChanges}
+          disabled={!hasUnsavedChanges || !rightAnswer}
         >
           <Save size={14} />
           Save Question

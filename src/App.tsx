@@ -25,11 +25,11 @@ import RoleAssignment from "./components/Auth/RoleAssignment";
 import StudentDashboard from "./components/Auth/Student/student-dashboard";
 import ProfessorDashboard from "./components/Auth/Professor/professor-dashboard";
 import QuestionTypeSelection from "./components/Auth/Professor/Quiz/quiz-type-selection";
-import AddQuestion from "./components/Auth/Professor/Quiz/quiz-add-question";
+import AddQuestion from "./components/Auth/Professor/Quiz/question-add";
 import CustomizeQuiz from "./components/Auth/Professor/Quiz/quiz-customize";
-import QuizGenerate from "./components/Auth/Professor/Quiz/quiz-generate-quiz";
+import QuizGenerate from "./components/Auth/Professor/Quiz/quiz-generate";
 import MaxQuestionsSelector from "./components/Auth/Professor/Quiz/quiz-questions-selector";
-import QuizEditQuestion from "./components/Auth/Professor/Quiz/quiz-edit-question";
+import QuizEditQuestion from "./components/Auth/Professor/Quiz/question-edit";
 
 // Define route configurations
 const publicRoutes = [

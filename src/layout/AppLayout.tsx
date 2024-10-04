@@ -4,7 +4,7 @@ import Footer from "@/components/Shared/Footer";
 import Navbar from "@/components/Shared/Navbar";
 import { useAuth } from "@/contexts/AuthProvider";
 import QuizNavbar from "@/components/Auth/Professor/Quiz/quiz-navbar";
-import QuizEditQuestionNavbar from "@/components/Auth/Professor/Quiz/quiz-edit-question-navbar";
+import QuizEditQuestionNavbar from "@/components/Auth/Professor/Quiz/question-navbar";
 
 function AppLayout() {
   const { user } = useAuth();

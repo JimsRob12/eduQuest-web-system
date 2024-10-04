@@ -1,14 +1,6 @@
 import React, { createContext, useState, useContext } from "react";
 import { formatQuestionType } from "@/lib/helpers";
-
-type QuestionData = {
-  question_type: string;
-  points: number;
-  time: number;
-  question: string;
-  distractor: string[];
-  right_answer: string;
-};
+import { QuizQuestions } from "@/lib/types";
 
 type QuestionEditContextType = {
   questionType: string;
@@ -25,7 +17,8 @@ type QuestionEditContextType = {
   updateQuestion: (question: string) => void;
   updateDistractors: (distractors: string[]) => void;
   updateRightAnswer: (answer: string) => void;
-  setInitialQuestionData: (data: QuestionData) => void;
+  setInitialQuestionData: (data: QuizQuestions) => void;
+  resetToInitialState: () => void;
 };
 
 const QuestionEditContext = createContext<QuestionEditContextType | undefined>(
@@ -52,7 +45,7 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
     rightAnswer: "",
   });
 
-  const setInitialQuestionData = (data: QuestionData) => {
+  const setInitialQuestionData = (data: QuizQuestions) => {
     if (!isInitialDataSet) {
       const formattedType = formatQuestionType(data.question_type);
       setQuestionType(formattedType);
@@ -73,6 +66,18 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setIsInitialDataSet(true);
     }
+  };
+
+  const resetToInitialState = () => {
+    setInitialState({
+      questionType: "",
+      points: 0,
+      time: 0,
+      question: "",
+      distractors: [],
+      rightAnswer: "",
+    });
+    setIsInitialDataSet(false);
   };
 
   const hasUnsavedChanges =
@@ -109,6 +114,7 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
         updateDistractors,
         updateRightAnswer,
         setInitialQuestionData,
+        resetToInitialState,
       }}
     >
       {children}

@@ -4,6 +4,8 @@ import { Check, Plus, Trash } from "lucide-react";
 import { getDarkerShade } from "@/lib/helpers";
 import { useQuestionEdit } from "@/contexts/QuestionProvider";
 import { useFetchQuestionData } from "./useFetchQuestionData";
+import toast from "react-hot-toast";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function QuizEditQuestion() {
   const { theme } = useTheme();
@@ -22,39 +24,54 @@ export default function QuizEditQuestion() {
 
   const showPlusButton = distractors.length < 5;
 
-  // Function to add a new distractor input
+  // Add a new distractor input (empty) without auto-selecting as the right answer
   const addDistractor = () => {
     updateDistractors([...distractors, ""]);
   };
 
-  // Function to delete a distractor input
+  // Delete distractor but ensure at least 2 distractors remain, even if they are empty
   const deleteDistractor = (index: number) => {
     if (distractors.length > 2) {
-      const newDistractors = distractors.filter((_, i) => i !== index);
+      const newDistractors = [...distractors];
+      newDistractors.splice(index, 1); // Remove the selected distractor
       updateDistractors(newDistractors);
+
+      // If the right answer is the one being deleted, clear the right answer
       if (rightAnswer === distractors[index]) {
         updateRightAnswer("");
       }
+    } else {
+      toast.error("At least two distractors must remain.");
     }
   };
 
-  // Function to update distractor input value
+  // Update a specific distractor's value
   const updateDistractor = (index: number, value: string) => {
     const updatedDistractors = [...distractors];
     updatedDistractors[index] = value;
     updateDistractors(updatedDistractors);
   };
 
+  // Handle marking the right answer with a validation check
+  const handleRightAnswer = (distractor: string) => {
+    if (!distractor.trim()) {
+      toast.error("Cannot mark an empty input as the correct answer!");
+    } else {
+      updateRightAnswer(distractor);
+    }
+  };
+
   return (
     <div className="mt-8 flex h-[calc(100%-8rem)] w-full items-center justify-center">
       <div className="w-[70vw] rounded-xl bg-zinc-200 p-4 dark:bg-zinc-900">
-        <Input
+        <Textarea
           value={question}
           onChange={(e) => updateQuestion(e.target.value)}
           className="rounded-lg py-16 text-center text-xl font-semibold shadow-lg"
+          style={{ resize: "none" }}
         />
 
-        {distractors.length > 0 && distractors.some((d) => d.trim() !== "") && (
+        {distractors.length > 0 && (
           <div
             className="mt-4 grid gap-2 rounded-lg"
             style={{
@@ -72,9 +89,10 @@ export default function QuizEditQuestion() {
               const darkerBgColor = getDarkerShade(bgColor, 15);
               const isSelected = rightAnswer === distractor;
 
-              const buttonBgColor = isSelected
-                ? "bg-green-500"
-                : "bg-zinc-800 bg-opacity-20";
+              const buttonBgColor =
+                isSelected && distractor.trim() !== ""
+                  ? "bg-green-500"
+                  : "bg-zinc-800 bg-opacity-20";
 
               return (
                 <div
@@ -94,8 +112,8 @@ export default function QuizEditQuestion() {
                       <Trash className="fill-white" size={14} />
                     </button>
                     <button
-                      className={`rounded-full border p-1 ${buttonBgColor} ${!rightAnswer && "animate-pulse"}`}
-                      onClick={() => updateRightAnswer(distractor)}
+                      className={`rounded-full border p-1 ${buttonBgColor}`}
+                      onClick={() => handleRightAnswer(distractor)}
                     >
                       <Check size={14} />
                     </button>
