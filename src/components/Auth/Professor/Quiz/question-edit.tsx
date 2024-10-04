@@ -6,12 +6,14 @@ import { useQuestionEdit } from "@/contexts/QuestionProvider";
 import { useFetchQuestionData } from "./useFetchQuestionData";
 import toast from "react-hot-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { useMediaQuery } from "react-responsive";
 
 export default function QuizEditQuestion() {
   const { theme } = useTheme();
   useFetchQuestionData();
   const {
     question,
+    questionType,
     distractors,
     rightAnswer,
     updateQuestion,
@@ -21,6 +23,7 @@ export default function QuizEditQuestion() {
 
   const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF8C33"];
   const lightColors = ["#FF8C66", "#37a753", "#668CFF", "#FF66C2", "#FFB366"];
+  const isTabletorMobile = useMediaQuery({ query: "(max-width: 1024px)" });
 
   const showPlusButton = distractors.length < 5;
 
@@ -62,7 +65,7 @@ export default function QuizEditQuestion() {
   };
 
   return (
-    <div className="mt-8 flex h-[calc(100%-8rem)] w-full items-center justify-center">
+    <div className="mt-8 flex w-full items-center justify-center md:h-[calc(100%-8rem)]">
       <div className="w-[70vw] rounded-xl bg-zinc-200 p-4 dark:bg-zinc-900">
         <Textarea
           value={question}
@@ -71,78 +74,81 @@ export default function QuizEditQuestion() {
           style={{ resize: "none" }}
         />
 
-        {distractors.length > 0 && (
-          <div
-            className="mt-4 grid gap-2 rounded-lg"
-            style={{
-              gridTemplateColumns: showPlusButton
-                ? `repeat(${distractors.length}, 1fr) auto`
-                : `repeat(${distractors.length}, 1fr)`,
-            }}
-          >
-            {distractors.map((distractor, index) => {
-              const bgColor =
-                theme === "dark"
-                  ? lightColors[index % lightColors.length]
-                  : colors[index % colors.length];
+        {distractors.length > 0 &&
+          questionType.toLowerCase() === "multiple choice" && (
+            <div
+              className="mt-4 grid gap-2 rounded-lg"
+              style={{
+                gridTemplateColumns: isTabletorMobile
+                  ? `repeat(1, 1fr)`
+                  : showPlusButton
+                    ? `repeat(${distractors.length}, 1fr) auto`
+                    : `repeat(${distractors.length}, 1fr)`,
+              }}
+            >
+              {distractors.map((distractor, index) => {
+                const bgColor =
+                  theme === "dark"
+                    ? lightColors[index % lightColors.length]
+                    : colors[index % colors.length];
 
-              const darkerBgColor = getDarkerShade(bgColor, 15);
-              const isSelected = rightAnswer === distractor;
+                const darkerBgColor = getDarkerShade(bgColor, 15);
+                const isSelected = rightAnswer === distractor;
 
-              const buttonBgColor =
-                isSelected && distractor.trim() !== ""
-                  ? "bg-green-500"
-                  : "bg-zinc-800 bg-opacity-20";
+                const buttonBgColor =
+                  isSelected && distractor.trim() !== ""
+                    ? "bg-green-500"
+                    : "bg-zinc-800 bg-opacity-20";
 
-              return (
-                <div
-                  key={index}
-                  className="rounded-lg p-1"
-                  style={{
-                    backgroundColor: bgColor,
-                    color: "#fff",
-                  }}
-                >
-                  <div className="flex w-full items-center justify-between">
-                    <button
-                      className="rounded-md bg-zinc-50 bg-opacity-20 p-1.5"
-                      onClick={() => deleteDistractor(index)}
-                      disabled={distractors.length <= 2}
-                    >
-                      <Trash className="fill-white" size={14} />
-                    </button>
-                    <button
-                      className={`rounded-full border p-1 ${buttonBgColor}`}
-                      onClick={() => handleRightAnswer(distractor)}
-                    >
-                      <Check size={14} />
-                    </button>
+                return (
+                  <div
+                    key={index}
+                    className="rounded-lg p-1"
+                    style={{
+                      backgroundColor: bgColor,
+                      color: "#fff",
+                    }}
+                  >
+                    <div className="flex w-full items-center justify-between">
+                      <button
+                        className="rounded-md bg-zinc-50 bg-opacity-20 p-1.5"
+                        onClick={() => deleteDistractor(index)}
+                        disabled={distractors.length <= 2}
+                      >
+                        <Trash className="fill-white" size={14} />
+                      </button>
+                      <button
+                        className={`rounded-full border p-1 ${buttonBgColor}`}
+                        onClick={() => handleRightAnswer(distractor)}
+                      >
+                        <Check size={14} />
+                      </button>
+                    </div>
+                    <Input
+                      value={distractor}
+                      onChange={(e) => updateDistractor(index, e.target.value)}
+                      placeholder="Type your answer here"
+                      className="mt-2 h-12 border-none text-center text-lg focus-visible:ring-0 dark:placeholder:text-white dark:placeholder:text-opacity-50 md:h-32"
+                      onFocus={(e) =>
+                        (e.target.style.backgroundColor = darkerBgColor)
+                      }
+                      onBlur={(e) => (e.target.style.backgroundColor = bgColor)}
+                    />
                   </div>
-                  <Input
-                    value={distractor}
-                    onChange={(e) => updateDistractor(index, e.target.value)}
-                    placeholder="Type your answer here"
-                    className="mt-2 h-32 border-none text-center text-lg focus-visible:ring-0 dark:placeholder:text-white dark:placeholder:text-opacity-50"
-                    onFocus={(e) =>
-                      (e.target.style.backgroundColor = darkerBgColor)
-                    }
-                    onBlur={(e) => (e.target.style.backgroundColor = bgColor)}
-                  />
+                );
+              })}
+              {showPlusButton && (
+                <div className="flex items-center justify-center">
+                  <button
+                    className="rounded-md bg-zinc-900 bg-opacity-20 p-1.5 text-white dark:bg-white dark:text-black"
+                    onClick={addDistractor}
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
-              );
-            })}
-            {showPlusButton && (
-              <div className="flex items-center justify-center">
-                <button
-                  className="rounded-md bg-zinc-900 bg-opacity-20 p-1.5 text-white dark:bg-white dark:text-black"
-                  onClick={addDistractor}
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
       </div>
     </div>
   );
