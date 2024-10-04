@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import supabase from "../supabase";
 import { v4 as uuidv4 } from "uuid";
@@ -383,4 +384,49 @@ export async function updateQuestion(params: QuizQuestions) {
   }
 
   return data;
+}
+
+export async function deleteQuestion(questionId: string) {
+  const { data, error } = await supabase
+    .from("quiz_questions")
+    .delete()
+    .match({ quiz_question_id: questionId });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function duplicateQuestion(questionId: string) {
+  // First, fetch the question to duplicate
+  const { data: originalQuestion, error: fetchError } = await supabase
+    .from("quiz_questions")
+    .select("*")
+    .eq("quiz_question_id", questionId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  // Remove the id from the original question to create a new entry
+  const { quiz_question_id, ...newQuestion } = originalQuestion;
+
+  // Insert the new question
+  const { data: duplicatedQuestion, error: insertError } = await supabase
+    .from("quiz_questions")
+    .insert({ ...newQuestion, order: newQuestion.order + 1 })
+    .select();
+
+  if (insertError) throw insertError;
+
+  // Update the order of subsequent questions using a raw SQL query
+  const { error: updateError } = await supabase.rpc(
+    "increment_question_order",
+    {
+      min_order: newQuestion.order + 1,
+      excluded_id: duplicatedQuestion[0].quiz_question_id,
+    },
+  );
+
+  if (updateError) throw updateError;
+
+  return duplicatedQuestion[0];
 }
