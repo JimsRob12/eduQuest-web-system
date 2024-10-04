@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, Save } from "lucide-react";
+import { ChevronLeft, Loader2, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuestionEdit } from "@/contexts/QuestionProvider";
 import { useFetchQuestionData } from "./useFetchQuestionData";
@@ -38,6 +38,7 @@ export default function QuizEditQuestionNavbar() {
     updateTime,
     resetToInitialState,
     saveQuestion,
+    isSaving,
   } = useQuestionEdit();
 
   const handleBack = () => {
@@ -148,11 +149,19 @@ export default function QuizEditQuestionNavbar() {
         <Button
           className="flex gap-1 text-xs"
           variant="default"
-          disabled={!hasUnsavedChanges || !rightAnswer}
+          disabled={!hasUnsavedChanges || !rightAnswer || isSaving}
           onClick={handleSave}
         >
-          <Save size={14} />
-          Save Question
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save size={14} /> Save Question
+            </>
+          )}
         </Button>
       </div>
     </div>

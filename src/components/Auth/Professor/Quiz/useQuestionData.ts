@@ -4,7 +4,7 @@ import { QuizQuestions } from "@/lib/types";
 
 export function useQuestionData(questionId: string) {
   const questionQuery = useQuery<QuizQuestions, Error>({
-    queryKey: ["question", questionId],
+    queryKey: ["questions", questionId],
     queryFn: async () => {
       const question = await getQuestion(questionId);
       if (!question) {

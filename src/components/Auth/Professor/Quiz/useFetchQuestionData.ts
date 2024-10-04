@@ -5,18 +5,32 @@ import { useQuestionEdit } from "@/contexts/QuestionProvider";
 
 export const useFetchQuestionData = () => {
   const { questionId } = useParams<{ questionId: string }>();
-  const { question: questionData } = useQuestionData(questionId!);
-  const { setInitialQuestionData, isInitialDataSet } = useQuestionEdit();
+  const {
+    question: questionData,
+    isLoading,
+    isError,
+  } = useQuestionData(questionId!);
+  const { setInitialQuestionData, resetToInitialState } = useQuestionEdit();
 
   useEffect(() => {
-    if (questionData && !isInitialDataSet) {
+    // Reset the state when the questionId changes
+    resetToInitialState();
+
+    if (questionData && !isLoading && !isError) {
       setInitialQuestionData({
         ...questionData,
         points: questionData.points ?? 0,
         distractor: questionData.distractor ?? [],
       });
     }
-  }, [questionData, setInitialQuestionData, isInitialDataSet]);
+  }, [
+    questionId,
+    questionData,
+    isLoading,
+    isError,
+    setInitialQuestionData,
+    resetToInitialState,
+  ]);
 
-  return questionData;
+  return { questionData, isLoading, isError };
 };

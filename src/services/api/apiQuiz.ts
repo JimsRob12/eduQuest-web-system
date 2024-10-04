@@ -369,3 +369,18 @@ export async function updateQuestionOrder(
 
   return results.map((result) => result.data).flat();
 }
+
+export async function updateQuestion(params: QuizQuestions) {
+  const { quiz_question_id, ...updateData } = params;
+
+  const { data, error } = await supabase
+    .from("quiz_questions")
+    .update(updateData)
+    .eq("quiz_question_id", quiz_question_id);
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}

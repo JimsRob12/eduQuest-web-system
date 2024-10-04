@@ -1,6 +1,9 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useCallback } from "react";
 import { formatQuestionType, parseQuestionType } from "@/lib/helpers";
 import { QuizQuestions } from "@/lib/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateQuestion as updateQuestionApi } from "@/services/api/apiQuiz";
+import toast from "react-hot-toast";
 
 type QuestionEditContextType = {
   questionType: string;
@@ -20,6 +23,8 @@ type QuestionEditContextType = {
   setInitialQuestionData: (data: QuizQuestions) => void;
   resetToInitialState: () => void;
   saveQuestion: () => void;
+  isSaving: boolean;
+  saveError: Error | null;
 };
 
 const QuestionEditContext = createContext<QuestionEditContextType | undefined>(
@@ -29,6 +34,8 @@ const QuestionEditContext = createContext<QuestionEditContextType | undefined>(
 export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const queryClient = useQueryClient();
+
   const [questionType, setQuestionType] = useState("");
   const [points, setPoints] = useState(0);
   const [time, setTime] = useState(0);
@@ -36,6 +43,9 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
   const [distractors, setDistractors] = useState<string[]>([]);
   const [rightAnswer, setRightAnswer] = useState("");
   const [isInitialDataSet, setIsInitialDataSet] = useState(false);
+  const [quizId, setQuizId] = useState("");
+  const [questionId, setQuestionId] = useState("");
+  const [order, setOrder] = useState(0);
   const [initialState, setInitialState] = useState({
     questionType: "",
     points: 0,
@@ -45,38 +55,48 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
     rightAnswer: "",
   });
 
-  const setInitialQuestionData = (data: QuizQuestions) => {
-    if (!isInitialDataSet) {
-      const formattedType = formatQuestionType(data.question_type);
-      setQuestionType(formattedType);
-      setPoints(data.points ?? 0);
-      setTime(data.time);
-      setQuestion(data.question);
-      setDistractors(data.distractor || []);
-      setRightAnswer(data.right_answer);
+  const updateQuestionMutation = useMutation({
+    mutationFn: (params: QuizQuestions) => updateQuestionApi(params),
+    onSuccess: () => {
       setInitialState({
-        questionType: formattedType,
-        points: data.points ?? 0,
-        time: data.time,
-        question: data.question,
-        distractors: data.distractor || [],
-        rightAnswer: data.right_answer,
+        questionType,
+        points,
+        time,
+        question,
+        distractors,
+        rightAnswer,
       });
-      setIsInitialDataSet(true);
-    }
-  };
+      toast.success("Question updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["questions", quizId] });
+    },
+    onError: () => {
+      toast.error("Failed to update question");
+    },
+  });
 
-  const resetToInitialState = () => {
-    setInitialState({
-      questionType: "",
-      points: 0,
-      time: 0,
-      question: "",
-      distractors: [],
-      rightAnswer: "",
-    });
+  const setInitialQuestionData = useCallback((data: QuizQuestions) => {
+    const formattedType = formatQuestionType(data.question_type);
+    setQuestionType(formattedType);
+    setPoints(data.points ?? 0);
+    setTime(data.time);
+    setQuestion(data.question);
+    setDistractors(data.distractor || []);
+    setRightAnswer(data.right_answer);
+    setQuizId(data.quiz_id);
+    setQuestionId(data.quiz_question_id);
+    setOrder(data.order);
+    setIsInitialDataSet(true);
+  }, []);
+
+  const resetToInitialState = useCallback(() => {
+    setQuestionType("");
+    setPoints(0);
+    setTime(0);
+    setQuestion("");
+    setDistractors([]);
+    setRightAnswer("");
     setIsInitialDataSet(false);
-  };
+  }, []);
 
   const hasUnsavedChanges =
     questionType !== initialState.questionType ||
@@ -89,34 +109,46 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateQuestionType = (type: string) => {
     setQuestionType(type);
     setRightAnswer("");
+
+    switch (type) {
+      case "True/False":
+        setDistractors(["True", "False"]);
+        break;
+      case "Fill in the Blank":
+        setDistractors([rightAnswer]);
+        break;
+      default:
+        break;
+    }
   };
+
   const updatePoints = (points: number) => setPoints(points);
   const updateTime = (time: number) => setTime(time);
   const updateQuestion = (question: string) => setQuestion(question);
   const updateDistractors = (distractors: string[]) =>
     setDistractors(distractors);
-  const updateRightAnswer = (answer: string) => setRightAnswer(answer);
+  const updateRightAnswer = (answer: string) => {
+    setRightAnswer(answer);
+    // If it's Fill in the Blank, update the distractor as well
+    if (questionType === "Fill in the Blank") {
+      setDistractors([answer]);
+    }
+  };
 
   const saveQuestion = () => {
-    console.log("Saving question with the following data:", {
-      questionType: parseQuestionType(questionType),
-      points,
-      time,
-      question,
-      distractors,
-      rightAnswer,
-    });
+    const questionData: QuizQuestions = {
+      quiz_question_id: questionId,
+      quiz_id: quizId,
+      question: question,
+      question_type: parseQuestionType(questionType),
+      right_answer: rightAnswer,
+      points: points,
+      distractor: distractors,
+      time: time,
+      order: order,
+    };
 
-    // Here you would typically make an API call to save the data
-    // For now, we'll just update the initialState to reflect the saved state
-    setInitialState({
-      questionType: parseQuestionType(questionType),
-      points,
-      time,
-      question,
-      distractors,
-      rightAnswer,
-    });
+    updateQuestionMutation.mutate(questionData);
   };
 
   return (
@@ -139,6 +171,8 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
         setInitialQuestionData,
         resetToInitialState,
         saveQuestion,
+        isSaving: updateQuestionMutation.isPending,
+        saveError: updateQuestionMutation.error as Error | null,
       }}
     >
       {children}
