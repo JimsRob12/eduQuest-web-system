@@ -1,60 +1,32 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Play, Save, Settings } from "lucide-react";
-import {
-  getQuestions,
-  getQuizById,
-  updateQuizTitle,
-} from "@/services/api/apiQuiz";
-import { Quiz } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import QuizSettingsForm from "./quiz-settings-form";
+import { useQuizData } from "./useQuizData";
 
 export default function QuizNavbar() {
   const { quizId } = useParams<{ quizId: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
 
   const {
-    data: quiz,
-    isPending,
+    quiz,
+    isLoading: isPending,
     isError,
-  } = useQuery<Quiz, Error>({
-    queryKey: ["quiz", quizId],
-    queryFn: async () => {
-      const data = await getQuizById(quizId!);
-      if (!data) {
-        throw new Error("Quiz not found");
-      }
-      return data as unknown as Quiz;
-    },
-    enabled: !!quizId,
-  });
+    updateTitle,
+    questions,
+  } = useQuizData(quizId!);
 
-  const { data: questions } = useQuery({
-    queryKey: ["questions", quizId],
-    queryFn: async () => {
-      const data = await getQuestions(quizId!);
-      if (!data) {
-        throw new Error("Questions not found");
-      }
-      return data;
-    },
-    enabled: !!quizId,
-  });
-
-  const updateTitleMutation = useMutation({
-    mutationFn: (newTitle: string) => updateQuizTitle(quizId!, newTitle),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
-    },
-  });
+  useEffect(() => {
+    if (quiz) {
+      setEditedTitle(quiz.title || "Untitled Quiz");
+    }
+  }, [quiz]);
 
   useEffect(() => {
     if (quiz) {
@@ -77,7 +49,7 @@ export default function QuizNavbar() {
   const handleTitleBlur = () => {
     setIsEditing(false);
     if (editedTitle !== quiz?.title) {
-      updateTitleMutation.mutate(editedTitle);
+      updateTitle(editedTitle);
     }
   };
 
@@ -124,7 +96,7 @@ export default function QuizNavbar() {
             </Button>
           </DialogTrigger>
           <DialogContent className="dark:text-white">
-            <QuizSettingsForm quiz={quiz} />
+            {quiz && <QuizSettingsForm quiz={quiz} />}
           </DialogContent>
         </Dialog>
         <Button

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import {
-  getQuestions,
   updateBulkPointsAndTime,
   updateQuestionOrder,
   updateSingleQuestion,
 } from "@/services/api/apiQuiz";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   DragDropContext,
@@ -40,6 +39,7 @@ import {
   Plus,
 } from "lucide-react";
 import { formatQuestionType, questionTypeIcon } from "@/lib/helpers";
+import { useQuizData } from "./useQuizData";
 
 const iconMapping = {
   Scale: Scale,
@@ -60,21 +60,10 @@ export default function CustomizeQuiz() {
   const queryClient = useQueryClient();
 
   const {
-    data: quizQuestionsData,
-    isPending,
+    questions: quizQuestionsData,
+    isLoading: isPending,
     isError,
-  } = useQuery<QuizQuestions[], Error>({
-    queryKey: ["quiz", quizId],
-    queryFn: async () => {
-      const data = await getQuestions(quizId!);
-      if (!data) {
-        throw new Error("Quiz not found");
-      }
-      return data.sort((a, b) => a.order - b.order) as QuizQuestions[];
-    },
-    enabled: !!quizId,
-    staleTime: 1000 * 60 * 5,
-  });
+  } = useQuizData(quizId!);
 
   useEffect(() => {
     if (quizQuestionsData && Array.isArray(quizQuestionsData)) {
