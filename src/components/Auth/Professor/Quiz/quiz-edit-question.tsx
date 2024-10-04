@@ -1,45 +1,40 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { useQuestionData } from "./useQuestionData";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { Check, Plus, Trash } from "lucide-react";
 import { getDarkerShade } from "@/lib/helpers";
+import { useQuestionEdit } from "@/contexts/QuestionProvider";
+import { useFetchQuestionData } from "./useFetchQuestionData";
 
 export default function QuizEditQuestion() {
-  const { questionId } = useParams<{ questionId: string }>();
-  const { question: questionData } = useQuestionData(questionId!);
   const { theme } = useTheme();
-
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [distractors, setDistractors] = useState<string[]>([]);
+  useFetchQuestionData();
+  const {
+    question,
+    distractors,
+    rightAnswer,
+    updateQuestion,
+    updateDistractors,
+    updateRightAnswer,
+  } = useQuestionEdit();
 
   const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF8C33"];
   const lightColors = ["#FF8C66", "#37a753", "#668CFF", "#FF66C2", "#FFB366"];
 
   const showPlusButton = distractors.length < 5;
 
-  // Ensure the right answer is selected by default on mount
-  useEffect(() => {
-    if (questionData && questionData.right_answer) {
-      setSelectedAnswer(questionData.right_answer);
-    }
-
-    if (questionData && questionData.distractor) {
-      setDistractors(questionData.distractor);
-    }
-  }, [questionData]);
-
   // Function to add a new distractor input
   const addDistractor = () => {
-    setDistractors((prev) => [...prev, ""]);
+    updateDistractors([...distractors, ""]);
   };
 
   // Function to delete a distractor input
   const deleteDistractor = (index: number) => {
     if (distractors.length > 2) {
-      setDistractors((prev) => prev.filter((_, i) => i !== index));
-      setSelectedAnswer(null);
+      const newDistractors = distractors.filter((_, i) => i !== index);
+      updateDistractors(newDistractors);
+      if (rightAnswer === distractors[index]) {
+        updateRightAnswer("");
+      }
     }
   };
 
@@ -47,20 +42,18 @@ export default function QuizEditQuestion() {
   const updateDistractor = (index: number, value: string) => {
     const updatedDistractors = [...distractors];
     updatedDistractors[index] = value;
-    setDistractors(updatedDistractors);
+    updateDistractors(updatedDistractors);
   };
 
   return (
     <div className="mt-8 flex h-[calc(100%-8rem)] w-full items-center justify-center">
       <div className="w-[70vw] rounded-xl bg-zinc-200 p-4 dark:bg-zinc-900">
-        {questionData && (
-          <Input
-            defaultValue={questionData.question}
-            className="rounded-lg py-16 text-center text-xl font-semibold shadow-lg"
-          />
-        )}
+        <Input
+          value={question}
+          onChange={(e) => updateQuestion(e.target.value)}
+          className="rounded-lg py-16 text-center text-xl font-semibold shadow-lg"
+        />
 
-        {/* Ensure distractors are only shown if there are valid entries */}
         {distractors.length > 0 && distractors.some((d) => d.trim() !== "") && (
           <div
             className="mt-4 grid gap-2 rounded-lg"
@@ -77,9 +70,8 @@ export default function QuizEditQuestion() {
                   : colors[index % colors.length];
 
               const darkerBgColor = getDarkerShade(bgColor, 15);
-              const isSelected = selectedAnswer === distractor;
+              const isSelected = rightAnswer === distractor;
 
-              // Determine button background color
               const buttonBgColor = isSelected
                 ? "bg-green-500"
                 : "bg-zinc-800 bg-opacity-20";
@@ -102,8 +94,8 @@ export default function QuizEditQuestion() {
                       <Trash className="fill-white" size={14} />
                     </button>
                     <button
-                      className={`rounded-full border p-1 ${buttonBgColor} ${!selectedAnswer && "animate-pulse"}`}
-                      onClick={() => setSelectedAnswer(distractor)}
+                      className={`rounded-full border p-1 ${buttonBgColor} ${!rightAnswer && "animate-pulse"}`}
+                      onClick={() => updateRightAnswer(distractor)}
                     >
                       <Check size={14} />
                     </button>

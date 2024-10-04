@@ -20,47 +20,22 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ChevronLeft, Save } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useQuestionData } from "./useQuestionData";
-import { formatQuestionType } from "@/lib/helpers";
+import { useNavigate } from "react-router-dom";
+import { useQuestionEdit } from "@/contexts/QuestionProvider";
+import { useFetchQuestionData } from "./useFetchQuestionData";
 
 export default function QuizEditQuestionNavbar() {
   const navigate = useNavigate();
-  const { questionId } = useParams();
-  const { question: questionData } = useQuestionData(questionId!);
-
-  const [selectedType, setSelectedType] = useState<string>("");
-  const [selectedPoints, setSelectedPoints] = useState<number | undefined>(
-    undefined,
-  );
-  const [selectedTime, setSelectedTime] = useState<number | undefined>(
-    undefined,
-  );
-
-  const [initialType, setInitialType] = useState<string>("");
-  const [initialPoints, setInitialPoints] = useState<number | undefined>(
-    undefined,
-  );
-  const [initialTime, setInitialTime] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    if (questionData) {
-      const formattedType = formatQuestionType(questionData.question_type);
-      setSelectedType(formattedType);
-      setSelectedPoints(questionData.points);
-      setSelectedTime(questionData.time);
-
-      setInitialType(formattedType);
-      setInitialPoints(questionData.points);
-      setInitialTime(questionData.time);
-    }
-  }, [questionData]);
-
-  const hasUnsavedChanges =
-    selectedType !== initialType ||
-    selectedPoints !== initialPoints ||
-    selectedTime !== initialTime;
+  useFetchQuestionData();
+  const {
+    questionType,
+    points,
+    time,
+    hasUnsavedChanges,
+    updateQuestionType,
+    updatePoints,
+    updateTime,
+  } = useQuestionEdit();
 
   const handleBack = () => {
     navigate(-1);
@@ -69,32 +44,38 @@ export default function QuizEditQuestionNavbar() {
   return (
     <div className="-mx-6 flex w-screen flex-wrap items-center justify-between px-6 py-4 shadow-xl md:-mx-12 lg:-mx-16">
       <div className="flex items-center gap-4">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button>
-              <ChevronLeft className="rounded border p-1" />
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="dark:text-white">
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                Are you sure you want to go back?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                Any unsaved changes will be lost. Please make sure to save your
-                changes before leaving.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleBack}>
-                Go Back
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {hasUnsavedChanges ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button>
+                <ChevronLeft className="rounded border p-1" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="dark:text-white">
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Are you sure you want to go back?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Any unsaved changes will be lost. Please make sure to save
+                  your changes before leaving.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleBack}>
+                  Go Back
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <button>
+            <ChevronLeft className="rounded border p-1" onClick={handleBack} />
+          </button>
+        )}
 
-        <Select value={selectedType} onValueChange={setSelectedType}>
+        <Select value={questionType} onValueChange={updateQuestionType}>
           <SelectTrigger className="w-36 border-none">
             <SelectValue placeholder="Question Type" />
           </SelectTrigger>
@@ -103,7 +84,7 @@ export default function QuizEditQuestionNavbar() {
               <SelectLabel>Question Type</SelectLabel>
               {["Multiple Choice", "True/False", "Fill in the Blank"].map(
                 (value) => (
-                  <SelectItem key={value} value={value.toString()}>
+                  <SelectItem key={value} value={value}>
                     {value}
                   </SelectItem>
                 ),
@@ -115,8 +96,8 @@ export default function QuizEditQuestionNavbar() {
 
       <div className="flex items-center gap-4">
         <Select
-          value={selectedPoints?.toString()}
-          onValueChange={(value) => setSelectedPoints(parseInt(value))}
+          value={points.toString()}
+          onValueChange={(value) => updatePoints(parseInt(value))}
         >
           <SelectTrigger className="text-xs">
             <SelectValue placeholder="Points" />
@@ -134,8 +115,8 @@ export default function QuizEditQuestionNavbar() {
         </Select>
 
         <Select
-          value={selectedTime?.toString()}
-          onValueChange={(value) => setSelectedTime(parseInt(value))}
+          value={time.toString()}
+          onValueChange={(value) => updateTime(parseInt(value))}
         >
           <SelectTrigger className="text-xs">
             <SelectValue placeholder="Time" />
