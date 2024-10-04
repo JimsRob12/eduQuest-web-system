@@ -303,8 +303,6 @@ export async function getQuestion(
     .eq("quiz_question_id", questionId)
     .single();
 
-  console.log(data);
-
   if (error) throw new Error(error.message);
   return data;
 }

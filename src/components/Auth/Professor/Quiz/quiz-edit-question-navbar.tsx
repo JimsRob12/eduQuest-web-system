@@ -20,10 +20,47 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ChevronLeft, Save } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useQuestionData } from "./useQuestionData";
+import { formatQuestionType } from "@/lib/helpers";
 
 export default function QuizEditQuestionNavbar() {
   const navigate = useNavigate();
+  const { questionId } = useParams();
+  const { question: questionData } = useQuestionData(questionId!);
+
+  const [selectedType, setSelectedType] = useState<string>("");
+  const [selectedPoints, setSelectedPoints] = useState<number | undefined>(
+    undefined,
+  );
+  const [selectedTime, setSelectedTime] = useState<number | undefined>(
+    undefined,
+  );
+
+  const [initialType, setInitialType] = useState<string>("");
+  const [initialPoints, setInitialPoints] = useState<number | undefined>(
+    undefined,
+  );
+  const [initialTime, setInitialTime] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (questionData) {
+      const formattedType = formatQuestionType(questionData.question_type);
+      setSelectedType(formattedType);
+      setSelectedPoints(questionData.points);
+      setSelectedTime(questionData.time);
+
+      setInitialType(formattedType);
+      setInitialPoints(questionData.points);
+      setInitialTime(questionData.time);
+    }
+  }, [questionData]);
+
+  const hasUnsavedChanges =
+    selectedType !== initialType ||
+    selectedPoints !== initialPoints ||
+    selectedTime !== initialTime;
 
   const handleBack = () => {
     navigate(-1);
@@ -56,7 +93,8 @@ export default function QuizEditQuestionNavbar() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <Select>
+
+        <Select value={selectedType} onValueChange={setSelectedType}>
           <SelectTrigger className="w-36 border-none">
             <SelectValue placeholder="Question Type" />
           </SelectTrigger>
@@ -74,8 +112,12 @@ export default function QuizEditQuestionNavbar() {
           </SelectContent>
         </Select>
       </div>
+
       <div className="flex items-center gap-4">
-        <Select>
+        <Select
+          value={selectedPoints?.toString()}
+          onValueChange={(value) => setSelectedPoints(parseInt(value))}
+        >
           <SelectTrigger className="text-xs">
             <SelectValue placeholder="Points" />
           </SelectTrigger>
@@ -90,7 +132,11 @@ export default function QuizEditQuestionNavbar() {
             </SelectGroup>
           </SelectContent>
         </Select>
-        <Select>
+
+        <Select
+          value={selectedTime?.toString()}
+          onValueChange={(value) => setSelectedTime(parseInt(value))}
+        >
           <SelectTrigger className="text-xs">
             <SelectValue placeholder="Time" />
           </SelectTrigger>
@@ -105,7 +151,12 @@ export default function QuizEditQuestionNavbar() {
             </SelectGroup>
           </SelectContent>
         </Select>
-        <Button className="flex gap-1 text-xs" variant="default">
+
+        <Button
+          className="flex gap-1 text-xs"
+          variant="default"
+          disabled={!hasUnsavedChanges}
+        >
           <Save size={14} />
           Save Question
         </Button>
