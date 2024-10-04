@@ -37,6 +37,7 @@ export default function QuizEditQuestionNavbar() {
     updatePoints,
     updateTime,
     resetToInitialState,
+    saveQuestion,
   } = useQuestionEdit();
 
   const handleBack = () => {
@@ -44,6 +45,12 @@ export default function QuizEditQuestionNavbar() {
       resetToInitialState();
     }
     navigate(-1);
+  };
+
+  const handleSave = () => {
+    if (hasUnsavedChanges && rightAnswer) {
+      saveQuestion();
+    }
   };
 
   return (
@@ -142,6 +149,7 @@ export default function QuizEditQuestionNavbar() {
           className="flex gap-1 text-xs"
           variant="default"
           disabled={!hasUnsavedChanges || !rightAnswer}
+          onClick={handleSave}
         >
           <Save size={14} />
           Save Question

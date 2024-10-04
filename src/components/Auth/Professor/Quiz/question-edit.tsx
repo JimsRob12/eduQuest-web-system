@@ -27,19 +27,16 @@ export default function QuizEditQuestion() {
 
   const showPlusButton = distractors.length < 5;
 
-  // Add a new distractor input (empty) without auto-selecting as the right answer
   const addDistractor = () => {
     updateDistractors([...distractors, ""]);
   };
 
-  // Delete distractor but ensure at least 2 distractors remain, even if they are empty
   const deleteDistractor = (index: number) => {
     if (distractors.length > 2) {
       const newDistractors = [...distractors];
-      newDistractors.splice(index, 1); // Remove the selected distractor
+      newDistractors.splice(index, 1);
       updateDistractors(newDistractors);
 
-      // If the right answer is the one being deleted, clear the right answer
       if (rightAnswer === distractors[index]) {
         updateRightAnswer("");
       }
@@ -48,14 +45,12 @@ export default function QuizEditQuestion() {
     }
   };
 
-  // Update a specific distractor's value
   const updateDistractor = (index: number, value: string) => {
     const updatedDistractors = [...distractors];
     updatedDistractors[index] = value;
     updateDistractors(updatedDistractors);
   };
 
-  // Handle marking the right answer with a validation check
   const handleRightAnswer = (distractor: string) => {
     if (!distractor.trim()) {
       toast.error("Cannot mark an empty input as the correct answer!");
@@ -149,6 +144,81 @@ export default function QuizEditQuestion() {
               )}
             </div>
           )}
+        {questionType.toLowerCase() === "true/false" && (
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <button
+              className={`rounded-lg p-4 ${
+                rightAnswer === "True"
+                  ? "border border-zinc-800 bg-green-500 dark:border-white"
+                  : "bg-purple-800 bg-opacity-20"
+              }`}
+              onClick={() => updateRightAnswer("True")}
+            >
+              True
+            </button>
+            <button
+              className={`rounded-lg p-4 ${
+                rightAnswer === "False"
+                  ? "border border-zinc-800 bg-green-500 dark:border-white"
+                  : "bg-purple-800 bg-opacity-20"
+              }`}
+              onClick={() => updateRightAnswer("False")}
+            >
+              False
+            </button>
+          </div>
+        )}
+        {questionType.toLowerCase() === "fill in the blank" && (
+          <>
+            <div className="relative my-4 flex items-center justify-center rounded-lg bg-zinc-950 p-4">
+              <h2 className="absolute left-4 top-2 text-sm font-semibold">
+                Correct Answer
+              </h2>
+              <Input
+                value={rightAnswer}
+                onChange={(e) => updateRightAnswer(e.target.value)}
+                placeholder="Type the correct answer here"
+                className="mt-4 h-12 w-4/6 text-center text-lg focus-visible:ring-0 dark:placeholder:text-white dark:placeholder:text-opacity-50"
+              />
+            </div>
+
+            <div className="relative flex flex-col items-center justify-center rounded-lg bg-zinc-950 p-4">
+              <h2 className="absolute left-4 top-2 text-sm font-semibold opacity-50">
+                Student View
+              </h2>
+              <h1 className="text-center font-bold opacity-70">
+                Type your answer in the boxes
+              </h1>
+
+              <div
+                className="mt-2 grid gap-1"
+                style={{
+                  gridTemplateColumns: rightAnswer
+                    ? `repeat(${Math.min(rightAnswer.length, isTabletorMobile ? 5 : 10)}, 1fr)`
+                    : "repeat(4, 1fr)",
+                }}
+              >
+                {rightAnswer
+                  ? rightAnswer.split("").map((char, index) => (
+                      <div
+                        key={index}
+                        className="flex size-12 items-center justify-center rounded-lg bg-zinc-700 text-center text-white"
+                      >
+                        {char}
+                      </div>
+                    ))
+                  : Array(4)
+                      .fill("")
+                      .map((_, index) => (
+                        <div
+                          key={index}
+                          className="size-12 rounded-lg bg-zinc-700 text-white"
+                        />
+                      ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

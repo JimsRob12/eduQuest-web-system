@@ -47,6 +47,19 @@ export function formatQuestionType(type: string) {
   }
 }
 
+export function parseQuestionType(formattedType: string): string {
+  switch (formattedType) {
+    case "True/False":
+      return "boolean";
+    case "Multiple Choice":
+      return "mcq";
+    case "Fill in the Blank":
+      return "short";
+    default:
+      return formattedType;
+  }
+}
+
 export function questionTypeIcon(type: string) {
   switch (type) {
     case "boolean":
