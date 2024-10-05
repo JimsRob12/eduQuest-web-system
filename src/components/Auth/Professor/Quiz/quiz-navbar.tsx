@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import QuizSettingsForm from "./quiz-settings-form";
 import { useQuizData } from "./useQuizData";
+import QuizPreviewDialog from "./question-preview-dialog";
 
 export default function QuizNavbar() {
   const { quizId } = useParams<{ quizId: string }>();
   const navigate = useNavigate();
+  const titleRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
-  const titleRef = useRef<HTMLInputElement>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const {
     quiz,
@@ -102,6 +104,7 @@ export default function QuizNavbar() {
         <Button
           className="flex gap-1 text-xs"
           variant="secondary"
+          onClick={() => setPreviewOpen(true)}
           disabled={!questions || questions.length === 0}
         >
           <Play size={14} />
@@ -112,6 +115,7 @@ export default function QuizNavbar() {
           Save
         </Button>
       </div>
+      <QuizPreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} />
     </div>
   );
 }
