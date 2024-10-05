@@ -55,8 +55,8 @@ export function useQuizData(quizId: string) {
   return {
     quiz: quizQuery.data,
     questions: questionsQuery.data,
-    isLoading: quizQuery.isPending || questionsQuery.isPending,
-    isError: quizQuery.isError || questionsQuery.isError,
+    isLoading: quizQuery.isPending,
+    isError: quizQuery.isError,
     updateTitle: updateTitleMutation.mutate,
   };
 }

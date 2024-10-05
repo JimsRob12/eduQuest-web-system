@@ -52,6 +52,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import QuizTypeModal from "./quiz-type-modal";
 
 const iconMapping = {
   Scale: Scale,
@@ -69,6 +70,7 @@ export default function CustomizeQuiz() {
   const [customPoints, setCustomPoints] = useState<boolean>(false);
   const [customTime, setCustomTime] = useState<boolean>(false);
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
+  const [questionTypeModalOpen, setQuestionTypeModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -152,6 +154,10 @@ export default function CustomizeQuiz() {
       toast.error(`Failed to duplicate question: ${error.message}`);
     },
   });
+
+  const handleCreate = () => {
+    setQuestionTypeModalOpen(true);
+  };
 
   const handleDuplicate = (questionId: string) => {
     duplicateMutation.mutate(questionId);
@@ -335,7 +341,7 @@ export default function CustomizeQuiz() {
                 ({totalPoints} points)
               </span>
             </h2>
-            <Button className="gap-1" size="sm">
+            <Button className="gap-1" size="sm" onClick={handleCreate}>
               <Plus size={18} />
               Add Question
             </Button>
@@ -506,11 +512,16 @@ export default function CustomizeQuiz() {
                 </Droppable>
               </DragDropContext>
             ) : (
-              <p>No Questions Available</p>
+              <div className="flex h-full items-center justify-center">
+                <p className="text-center text-gray-500">
+                  No questions available. Please add some questions to get
+                  started.
+                </p>
+              </div>
             )}
           </div>
           <Button
-            onClick={() => console.log("Adding a new question")}
+            onClick={handleCreate}
             className="mt-4 self-center justify-self-center"
             size="sm"
           >
@@ -518,6 +529,11 @@ export default function CustomizeQuiz() {
           </Button>
         </div>
       </div>
+      <QuizTypeModal
+        hasQuestions={!!quizQuestionsData && quizQuestionsData.length > 0}
+        open={questionTypeModalOpen}
+        openChange={setQuestionTypeModalOpen}
+      />
       <AlertDialog
         open={!!questionToDelete}
         onOpenChange={() => setQuestionToDelete(null)}

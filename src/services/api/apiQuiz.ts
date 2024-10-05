@@ -217,70 +217,6 @@ export async function generateQuestions(
   }
 }
 
-export async function createQuestions(
-  quizId: string,
-  quizQuestions: QuizQuestions[],
-): Promise<QuizQuestions[] | null> {
-  // const final_quiz_question_data = [
-  //   {
-  //     "right_answer": "false",
-  //     "id": 1,
-  //     "question": "Is there a class for reading visual arts?",
-  //     "question_type": "boolean",
-  //     "distractor" : [], // if T/F and Q&A empty else may choices
-  //     "time" : 30, // in seconds
-  //     "image_url" : File
-  //   },
-  //   {
-  //     "answer": "false",
-  //     "id": 2,
-  //     "question": "Is there a class in reading visual arts?",
-  //     "question_type": "boolean",
-  //     "distractor" : [],
-  //     "time" : 30,
-  //     "image_url" : File
-  //   }
-  // ];
-  // not tested
-  const insertedQuestions: QuizQuestions[] = [];
-
-  for (const quizQuestion of quizQuestions) {
-    let filename = "";
-
-    if (quizQuestion.image_url) {
-      filename = `avatar-${quizId}-${quizQuestion.quiz_question_id}-${Math.random()}`;
-
-      const { error: storageError } = await supabase.storage
-        .from("images")
-        .upload(filename, quizQuestion.image_url, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (storageError) throw new Error(storageError.message);
-    }
-
-    // Insert the question into the database
-    const { data, error } = await supabase
-      .from("quiz_questions")
-      .insert({
-        quiz_id: quizId,
-        right_answer: quizQuestion.right_answer,
-        question: quizQuestion.question,
-        distractor: quizQuestion.distractor || [],
-        time: quizQuestion.time || 30, // Default to 30 if time is not provided
-        image_url: filename,
-      })
-      .single();
-
-    if (error) throw new Error(error.message);
-
-    if (data) insertedQuestions.push(data);
-  }
-
-  return insertedQuestions.length > 0 ? insertedQuestions : null;
-}
-
 export async function getQuestions(
   quizId: string,
 ): Promise<QuizQuestions[] | null> {
@@ -369,6 +305,42 @@ export async function updateQuestionOrder(
   }
 
   return results.map((result) => result.data).flat();
+}
+
+export async function createQuestion(quizId: string, questionType: string) {
+  // First, get the current maximum order for the quiz
+  const { data: maxOrderData, error: maxOrderError } = await supabase
+    .from("quiz_questions")
+    .select("order")
+    .eq("quiz_id", quizId)
+    .order("order", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (maxOrderError && maxOrderError.code !== "PGRST116") {
+    // PGRST116 is the error code for no rows returned, which is fine if there are no questions yet
+    throw maxOrderError;
+  }
+
+  const newOrder = (maxOrderData?.order || 0) + 1;
+
+  // Now create the new question with the calculated order
+  const { data, error } = await supabase
+    .from("quiz_questions")
+    .insert({
+      quiz_id: quizId,
+      question_type: questionType,
+      question: "",
+      right_answer: "",
+      points: 1,
+      time: 30,
+      order: newOrder,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 export async function updateQuestion(params: QuizQuestions) {

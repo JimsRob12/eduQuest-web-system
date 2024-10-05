@@ -8,6 +8,10 @@ import {
 import { Check, LucideIcon, RectangleEllipsis, Scale } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuiz } from "@/contexts/QuizProvider";
+import { useMutation } from "@tanstack/react-query";
+
+import toast from "react-hot-toast";
+import { createQuestion } from "@/services/api/apiQuiz";
 
 function QuestionTypeOption({
   icon: Icon,
@@ -34,16 +38,44 @@ function QuestionTypeOption({
   );
 }
 
+interface QuizTypeModalProps {
+  hasQuestions: boolean;
+  open?: boolean;
+  openChange?: (open: boolean) => void;
+}
+
 export default function QuizTypeModal({
   hasQuestions,
-}: {
-  hasQuestions: boolean;
-}) {
+  open,
+  openChange,
+}: QuizTypeModalProps) {
   const navigate = useNavigate();
   const { quizId } = useParams();
   const { setQuizData } = useQuiz();
 
+  const createQuestionMutation = useMutation({
+    mutationFn: (type: string) => createQuestion(quizId!, type),
+    onSuccess: (newQuestion) => {
+      setQuizData((prev) => ({
+        ...prev,
+        questionType: newQuestion.question_type,
+      }));
+      navigate(
+        `/professor/quiz/${quizId}/question/${newQuestion.quiz_question_id}/edit`,
+      );
+      if (openChange) openChange(false);
+    },
+    onError: (error) => {
+      toast.error("Failed to create new question");
+      console.error(error);
+    },
+  });
+
   const handleSelect = (type: string) => {
+    if (hasQuestions) {
+      createQuestionMutation.mutate(type);
+      return;
+    }
     setQuizData((prev) => ({ ...prev, questionType: type }));
     navigate(`/professor/quiz/${quizId}/${type}/max-questions-selector`);
   };
@@ -74,9 +106,13 @@ export default function QuizTypeModal({
 
   const content = (
     <div>
-      <h1 className="text-xl font-bold md:text-3xl">Create a new quiz</h1>
-      <p>Select Question Type</p>
-      <div className="mt-8">
+      {!hasQuestions && (
+        <>
+          <h1 className="text-xl font-bold md:text-3xl">Create a new quiz</h1>
+          <p>Select Question Type</p>
+        </>
+      )}
+      <div className={`${hasQuestions ? "mt-2" : "mt-8"}`}>
         <h2 className="my-2 font-bold">Create a new question</h2>
         <div className="grid grid-cols-2 gap-4">
           {questionTypes.map(({ icon, title, description, type }) => (
@@ -98,11 +134,11 @@ export default function QuizTypeModal({
   }
 
   return (
-    <Dialog open={hasQuestions}>
+    <Dialog open={open} onOpenChange={openChange}>
       <DialogContent className="dark:text-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold md:text-3xl">
-            Create a new quiz
+            Create a new question
           </DialogTitle>
           <DialogDescription>Select Question Type</DialogDescription>
         </DialogHeader>
