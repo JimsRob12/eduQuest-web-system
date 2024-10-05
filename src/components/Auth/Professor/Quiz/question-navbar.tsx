@@ -88,7 +88,14 @@ export default function QuizEditQuestionNavbar() {
           </button>
         )}
 
-        <Select value={questionType} onValueChange={updateQuestionType}>
+        <Select
+          value={
+            questionType.toLocaleLowerCase() === "true or false"
+              ? "True/False"
+              : questionType
+          }
+          onValueChange={updateQuestionType}
+        >
           <SelectTrigger className="w-36 border-none">
             <SelectValue placeholder="Question Type" />
           </SelectTrigger>

@@ -39,6 +39,7 @@ import {
   X,
   Copy,
   Plus,
+  AlertTriangle,
 } from "lucide-react";
 import { formatQuestionType, questionTypeIcon } from "@/lib/helpers";
 import { useQuizData } from "./useQuizData";
@@ -202,6 +203,15 @@ export default function CustomizeQuiz() {
     </div>
   );
 
+  const isQuestionIncomplete = (question: QuizQuestions) => {
+    return (
+      !question.question ||
+      !question.right_answer ||
+      !question.distractor ||
+      question.distractor.length === 0
+    );
+  };
+
   const onDragEnd = (result: DropResult) => {
     const { destination, source, type } = result;
 
@@ -356,156 +366,204 @@ export default function CustomizeQuiz() {
                       ref={provided.innerRef}
                       className="space-y-4"
                     >
-                      {questions.map((q, index) => (
-                        <Draggable
-                          key={q.quiz_question_id}
-                          draggableId={q.quiz_question_id}
-                          index={index}
-                        >
-                          {(provided, snapshot) => (
-                            <li
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`rounded-lg bg-white p-4 shadow dark:bg-zinc-900 ${
-                                snapshot.isDragging ? "opacity-50" : ""
-                              }`}
-                            >
-                              <div>
-                                <div className="mb-2 flex flex-wrap justify-between text-xs">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <div {...provided.dragHandleProps}>
-                                      <GripVertical className="size-6 cursor-move rounded-md border border-zinc-200 p-1 dark:border-zinc-800" />
-                                    </div>
-                                    <div className="flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 dark:border-zinc-800">
-                                      {React.createElement(
-                                        iconMapping[
-                                          questionTypeIcon(q.question_type)
-                                        ],
-                                        { size: 12 },
-                                      )}
-                                      <p>{index + 1}.</p>{" "}
-                                      <p>
-                                        {formatQuestionType(q.question_type)}
-                                      </p>
-                                    </div>
-                                    <Select
-                                      onValueChange={(value) =>
-                                        updateSingle({
-                                          questionId: q.quiz_question_id,
-                                          points: value,
-                                        })
-                                      }
-                                      defaultValue={q.points?.toString()}
-                                    >
-                                      <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
-                                        <SelectValue placeholder="Points" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectGroup>
-                                          <SelectLabel>Points</SelectLabel>
-                                          {[1, 2, 3, 5, 10].map((value) => (
-                                            <SelectItem
-                                              key={value}
-                                              value={value.toString()}
-                                            >
-                                              {value} point{value !== 1 && "s"}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectGroup>
-                                      </SelectContent>
-                                    </Select>
-                                    <Select
-                                      onValueChange={(value) =>
-                                        updateSingle({
-                                          questionId: q.quiz_question_id,
-                                          time: value,
-                                        })
-                                      }
-                                      defaultValue={q.time?.toString()}
-                                    >
-                                      <SelectTrigger className="h-fit w-fit px-2 py-1 text-xs">
-                                        <SelectValue placeholder="Time" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectGroup>
-                                          <SelectLabel>Time</SelectLabel>
-                                          {[10, 15, 20, 30, 60].map((value) => (
-                                            <SelectItem
-                                              key={value}
-                                              value={value.toString()}
-                                            >
-                                              {value} second{value !== 1 && "s"}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectGroup>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="mt-3 flex gap-2 md:mt-0">
-                                    <Copy
-                                      className="size-6 cursor-pointer rounded-md border border-zinc-200 py-1 dark:border-zinc-800"
-                                      onClick={() =>
-                                        handleDuplicate(q.quiz_question_id)
-                                      }
-                                    />
-                                    <button
-                                      className="flex h-fit w-fit items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 dark:border-zinc-800"
-                                      onClick={() =>
-                                        navigate(
-                                          `/professor/quiz/${quizId}/question/${q.quiz_question_id}/edit`,
-                                        )
-                                      }
-                                    >
-                                      <Pen size={12} />
-                                      Edit
-                                    </button>
-                                    <Trash
-                                      className="size-6 cursor-pointer rounded-md bg-red-600 p-1"
-                                      onClick={() =>
-                                        handleDelete(q.quiz_question_id)
-                                      }
-                                    />
-                                  </div>
-                                </div>
-                                <h1>{q.question}</h1>
-                                <p className="text-xs opacity-60">
-                                  Answer{" "}
-                                  {q.question_type === "mcq" && "choices"}
-                                </p>
-                                <div className="mt-2 grid grid-cols-2 gap-2">
-                                  {(q.distractor ?? [q.right_answer]).map(
-                                    (a, index) => (
-                                      <div
-                                        key={index}
-                                        className={`flex items-center rounded-lg p-2 text-xs shadow ${
-                                          a.toLowerCase() ===
-                                          q.right_answer.toLowerCase()
-                                            ? "bg-green-500 text-white"
-                                            : "bg-zinc-200 dark:bg-zinc-800"
-                                        }`}
-                                      >
-                                        {a.toLowerCase() ===
-                                        q.right_answer.toLowerCase() ? (
-                                          <Check className="mr-2" size={16} />
-                                        ) : (
-                                          <X
-                                            className="mr-2 text-red-600"
-                                            size={16}
-                                          />
+                      {questions.map((q, index) => {
+                        const isIncomplete = isQuestionIncomplete(q);
+                        return (
+                          <Draggable
+                            key={q.quiz_question_id}
+                            draggableId={q.quiz_question_id}
+                            index={index}
+                            isDragDisabled={isQuestionIncomplete(q)}
+                          >
+                            {(provided, snapshot) => (
+                              <li
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`relative rounded-lg bg-white p-4 shadow dark:bg-zinc-900 ${
+                                  snapshot.isDragging ? "opacity-50" : ""
+                                } ${
+                                  isIncomplete
+                                    ? "bg-red-100 dark:bg-red-900/20"
+                                    : ""
+                                }`}
+                              >
+                                <div>
+                                  <div className="mb-2 flex flex-wrap justify-between text-xs">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <div {...provided.dragHandleProps}>
+                                        <GripVertical className="size-6 cursor-move rounded-md border border-zinc-200 p-1 dark:border-zinc-800" />
+                                      </div>
+                                      <div className="flex items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 dark:border-zinc-800">
+                                        {React.createElement(
+                                          iconMapping[
+                                            questionTypeIcon(q.question_type)
+                                          ],
+                                          { size: 12 },
                                         )}
+                                        <p>{index + 1}.</p>{" "}
                                         <p>
-                                          {a.charAt(0).toUpperCase() +
-                                            a.slice(1)}
+                                          {formatQuestionType(q.question_type)}
                                         </p>
                                       </div>
-                                    ),
+                                      <Select
+                                        onValueChange={(value) =>
+                                          updateSingle({
+                                            questionId: q.quiz_question_id,
+                                            points: value,
+                                          })
+                                        }
+                                        defaultValue={q.points?.toString()}
+                                      >
+                                        <SelectTrigger
+                                          className="h-fit w-fit px-2 py-1 text-xs"
+                                          disabled={isQuestionIncomplete(q)}
+                                        >
+                                          <SelectValue placeholder="Points" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectGroup>
+                                            <SelectLabel>Points</SelectLabel>
+                                            {[1, 2, 3, 5, 10].map((value) => (
+                                              <SelectItem
+                                                key={value}
+                                                value={value.toString()}
+                                              >
+                                                {value} point
+                                                {value !== 1 && "s"}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectGroup>
+                                        </SelectContent>
+                                      </Select>
+                                      <Select
+                                        onValueChange={(value) =>
+                                          updateSingle({
+                                            questionId: q.quiz_question_id,
+                                            time: value,
+                                          })
+                                        }
+                                        defaultValue={q.time?.toString()}
+                                      >
+                                        <SelectTrigger
+                                          className="h-fit w-fit px-2 py-1 text-xs"
+                                          disabled={isQuestionIncomplete(q)}
+                                        >
+                                          <SelectValue placeholder="Time" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectGroup>
+                                            <SelectLabel>Time</SelectLabel>
+                                            {[10, 15, 20, 30, 60].map(
+                                              (value) => (
+                                                <SelectItem
+                                                  key={value}
+                                                  value={value.toString()}
+                                                >
+                                                  {value} second
+                                                  {value !== 1 && "s"}
+                                                </SelectItem>
+                                              ),
+                                            )}
+                                          </SelectGroup>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="mt-3 flex gap-2 md:mt-0">
+                                      <Button
+                                        className="h-fit w-fit border border-zinc-200 p-0 dark:border-zinc-800"
+                                        variant="outline"
+                                        onClick={() =>
+                                          handleDuplicate(q.quiz_question_id)
+                                        }
+                                        disabled={isQuestionIncomplete(q)}
+                                      >
+                                        <Copy className="size-6 rounded-md py-1" />
+                                      </Button>
+                                      <button
+                                        className={`flex h-fit w-fit items-center gap-1 rounded-md border px-2 py-1 ${
+                                          isIncomplete
+                                            ? "border-yellow-500 bg-yellow-100 text-yellow-700 dark:border-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-200"
+                                            : "border-zinc-200 dark:border-zinc-800"
+                                        }`}
+                                        onClick={() =>
+                                          navigate(
+                                            `/professor/quiz/${quizId}/question/${q.quiz_question_id}/edit`,
+                                          )
+                                        }
+                                      >
+                                        <Pen size={12} />
+                                        Edit
+                                      </button>
+                                      <Trash
+                                        className={`size-6 cursor-pointer rounded-md p-1 ${
+                                          isIncomplete
+                                            ? "bg-red-500 text-white"
+                                            : "bg-red-600"
+                                        }`}
+                                        onClick={() =>
+                                          handleDelete(q.quiz_question_id)
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+                                  <h1>{q.question}</h1>
+                                  {isIncomplete && (
+                                    <div className="mt-2 flex items-center gap-2 rounded-md bg-yellow-100 p-2 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+                                      <AlertTriangle className="size-8" />
+                                      <span>
+                                        This question is incomplete. Please edit
+                                        to add missing information. Incomplete
+                                        questions will not appear on the
+                                        students' question list.
+                                      </span>
+                                    </div>
+                                  )}
+                                  {q.right_answer && (
+                                    <>
+                                      <p className="mt-2 text-xs opacity-60">
+                                        Answer{" "}
+                                        {q.question_type === "mcq" && "choices"}
+                                      </p>
+                                      <div className="mt-2 grid grid-cols-2 gap-2">
+                                        {(q.distractor ?? [q.right_answer]).map(
+                                          (a, index) => (
+                                            <div
+                                              key={index}
+                                              className={`flex items-center rounded-lg p-2 text-xs shadow ${
+                                                a.toLowerCase() ===
+                                                q.right_answer.toLowerCase()
+                                                  ? "bg-green-500 text-white"
+                                                  : "bg-zinc-200 dark:bg-zinc-800"
+                                              }`}
+                                            >
+                                              {a.toLowerCase() ===
+                                              q.right_answer.toLowerCase() ? (
+                                                <Check
+                                                  className="mr-2"
+                                                  size={16}
+                                                />
+                                              ) : (
+                                                <X
+                                                  className="mr-2 text-red-600"
+                                                  size={16}
+                                                />
+                                              )}
+                                              <p>
+                                                {a.charAt(0).toUpperCase() +
+                                                  a.slice(1)}
+                                              </p>
+                                            </div>
+                                          ),
+                                        )}
+                                      </div>
+                                    </>
                                   )}
                                 </div>
-                              </div>
-                            </li>
-                          )}
-                        </Draggable>
-                      ))}
+                              </li>
+                            )}
+                          </Draggable>
+                        );
+                      })}
                       {provided.placeholder}
                     </ul>
                   )}

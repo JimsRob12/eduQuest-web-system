@@ -86,6 +86,16 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
     setQuestionId(data.quiz_question_id);
     setOrder(data.order);
     setIsInitialDataSet(true);
+
+    // Set the initial state when the data is first loaded
+    setInitialState({
+      questionType: formattedType,
+      points: data.points ?? 0,
+      time: data.time,
+      question: data.question,
+      distractors: data.distractor || [],
+      rightAnswer: data.right_answer,
+    });
   }, []);
 
   const resetToInitialState = useCallback(() => {
@@ -96,6 +106,14 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
     setDistractors([]);
     setRightAnswer("");
     setIsInitialDataSet(false);
+    setInitialState({
+      questionType: "",
+      points: 0,
+      time: 0,
+      question: "",
+      distractors: [],
+      rightAnswer: "",
+    });
   }, []);
 
   const hasUnsavedChanges =
