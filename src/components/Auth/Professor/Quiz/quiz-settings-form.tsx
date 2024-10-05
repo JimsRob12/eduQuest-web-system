@@ -57,6 +57,8 @@ const formSchema = z.object({
       "Only .jpg, .png, and .webp formats are supported.",
     )
     .optional(),
+  open_time: z.string().datetime(),
+  close_time: z.string().datetime(),
 });
 
 type QuizSettingsFormProps = {

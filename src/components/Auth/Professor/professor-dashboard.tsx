@@ -46,6 +46,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
           <p className="text-sm">
             {quiz.quiz_questions?.length ?? 0} Question
             {quiz.quiz_questions?.length !== 1 ? "s" : ""}
+            {quiz.subject && <span className="italic"> • {quiz.subject}</span>}
           </p>
         </div>
       </div>

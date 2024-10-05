@@ -19,6 +19,8 @@ export interface Quiz {
   status: string;
   cover_image: string;
   quiz_questions?: QuizQuestions[];
+  open_time?: string;
+  close_time?: string;
 }
 
 export interface QuizQuestions {

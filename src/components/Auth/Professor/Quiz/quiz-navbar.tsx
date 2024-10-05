@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Play, Save, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import QuizPreviewDialog from "./question-preview-dialog";
 export default function QuizNavbar() {
   const { quizId } = useParams<{ quizId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const titleRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
@@ -23,12 +24,6 @@ export default function QuizNavbar() {
     updateTitle,
     questions,
   } = useQuizData(quizId!);
-
-  useEffect(() => {
-    if (quiz) {
-      setEditedTitle(quiz.title || "Untitled Quiz");
-    }
-  }, [quiz]);
 
   useEffect(() => {
     if (quiz) {
@@ -60,6 +55,22 @@ export default function QuizNavbar() {
       handleTitleBlur();
     }
   };
+
+  useEffect(() => {
+    const blockBackNavigation = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    const generateQuizPattern = /\/professor\/quiz\/[^/]+\/generate-quiz/;
+    if (generateQuizPattern.test(location.pathname)) {
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", blockBackNavigation);
+
+      return () => {
+        window.removeEventListener("popstate", blockBackNavigation);
+      };
+    }
+  }, [location.pathname]);
 
   if (isPending) return <div>Loading...</div>;
   if (isError) return <div>Error loading quiz data</div>;

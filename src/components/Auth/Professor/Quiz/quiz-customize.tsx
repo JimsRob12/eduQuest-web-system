@@ -351,7 +351,12 @@ export default function CustomizeQuiz() {
                 ({totalPoints} points)
               </span>
             </h2>
-            <Button className="gap-1" size="sm" onClick={handleCreate}>
+            <Button
+              className="gap-1"
+              size="sm"
+              onClick={handleCreate}
+              disabled={questions.length === 0}
+            >
               <Plus size={18} />
               Add Question
             </Button>
@@ -570,11 +575,19 @@ export default function CustomizeQuiz() {
                 </Droppable>
               </DragDropContext>
             ) : (
-              <div className="flex h-full items-center justify-center">
+              <div className="flex h-full flex-col items-center justify-center gap-4">
                 <p className="text-center text-gray-500">
-                  No questions available. Please add some questions to get
+                  No questions available. Please generate some questions to get
                   started.
                 </p>
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    navigate(`/professor/quiz/${quizId}/generate-quiz`)
+                  }
+                >
+                  Generate Questions
+                </Button>
               </div>
             )}
           </div>
@@ -582,16 +595,19 @@ export default function CustomizeQuiz() {
             onClick={handleCreate}
             className="mt-4 self-center justify-self-center"
             size="sm"
+            disabled={questions.length === 0}
           >
             Add More Questions
           </Button>
         </div>
       </div>
-      <QuizTypeModal
-        hasQuestions={!!quizQuestionsData && quizQuestionsData.length > 0}
-        open={questionTypeModalOpen}
-        openChange={setQuestionTypeModalOpen}
-      />
+      {questions.length > 0 && (
+        <QuizTypeModal
+          hasQuestions={!!quizQuestionsData && quizQuestionsData.length > 0}
+          open={questionTypeModalOpen}
+          openChange={setQuestionTypeModalOpen}
+        />
+      )}
       <AlertDialog
         open={!!questionToDelete}
         onOpenChange={() => setQuestionToDelete(null)}
