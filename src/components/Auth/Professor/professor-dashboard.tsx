@@ -2,7 +2,13 @@ import Loader from "@/components/Shared/Loader";
 import { useGetQuizzes } from "../useGetQuizzes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Quiz, User } from "@/lib/types";
-import { EllipsisVertical, FileQuestion, Plus, Trash } from "lucide-react";
+import {
+  Copy,
+  EllipsisVertical,
+  FileQuestion,
+  Plus,
+  Trash,
+} from "lucide-react";
 import { formatTimeAgo } from "@/lib/helpers";
 import { useAuth } from "@/contexts/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -28,61 +34,90 @@ const QuizCard: React.FC<QuizCardProps> = ({
   user,
   onEdit,
   onDelete,
-}) => (
-  <div key={quiz.quiz_id} className="my-2 flex gap-4 rounded border p-3">
-    <img
-      src={quiz.cover_image || "/edu-quest-logo.png"}
-      alt={quiz.title}
-      className={`h-28 object-cover ${!quiz.cover_image && "rounded bg-zinc-100 p-2 dark:bg-zinc-800"}`}
-    />
-    <div className="flex flex-grow flex-col justify-between">
-      <div className="space-y-1">
-        <p
-          className={`w-fit rounded-full px-2 text-[0.6rem] font-semibold uppercase ${
-            quiz.status === "draft"
-              ? "bg-red-300 text-red-700"
-              : "bg-green-300 text-green-700"
-          }`}
-        >
-          {quiz.status}
-        </p>
-        <h3 className="text-lg font-bold">{quiz.title}</h3>
-        <div className="flex items-center gap-1 opacity-60">
-          <FileQuestion size={18} />
-          <p className="text-sm">
-            {quiz.quiz_questions?.length ?? 0} Question
-            {quiz.quiz_questions?.length !== 1 ? "s" : ""}
-            {quiz.subject && <span className="italic"> • {quiz.subject}</span>}
-          </p>
-        </div>
-      </div>
-      <p className="text-xs opacity-50">
-        <span className="font-semibold">{user?.name}</span> •{" "}
-        {formatTimeAgo(new Date(quiz.created_at))}
-      </p>
-    </div>
-    <div className="flex flex-col items-end justify-between">
-      <Popover>
-        <PopoverTrigger>
-          <EllipsisVertical size={18} />
-        </PopoverTrigger>
-        <PopoverContent side="left" align="start" className="h-fit w-fit p-0">
-          <Button
-            variant="link"
-            className="gap-1"
-            onClick={() => onDelete(quiz.quiz_id)}
+}) => {
+  const handleCopyCode = () => {
+    if (quiz.class_code) {
+      navigator.clipboard
+        .writeText(quiz.class_code)
+        .then(() => {
+          toast.success("Quiz code copied to clipboard!");
+        })
+        .catch((err) => {
+          console.error("Failed to copy quiz code:", err);
+          toast.error("Failed to copy quiz code. Please try again.");
+        });
+    } else {
+      toast.error("No quiz code available.");
+    }
+  };
+
+  return (
+    <div key={quiz.quiz_id} className="my-2 flex gap-4 rounded border p-3">
+      <img
+        src={quiz.cover_image || "/edu-quest-logo.png"}
+        alt={quiz.title}
+        className={`h-28 object-cover ${!quiz.cover_image && "rounded bg-zinc-100 p-2 dark:bg-zinc-800"}`}
+      />
+      <div className="flex flex-grow flex-col justify-between">
+        <div className="space-y-1">
+          <p
+            className={`w-fit rounded-full px-2 text-[0.6rem] font-semibold uppercase ${
+              quiz.status === "draft"
+                ? "bg-red-300 text-red-700"
+                : "bg-green-300 text-green-700"
+            }`}
           >
-            <Trash size={16} />
-            Delete
+            {quiz.status}
+          </p>
+          <h3 className="text-lg font-bold">{quiz.title}</h3>
+          <div className="flex items-center gap-1 opacity-60">
+            <FileQuestion size={18} />
+            <p className="text-sm">
+              {quiz.quiz_questions?.length ?? 0} Question
+              {quiz.quiz_questions?.length !== 1 ? "s" : ""}
+              {quiz.subject && (
+                <span className="italic"> • {quiz.subject}</span>
+              )}
+            </p>
+          </div>
+        </div>
+        <p className="text-xs opacity-50">
+          <span className="font-semibold">{user?.name}</span> •{" "}
+          {formatTimeAgo(new Date(quiz.created_at))}
+        </p>
+      </div>
+      <div className="flex flex-col items-end justify-between">
+        <Popover>
+          <PopoverTrigger>
+            <EllipsisVertical size={18} />
+          </PopoverTrigger>
+          <PopoverContent side="left" align="start" className="h-fit w-fit p-0">
+            <Button
+              variant="link"
+              className="gap-1"
+              onClick={() => onDelete(quiz.quiz_id)}
+            >
+              <Trash size={16} />
+              Delete
+            </Button>
+          </PopoverContent>
+        </Popover>
+        {quiz.status.toLowerCase() === "draft" ? (
+          <Button onClick={() => onEdit(quiz.quiz_id)}>Continue editing</Button>
+        ) : (
+          <Button
+            variant="secondary"
+            className="gap-1"
+            onClick={handleCopyCode}
+          >
+            <Copy size={14} />
+            Copy Quiz Code
           </Button>
-        </PopoverContent>
-      </Popover>
-      {quiz.status.toLowerCase() === "draft" && (
-        <Button onClick={() => onEdit(quiz.quiz_id)}>Continue editing</Button>
-      )}
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function ProfessorDashboard() {
   const navigate = useNavigate();
