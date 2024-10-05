@@ -20,6 +20,7 @@ export default function QuizNavbar() {
   const [editedTitle, setEditedTitle] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState<string[]>([]); // for form of quiz settings
 
   const queryClient = useQueryClient();
 
@@ -74,13 +75,30 @@ export default function QuizNavbar() {
   };
 
   const handleSave = () => {
-    if (!quiz || !quiz.description || !quiz.subject) {
+    const errors: string[] = [];
+
+    if (!quiz || !quiz.title) {
+      errors.push("Title is required");
+    }
+
+    if (!quiz || !quiz.description) {
+      errors.push("Description is required");
+    }
+
+    if (!quiz || !quiz.subject) {
+      errors.push("Subject must be selected");
+    }
+
+    if (errors.length > 0) {
+      setFormErrors(errors);
       setSettingsOpen(true);
       return;
     }
 
-    if (questions) {
+    if (questions && questions.length > 0) {
       saveMutation.mutate();
+    } else {
+      toast.error("Quiz must have at least one question");
     }
   };
 
@@ -137,7 +155,13 @@ export default function QuizNavbar() {
             </Button>
           </DialogTrigger>
           <DialogContent className="dark:text-white">
-            {quiz && <QuizSettingsForm quiz={quiz} />}
+            {quiz && (
+              <QuizSettingsForm
+                quiz={quiz}
+                formErrors={formErrors}
+                setFormErrors={setFormErrors}
+              />
+            )}
           </DialogContent>
         </Dialog>
         <Button

@@ -50,6 +50,7 @@ export default function MaxQuestionsSelector() {
           navigate(`/professor/quiz/${quizId}/customize`);
         } else {
           toast.error("Failed to update quiz");
+          navigate(`/professor/quiz/${quizId}/generate-quiz`);
         }
       } catch (error) {
         if (error instanceof Error) {

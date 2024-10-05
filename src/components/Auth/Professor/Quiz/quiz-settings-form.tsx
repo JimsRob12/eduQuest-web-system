@@ -98,9 +98,15 @@ const formSchema = z
 
 type QuizSettingsFormProps = {
   quiz: Quiz;
+  formErrors: string[];
+  setFormErrors: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
-export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
+export default function QuizSettingsForm({
+  quiz,
+  formErrors,
+  setFormErrors,
+}: QuizSettingsFormProps) {
   const queryClient = useQueryClient();
 
   const transformedSubjectData = transformSubjectData(subjectData);
@@ -160,6 +166,20 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
     setCoverImagePreview(null);
   };
 
+  useEffect(() => {
+    if (formErrors.length > 0) {
+      formErrors.forEach((error) => {
+        if (error.includes("Title")) {
+          form.setError("title", { type: "manual", message: error });
+        } else if (error.includes("Description")) {
+          form.setError("description", { type: "manual", message: error });
+        } else if (error.includes("Subject")) {
+          form.setError("subject", { type: "manual", message: error });
+        }
+      });
+    }
+  }, [formErrors, form]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     const { is_scheduled, open_time, close_time, ...restValues } = values;
     const submittedValues = {
@@ -169,6 +189,8 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
       close_time: close_time || null,
     };
 
+    // Clear form errors when submitting
+    setFormErrors([]);
     mutateUpdateQuiz(submittedValues);
   }
 

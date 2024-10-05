@@ -2,7 +2,7 @@ import Loader from "@/components/Shared/Loader";
 import { useGetQuizzes } from "../useGetQuizzes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Quiz, User } from "@/lib/types";
-import { EllipsisVertical, FileQuestion, Trash } from "lucide-react";
+import { EllipsisVertical, FileQuestion, Plus, Trash } from "lucide-react";
 import { formatTimeAgo } from "@/lib/helpers";
 import { useAuth } from "@/contexts/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteQuiz } from "@/services/api/apiQuiz";
+import { createQuiz, deleteQuiz } from "@/services/api/apiQuiz";
 import toast from "react-hot-toast";
 
 interface QuizCardProps {
@@ -98,6 +98,23 @@ export default function ProfessorDashboard() {
     (quiz: Quiz) => quiz.status === "draft",
   );
 
+  const { mutate: createNewQuiz, isPending: isCreatingQuiz } = useMutation({
+    mutationFn: () => {
+      if (user) {
+        return createQuiz(user.id);
+      }
+      throw new Error("User is not authenticated");
+    },
+    onSuccess: (data) => {
+      if (data) {
+        navigate(`/professor/quiz/${data.quiz_id}/generate-quiz`);
+      }
+    },
+    onError: (error) => {
+      toast.error(`Failed to create quiz: ${error.message}`);
+    },
+  });
+
   const { mutate: mutateDeleteQuiz } = useMutation({
     mutationFn: async (quizId: string) => deleteQuiz(user!.id, quizId),
     onSuccess: () => {
@@ -123,14 +140,29 @@ export default function ProfessorDashboard() {
   return (
     <div className="p-4">
       <Tabs defaultValue="active-quizzes">
-        <TabsList>
-          <TabsTrigger value="active-quizzes">
-            Active Quizzes ({activeQuizzes.length})
-          </TabsTrigger>
-          <TabsTrigger value="draft">
-            Drafts ({draftQuizzes.length})
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex justify-between">
+          <TabsList>
+            <TabsTrigger value="active-quizzes">
+              Active Quizzes ({activeQuizzes.length})
+            </TabsTrigger>
+            <TabsTrigger value="draft">
+              Drafts ({draftQuizzes.length})
+            </TabsTrigger>
+          </TabsList>
+          <Button
+            onClick={() => createNewQuiz()}
+            className="gap-1 px-3 md:hidden"
+            disabled={isCreatingQuiz}
+          >
+            {isCreatingQuiz ? (
+              "Creating..."
+            ) : (
+              <>
+                <Plus size={16} /> Create Quiz
+              </>
+            )}
+          </Button>
+        </div>
         <TabsContent value="active-quizzes">
           {activeQuizzes.length > 0 ? (
             activeQuizzes.map((quiz: Quiz) => (
