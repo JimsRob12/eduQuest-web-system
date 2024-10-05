@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IconBrandGoogle } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 import ReCAPTCHA from "react-google-recaptcha";
 
@@ -214,7 +213,12 @@ const Signup: React.FC = () => {
                 variant={"outline"}
                 disabled={isSigningUp}
               >
-                <IconBrandGoogle />
+                <img
+                  width="24"
+                  height="24"
+                  src="https://img.icons8.com/fluency/24/google-logo.png"
+                  alt="google-logo"
+                />
                 {isSigningUp ? "Signing up..." : "Sign up with Google"}
               </Button>
             </motion.div>

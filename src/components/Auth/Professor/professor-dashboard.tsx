@@ -37,7 +37,13 @@ const QuizCard: React.FC<QuizCardProps> = ({
     />
     <div className="flex flex-grow flex-col justify-between">
       <div className="space-y-1">
-        <p className="w-fit rounded-full bg-red-300 px-2 text-[0.6rem] font-semibold uppercase text-red-700">
+        <p
+          className={`w-fit rounded-full px-2 text-[0.6rem] font-semibold uppercase ${
+            quiz.status === "draft"
+              ? "bg-red-300 text-red-700"
+              : "bg-green-300 text-green-700"
+          }`}
+        >
           {quiz.status}
         </p>
         <h3 className="text-lg font-bold">{quiz.title}</h3>
@@ -71,7 +77,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
           </Button>
         </PopoverContent>
       </Popover>
-      <Button onClick={() => onEdit(quiz.quiz_id)}>Continue editing</Button>
+      {quiz.status.toLowerCase() === "draft" && (
+        <Button onClick={() => onEdit(quiz.quiz_id)}>Continue editing</Button>
+      )}
     </div>
   </div>
 );

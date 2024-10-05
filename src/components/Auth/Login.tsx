@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/AuthProvider";
 import { NavLink } from "react-router-dom";
-import { IconBrandGoogle } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import ReCAPTCHA from "react-google-recaptcha";
 import toast from "react-hot-toast";
@@ -200,7 +199,12 @@ const Login: React.FC = () => {
                 variant={"outline"}
                 disabled={isLoggingIn}
               >
-                <IconBrandGoogle />
+                <img
+                  width="24"
+                  height="24"
+                  src="https://img.icons8.com/fluency/24/google-logo.png"
+                  alt="google-logo"
+                />
                 {isLoggingIn ? "Logging in..." : "Sign in with Google"}
               </Button>
             </motion.div>

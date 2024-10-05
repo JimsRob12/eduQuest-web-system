@@ -49,11 +49,19 @@ export async function updateQuizSettings(updateData: {
   description: string;
   subject: string;
   cover_image?: File;
+  open_time: string;
+  close_time: string;
 }): Promise<any> {
-  const { quizId, title, description, subject, cover_image } = updateData;
+  const {
+    quizId,
+    title,
+    description,
+    subject,
+    cover_image,
+    open_time,
+    close_time,
+  } = updateData;
   let coverImageUrl = null;
-
-  console.log(quizId, title, description, subject, cover_image);
 
   if (cover_image) {
     const fileExt = cover_image.name.split(".").pop();
@@ -78,6 +86,8 @@ export async function updateQuizSettings(updateData: {
   if (description !== undefined) updateObject.description = description;
   if (subject !== undefined) updateObject.subject = subject;
   if (coverImageUrl) updateObject.cover_image = coverImageUrl;
+  if (open_time !== undefined) updateObject.open_time = open_time;
+  if (close_time !== undefined) updateObject.close_time = close_time;
 
   const { data, error } = await supabase
     .from("quiz")
@@ -401,4 +411,132 @@ export async function duplicateQuestion(questionId: string) {
   if (updateError) throw updateError;
 
   return duplicatedQuestion[0];
+}
+
+export async function updateQuizAndQuestions(
+  quizId: string,
+  quizData: Partial<Quiz>,
+  questions: QuizQuestions[],
+): Promise<{ quiz: Quiz; questions: QuizQuestions[] } | null> {
+  try {
+    // Calculate max_items and total_points
+    const max_items = questions.length;
+    const total_points = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+
+    // Prepare the quiz update object
+    const quizUpdateData: Partial<Quiz> = {
+      title: quizData.title,
+      description: quizData.description,
+      subject: quizData.subject,
+      max_items,
+      total_points,
+      question_type: quizData.question_type,
+      status: "active",
+      cover_image: quizData.cover_image,
+      open_time: quizData.open_time,
+      close_time: quizData.close_time,
+    };
+
+    // Remove any undefined values
+    Object.keys(quizUpdateData).forEach(
+      (key) =>
+        quizUpdateData[key as keyof Partial<Quiz>] === undefined &&
+        delete quizUpdateData[key as keyof Partial<Quiz>],
+    );
+
+    // Update the quiz
+    const { data: updatedQuiz, error: quizError } = await supabase
+      .from("quiz")
+      .update(quizUpdateData)
+      .eq("quiz_id", quizId)
+      .single();
+
+    if (quizError) throw quizError;
+
+    // Get existing questions
+    const { data: existingQuestions, error: existingQuestionsError } =
+      await supabase
+        .from("quiz_questions")
+        .select("quiz_question_id")
+        .eq("quiz_id", quizId);
+
+    if (existingQuestionsError) throw existingQuestionsError;
+
+    const existingQuestionIds = new Set(
+      existingQuestions.map((q) => q.quiz_question_id),
+    );
+
+    // Prepare question operations
+    const questionOps = questions.map((question) => {
+      const isExisting = existingQuestionIds.has(question.quiz_question_id);
+      existingQuestionIds.delete(question.quiz_question_id);
+
+      const questionData: Partial<QuizQuestions> = {
+        quiz_id: quizId,
+        right_answer: question.right_answer,
+        question: question.question,
+        distractor: question.distractor,
+        time: question.time,
+        image_url: question.image_url,
+        points: question.points,
+        question_type: question.question_type,
+        order: question.order,
+      };
+
+      // Remove any undefined values
+      Object.keys(questionData).forEach(
+        (key) =>
+          questionData[key as keyof Partial<QuizQuestions>] === undefined &&
+          delete questionData[key as keyof Partial<QuizQuestions>],
+      );
+
+      if (isExisting) {
+        return supabase
+          .from("quiz_questions")
+          .update(questionData)
+          .eq("quiz_question_id", question.quiz_question_id);
+      } else {
+        return supabase.from("quiz_questions").insert({
+          ...questionData,
+          quiz_question_id: question.quiz_question_id,
+        });
+      }
+    });
+
+    // Delete questions that are no longer present
+    if (existingQuestionIds.size > 0) {
+      questionOps.push(
+        supabase
+          .from("quiz_questions")
+          .delete()
+          .in("quiz_question_id", Array.from(existingQuestionIds)),
+      );
+    }
+
+    // Execute all question operations
+    const questionResults = await Promise.all(questionOps);
+
+    const questionErrors = questionResults.filter((result) => result.error);
+    if (questionErrors.length > 0) {
+      throw new Error("Failed to update one or more questions");
+    }
+
+    // Fetch the updated questions
+    const { data: updatedQuestions, error: updatedQuestionsError } =
+      await supabase
+        .from("quiz_questions")
+        .select("*")
+        .eq("quiz_id", quizId)
+        .order("order");
+
+    if (updatedQuestionsError) throw updatedQuestionsError;
+
+    return {
+      quiz: updatedQuiz as Quiz,
+      questions: updatedQuestions as QuizQuestions[],
+    };
+  } catch (error) {
+    console.error("Error updating quiz and questions:", error);
+    throw error;
+  }
 }

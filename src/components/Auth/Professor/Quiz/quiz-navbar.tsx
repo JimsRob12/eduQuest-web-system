@@ -7,6 +7,9 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import QuizSettingsForm from "./quiz-settings-form";
 import { useQuizData } from "./useQuizData";
 import QuizPreviewDialog from "./question-preview-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateQuizAndQuestions } from "@/services/api/apiQuiz";
+import toast from "react-hot-toast";
 
 export default function QuizNavbar() {
   const { quizId } = useParams<{ quizId: string }>();
@@ -16,6 +19,9 @@ export default function QuizNavbar() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const {
     quiz,
@@ -24,6 +30,17 @@ export default function QuizNavbar() {
     updateTitle,
     questions,
   } = useQuizData(quizId!);
+
+  const saveMutation = useMutation({
+    mutationFn: () => updateQuizAndQuestions(quizId!, quiz!, questions!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
+      queryClient.invalidateQueries({ queryKey: ["questions", quizId] });
+      toast.success("Quiz saved successfully");
+      setSettingsOpen(false);
+      navigate(`/professor/dashboard`);
+    },
+  });
 
   useEffect(() => {
     if (quiz) {
@@ -53,6 +70,17 @@ export default function QuizNavbar() {
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleTitleBlur();
+    }
+  };
+
+  const handleSave = () => {
+    if (!quiz || !quiz.description || !quiz.subject) {
+      setSettingsOpen(true);
+      return;
+    }
+
+    if (questions) {
+      saveMutation.mutate();
     }
   };
 
@@ -101,7 +129,7 @@ export default function QuizNavbar() {
         )}
       </div>
       <div className="mt-2 flex gap-2 sm:mt-0">
-        <Dialog>
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogTrigger asChild>
             <Button className="flex gap-1 text-xs" variant="outline">
               <Settings size={14} />
@@ -121,9 +149,16 @@ export default function QuizNavbar() {
           <Play size={14} />
           Preview
         </Button>
-        <Button className="flex gap-1 text-xs" variant="default">
+        <Button
+          className="flex gap-1 text-xs"
+          variant="default"
+          onClick={handleSave}
+          disabled={
+            !questions || questions.length === 0 || saveMutation.isPending
+          }
+        >
           <Save size={14} />
-          Save
+          {saveMutation.isPending ? "Saving..." : "Save"}
         </Button>
       </div>
       <QuizPreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} />
