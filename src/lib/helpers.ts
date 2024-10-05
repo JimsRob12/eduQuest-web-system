@@ -37,7 +37,7 @@ export function formatTimeAgo(date: Date) {
 export function formatQuestionType(type: string) {
   switch (type) {
     case "boolean":
-      return "True or False";
+      return "True/False";
     case "mcq":
       return "Multiple Choice";
     case "short":

@@ -150,6 +150,8 @@ export const QuestionEditProvider: React.FC<{ children: React.ReactNode }> = ({
     // If it's Fill in the Blank, update the distractor as well
     if (questionType === "Fill in the Blank") {
       setDistractors([answer]);
+    } else if (questionType === "True/False") {
+      setDistractors(["True", "False"]);
     }
   };
 
