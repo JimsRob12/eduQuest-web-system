@@ -110,7 +110,11 @@ const QuizPreviewDialog = ({ open, onOpenChange }: QuizPreviewDialogProps) => {
           return (
             <div
               key={index}
-              className={`rounded-lg p-1`}
+              className={`rounded-lg p-1 ${
+                !showAnswers
+                  ? "transition-transform duration-200 ease-in-out hover:translate-y-1"
+                  : ""
+              }`}
               style={{
                 backgroundColor: isCorrect && showAnswers ? "#22c55e" : bgColor,
                 color: "#fff",
@@ -142,7 +146,11 @@ const QuizPreviewDialog = ({ open, onOpenChange }: QuizPreviewDialogProps) => {
                 : showAnswers
                   ? "bg-purple-800 bg-opacity-20 opacity-50 grayscale"
                   : "bg-purple-800 bg-opacity-20"
-            }`}
+            } ${
+              !showAnswers
+                ? "transition-transform duration-200 ease-in-out hover:translate-y-1"
+                : ""
+            } `}
           >
             {option}
           </div>
