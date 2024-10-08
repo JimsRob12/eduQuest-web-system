@@ -1,12 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthProvider";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IconBrandGoogle } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 import ReCAPTCHA from "react-google-recaptcha";
 
@@ -48,8 +46,10 @@ const itemVariants = {
 
 const Signup: React.FC = () => {
   const { signUp, googleSignUp } = useAuth();
+  const navigate = useNavigate();
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,30 +64,52 @@ const Signup: React.FC = () => {
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    try {
-      if (!recaptchaToken) {
-        toast.error("Please complete the reCAPTCHA verification.");
-        return;
-      }
+    if (!recaptchaToken) {
+      toast.error("Please complete the reCAPTCHA verification.");
+      return;
+    }
 
+    setIsSigningUp(true);
+
+    try {
       await signUp(data.email, data.password);
       toast.success(
         "Successfully signed up! Please check your email for confirmation.",
       );
+      navigate("/email-verification", { state: { email: data.email } });
 
       recaptchaRef.current?.reset();
       setRecaptchaToken(null);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unknown error occurred.");
+      }
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (!recaptchaToken) {
+      toast.error("Please complete the reCAPTCHA verification.");
+      return;
+    }
+
+    setIsSigningUp(true);
+
     try {
       await googleSignUp();
       toast.success("Successfully signed up with Google!");
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unknown error occurred.");
+      }
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
@@ -183,8 +205,8 @@ const Signup: React.FC = () => {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Button type="submit" className="w-full">
-                Register
+              <Button type="submit" className="w-full" disabled={isSigningUp}>
+                {isSigningUp ? "Registering..." : "Register"}
               </Button>
             </motion.div>
 
@@ -196,9 +218,15 @@ const Signup: React.FC = () => {
                 }}
                 className="flex w-full gap-2"
                 variant={"outline"}
+                disabled={isSigningUp}
               >
-                <IconBrandGoogle />
-                Sign up with Google
+                <img
+                  width="24"
+                  height="24"
+                  src="https://img.icons8.com/fluency/24/google-logo.png"
+                  alt="google-logo"
+                />
+                {isSigningUp ? "Signing up..." : "Sign up with Google"}
               </Button>
             </motion.div>
           </motion.form>

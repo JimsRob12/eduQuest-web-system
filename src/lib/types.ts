@@ -1,3 +1,10 @@
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: "professor" | "student" | null;
+}
+
 export interface Quiz {
   class_code: string;
   quiz_id: string;
@@ -11,6 +18,22 @@ export interface Quiz {
   created_at: string;
   status: string;
   cover_image: string;
+  quiz_questions?: QuizQuestions[];
+  open_time?: string;
+  close_time?: string;
+}
+
+export interface QuizQuestions {
+  quiz_question_id: string;
+  quiz_id: string;
+  right_answer: string;
+  question: string;
+  distractor?: string[];
+  time: number;
+  image_url?: string;
+  points?: number;
+  question_type: string;
+  order: number;
 }
 
 export enum Subject {

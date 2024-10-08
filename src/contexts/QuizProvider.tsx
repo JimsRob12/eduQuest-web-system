@@ -33,8 +33,8 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
   const updateQuiz = async (quizId: string, maxQuestions: number) => {
     try {
       // Step 1: Update the quiz in the quiz table
-      console.log(quizId, maxQuestions, quizData.questionType);
-      const { data: updatedQuizData, error: quizError } = await supabase
+      // console.log(quizId, maxQuestions, quizData.questionType);
+      const { error: quizError } = await supabase
         .from("quiz")
         .update({
           max_items: maxQuestions,
@@ -45,7 +45,7 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
         .single();
 
       if (quizError) throw quizError;
-      console.log("Quiz updated:", updatedQuizData);
+      // console.log("Quiz updated:", updatedQuizData);
 
       // Step 2: Generate new questions
       if (!quizData.file || !quizData.questionType) {
@@ -58,7 +58,7 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
         maxQuestions.toString(),
       );
 
-      console.log("Generated questions:", generatedQuestions);
+      // console.log("Generated questions:", generatedQuestions);
       // Step 3: Delete existing questions for this quiz
       const { error: deleteError } = await supabase
         .from("quiz_questions")
@@ -72,15 +72,25 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
         .from("quiz_questions")
         .insert(
           Array.isArray(generatedQuestions)
-            ? generatedQuestions.map((question) => ({
-                quiz_id: quizId,
-                question: question.question,
-                right_answer: question.right_answer,
-                question_type: quizData.questionType,
-                distractor: question.distractor
-                  ? [...question.distractor, question.right_answer]
-                  : null,
-              }))
+            ? generatedQuestions.map((question, index) => {
+                const distractors = question.distractor
+                  ? [...question.distractor]
+                  : [];
+                const randomIndex = Math.floor(
+                  Math.random() * (distractors.length + 1),
+                );
+                distractors.splice(randomIndex, 0, question.right_answer);
+
+                return {
+                  quiz_id: quizId,
+                  question: question.question,
+                  question_type: question.question_type,
+                  right_answer: question.right_answer,
+                  points: 1,
+                  distractor: distractors,
+                  order: index + 1,
+                };
+              })
             : [],
         );
 

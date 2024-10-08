@@ -1,42 +1,46 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Play, Save, Settings } from "lucide-react";
-import { getQuizById, updateQuizTitle } from "@/services/api/apiQuiz";
-import { Quiz } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import QuizSettingsForm from "./quiz-settings-form";
+import { useQuizData } from "./useQuizData";
+import QuizPreviewDialog from "./question-preview-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateQuizAndQuestions } from "@/services/api/apiQuiz";
+import toast from "react-hot-toast";
+import Loader from "@/components/Shared/Loader";
 
 export default function QuizNavbar() {
   const { quizId } = useParams<{ quizId: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const location = useLocation();
+  const titleRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
-  const titleRef = useRef<HTMLInputElement>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState<string[]>([]); // for form of quiz settings
+
+  const queryClient = useQueryClient();
 
   const {
-    data: quiz,
-    isPending,
+    quiz,
+    isLoading: isPending,
     isError,
-  } = useQuery<Quiz, Error>({
-    queryKey: ["quiz", quizId],
-    queryFn: async () => {
-      const data = await getQuizById(quizId!);
-      if (!data) {
-        throw new Error("Quiz not found");
-      }
-      return data as unknown as Quiz;
-    },
-    enabled: !!quizId,
-  });
+    updateTitle,
+    questions,
+  } = useQuizData(quizId!);
 
-  const updateTitleMutation = useMutation({
-    mutationFn: (newTitle: string) => updateQuizTitle(quizId!, newTitle),
+  const saveMutation = useMutation({
+    mutationFn: () => updateQuizAndQuestions(quizId!, quiz!, questions!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
+      queryClient.invalidateQueries({ queryKey: ["questions", quizId] });
+      toast.success("Quiz saved successfully");
+      setSettingsOpen(false);
+      navigate(`/professor/dashboard`);
     },
   });
 
@@ -61,7 +65,7 @@ export default function QuizNavbar() {
   const handleTitleBlur = () => {
     setIsEditing(false);
     if (editedTitle !== quiz?.title) {
-      updateTitleMutation.mutate(editedTitle);
+      updateTitle(editedTitle);
     }
   };
 
@@ -71,11 +75,55 @@ export default function QuizNavbar() {
     }
   };
 
-  if (isPending) return <div>Loading...</div>;
+  const handleSave = () => {
+    const errors: string[] = [];
+
+    if (!quiz || !quiz.title) {
+      errors.push("Title is required");
+    }
+
+    if (!quiz || !quiz.description) {
+      errors.push("Description is required");
+    }
+
+    if (!quiz || !quiz.subject) {
+      errors.push("Subject must be selected");
+    }
+
+    if (errors.length > 0) {
+      setFormErrors(errors);
+      setSettingsOpen(true);
+      return;
+    }
+
+    if (questions && questions.length > 0) {
+      saveMutation.mutate();
+    } else {
+      toast.error("Quiz must have at least one question");
+    }
+  };
+
+  useEffect(() => {
+    const blockBackNavigation = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    const generateQuizPattern = /\/professor\/quiz\/[^/]+\/generate-quiz/;
+    if (generateQuizPattern.test(location.pathname)) {
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", blockBackNavigation);
+
+      return () => {
+        window.removeEventListener("popstate", blockBackNavigation);
+      };
+    }
+  }, [location.pathname]);
+
+  if (isPending) return <Loader />;
   if (isError) return <div>Error loading quiz data</div>;
 
   return (
-    <div className="-mx-6 flex w-screen items-center justify-between px-6 py-4 shadow-xl md:-mx-12 lg:-mx-16">
+    <div className="-mx-6 flex w-screen flex-wrap items-center justify-between px-6 py-4 shadow-xl md:-mx-12 lg:-mx-16">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate(-1)}>
           <ChevronLeft className="rounded border p-1" />
@@ -99,8 +147,8 @@ export default function QuizNavbar() {
           </h1>
         )}
       </div>
-      <div className="flex gap-2">
-        <Dialog>
+      <div className="mt-2 flex gap-2 sm:mt-0">
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
           <DialogTrigger asChild>
             <Button className="flex gap-1 text-xs" variant="outline">
               <Settings size={14} />
@@ -108,23 +156,37 @@ export default function QuizNavbar() {
             </Button>
           </DialogTrigger>
           <DialogContent className="dark:text-white">
-            <QuizSettingsForm quiz={quiz} />
+            {quiz && (
+              <QuizSettingsForm
+                quiz={quiz}
+                formErrors={formErrors}
+                setFormErrors={setFormErrors}
+              />
+            )}
           </DialogContent>
         </Dialog>
         <Button
           className="flex gap-1 text-xs"
           variant="secondary"
-          // disable this if there are no questions, temporary disable for testing
-          disabled={!quiz.question_type}
+          onClick={() => setPreviewOpen(true)}
+          disabled={!questions || questions.length === 0}
         >
           <Play size={14} />
           Preview
         </Button>
-        <Button className="flex gap-1 text-xs" variant="default">
+        <Button
+          className="flex gap-1 text-xs"
+          variant="default"
+          onClick={handleSave}
+          disabled={
+            !questions || questions.length === 0 || saveMutation.isPending
+          }
+        >
           <Save size={14} />
-          Save
+          {saveMutation.isPending ? "Saving..." : "Save"}
         </Button>
       </div>
+      <QuizPreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} />
     </div>
   );
 }

@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./contexts/ThemeProvider";
-import { useAuth } from "./contexts/AuthProvider";
 import AppLayout from "./layout/AppLayout";
 import ProtectedRoute from "./components/Shared/ProtectedRoute";
 import PublicRoute from "./components/Shared/PublicRoute";
@@ -25,10 +24,12 @@ import RoleAssignment from "./components/Auth/RoleAssignment";
 import StudentDashboard from "./components/Auth/Student/student-dashboard";
 import ProfessorDashboard from "./components/Auth/Professor/professor-dashboard";
 import QuestionTypeSelection from "./components/Auth/Professor/Quiz/quiz-type-selection";
-import AddQuestion from "./components/Auth/Professor/Quiz/quiz-add-question";
+import AddQuestion from "./components/Auth/Professor/Quiz/question-add";
 import CustomizeQuiz from "./components/Auth/Professor/Quiz/quiz-customize";
-import QuizGenerate from "./components/Auth/Professor/Quiz/quiz-generate-quiz";
+import QuizGenerate from "./components/Auth/Professor/Quiz/quiz-generate";
 import MaxQuestionsSelector from "./components/Auth/Professor/Quiz/quiz-questions-selector";
+import QuizEditQuestion from "./components/Auth/Professor/Quiz/question-edit";
+import EmailVerification from "./components/Auth/EmailVerification";
 
 // Define route configurations
 const publicRoutes = [
@@ -40,6 +41,7 @@ const publicRoutes = [
   { path: "/privacy", element: <PrivacyPolicyPage /> },
   { path: "/login", element: <Login /> },
   { path: "/signup", element: <Signup /> },
+  { path: "/email-verification", element: <EmailVerification /> },
 ];
 
 const professorRoutes = [
@@ -53,11 +55,15 @@ const professorRoutes = [
     path: "/professor/quiz/:quizId/:type/max-questions-selector",
     element: <MaxQuestionsSelector />,
   },
+  { path: "/professor/quiz/:quizId/customize", element: <CustomizeQuiz /> },
+  {
+    path: "/professor/quiz/:quizId/question/:questionId/edit",
+    element: <QuizEditQuestion />,
+  },
   {
     path: "/professor/quiz/:quizId/add-question/:type",
     element: <AddQuestion />,
   },
-  { path: "/professor/quiz/:quizId/customize", element: <CustomizeQuiz /> },
 ];
 
 const studentRoutes = [
@@ -65,12 +71,6 @@ const studentRoutes = [
 ];
 
 const App: React.FC = () => {
-  const { loading } = useAuth();
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <>
       <ThemeProvider>
@@ -87,7 +87,14 @@ const App: React.FC = () => {
               ))}
 
               {/* Role Assignment Route */}
-              <Route path="/role-assignment" element={<RoleAssignment />} />
+              <Route
+                path="/role-assignment"
+                element={
+                  <ProtectedRoute>
+                    <RoleAssignment />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Professor Protected Routes */}
               <Route

@@ -11,13 +11,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const formSchema = z.object({
   role: z.enum(["professor", "student"]),
 });
 
 export default function RoleAssignment() {
-  const { setUserRole } = useAuth();
+  const { setUserRole, loading } = useAuth();
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -27,11 +28,18 @@ export default function RoleAssignment() {
     },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    setUserRole(data.role);
-    navigate(
-      data.role === "professor" ? "/professor/dashboard" : "/student/dashboard",
-    );
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    try {
+      await setUserRole(data.role);
+      toast.success(`User role set to: ${data.role}`);
+      navigate(
+        data.role === "professor"
+          ? "/professor/dashboard"
+          : "/student/dashboard",
+      );
+    } catch (error) {
+      toast.error(`Error setting user role: ${String(error)}`);
+    }
   }
 
   function handleRoleSelect(role: "professor" | "student") {
@@ -61,6 +69,7 @@ export default function RoleAssignment() {
                       className={`flex flex-col items-center justify-center ${
                         field.value === "student" ? "ring-2 ring-blue-500" : ""
                       }`}
+                      disabled={loading}
                     >
                       <img
                         src="/role-student.png"
@@ -79,6 +88,7 @@ export default function RoleAssignment() {
                           ? "ring-2 ring-blue-500"
                           : ""
                       }`}
+                      disabled={loading}
                     >
                       <img
                         src="/role-teacher.png"

@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/contexts/AuthProvider";
 import { NavLink } from "react-router-dom";
-import { IconBrandGoogle } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import ReCAPTCHA from "react-google-recaptcha";
 import toast from "react-hot-toast";
@@ -50,6 +48,7 @@ const Login: React.FC = () => {
   const { login, googleLogin } = useAuth();
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,29 +63,36 @@ const Login: React.FC = () => {
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    try {
-      if (!recaptchaToken) {
-        toast.error("Please complete the reCAPTCHA verification.");
-        return;
-      }
+    if (!recaptchaToken) {
+      toast.error("Please complete the reCAPTCHA verification.");
+      return;
+    }
 
+    setIsLoggingIn(true);
+    try {
       await login(data.email, data.password);
       toast.success("Successfully Logged In!");
 
       recaptchaRef.current?.reset();
       setRecaptchaToken(null);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unknown error occurred.");
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    try {
-      await googleLogin();
-      // toast.success("Successfully Logged In with Google!");
-    } catch (err: any) {
-      toast.error(err.message);
+    if (!recaptchaToken) {
+      toast.error("Please complete the reCAPTCHA verification.");
+      return;
     }
+
+    await googleLogin();
   };
 
   return (
@@ -171,8 +177,8 @@ const Login: React.FC = () => {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                {isLoggingIn ? "Logging in..." : "Login"}
               </Button>
             </motion.div>
 
@@ -184,9 +190,15 @@ const Login: React.FC = () => {
                 }}
                 className="flex w-full gap-2"
                 variant={"outline"}
+                disabled={isLoggingIn}
               >
-                <IconBrandGoogle />
-                Sign in with Google
+                <img
+                  width="24"
+                  height="24"
+                  src="https://img.icons8.com/fluency/24/google-logo.png"
+                  alt="google-logo"
+                />
+                {isLoggingIn ? "Logging in..." : "Sign in with Google"}
               </Button>
             </motion.div>
           </motion.form>

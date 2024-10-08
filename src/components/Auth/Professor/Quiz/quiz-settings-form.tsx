@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -41,35 +42,78 @@ import { transformSubjectData } from "@/lib/helpers";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateQuizSettings } from "@/services/api/apiQuiz";
 import toast from "react-hot-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-const formSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  subject: z.string().min(1, "Subject must be selected"),
-  cover_image: z
-    .instanceof(File)
-    .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
-    .refine(
-      (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
-      "Only .jpg, .png, and .webp formats are supported.",
-    )
-    .optional(),
-});
+const formSchema = z
+  .object({
+    title: z.string().min(3, "Title must be at least 3 characters"),
+    description: z
+      .string()
+      .min(10, "Description must be at least 10 characters"),
+    subject: z.string().min(1, "Subject must be selected"),
+    cover_image: z
+      .instanceof(File)
+      .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+      .refine(
+        (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
+        "Only .jpg, .png, and .webp formats are supported.",
+      )
+      .optional(),
+    is_scheduled: z.boolean().default(false),
+    open_time: z.string().optional(),
+    close_time: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.is_scheduled) {
+        const now = new Date();
+        const openTime = new Date(data.open_time || "");
+        const closeTime = new Date(data.close_time || "");
+
+        if (!data.open_time || !data.close_time) {
+          return false;
+        }
+
+        if (openTime < now) {
+          return false;
+        }
+
+        if (closeTime <= openTime) {
+          return false;
+        }
+
+        return true;
+      }
+      return true;
+    },
+    {
+      message:
+        "When scheduled, open time must be in the future and before close time",
+      path: ["close_time"],
+    },
+  );
 
 type QuizSettingsFormProps = {
   quiz: Quiz;
+  formErrors: string[];
+  setFormErrors: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
-export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
+export default function QuizSettingsForm({
+  quiz,
+  formErrors,
+  setFormErrors,
+}: QuizSettingsFormProps) {
   const queryClient = useQueryClient();
 
   const transformedSubjectData = transformSubjectData(subjectData);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(
     quiz?.cover_image || null,
   );
+  const [isScheduled, setIsScheduled] = useState(false);
 
   const { mutate: mutateUpdateQuiz, isPending } = useMutation({
     mutationFn: (data: any) => updateQuizSettings(data),
@@ -79,7 +123,8 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
     onSuccess: () => {
       toast.success("Quiz settings updated");
     },
-    onError: () => {
+    onError: (error) => {
+      console.error(error);
       toast.error("Failed to update quiz settings");
     },
   });
@@ -91,6 +136,9 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
       description: quiz?.description || "",
       subject: quiz?.subject as Subject,
       cover_image: undefined,
+      is_scheduled: false,
+      open_time: "",
+      close_time: "",
     },
   });
 
@@ -118,17 +166,36 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
     setCoverImagePreview(null);
   };
 
+  useEffect(() => {
+    if (formErrors.length > 0) {
+      formErrors.forEach((error) => {
+        if (error.includes("Title")) {
+          form.setError("title", { type: "manual", message: error });
+        } else if (error.includes("Description")) {
+          form.setError("description", { type: "manual", message: error });
+        } else if (error.includes("Subject")) {
+          form.setError("subject", { type: "manual", message: error });
+        }
+      });
+    }
+  }, [formErrors, form]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
+    const { is_scheduled, open_time, close_time, ...restValues } = values;
     const submittedValues = {
       quizId: quiz.quiz_id,
-      ...values,
+      ...restValues,
+      open_time: open_time || null,
+      close_time: close_time || null,
     };
 
+    // Clear form errors when submitting
+    setFormErrors([]);
     mutateUpdateQuiz(submittedValues);
   }
 
   return (
-    <>
+    <div className="max-h-[90vh] overflow-y-auto">
       <DialogHeader className="flex flex-row items-center gap-2">
         <Settings className="hidden size-8 rounded-full bg-purple-100 fill-purple-700 p-1 md:block" />
         <div className="p-0">
@@ -141,7 +208,7 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="grid grid-cols-2 gap-4"
+          className="flex flex-col gap-4 md:grid md:grid-cols-2"
         >
           <div className="space-y-4">
             <FormField
@@ -242,8 +309,74 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="is_scheduled"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-zinc-200 p-4 dark:border-zinc-800">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        setIsScheduled(checked as boolean);
+                      }}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Schedule Quiz</FormLabel>
+                    <FormDescription>
+                      Set a specific open and close time for this quiz.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+            {isScheduled && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="open_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Open Time</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          min={new Date().toISOString().slice(0, 16)}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="close_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Close Time</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          {...field}
+                          min={
+                            form.getValues("open_time") ||
+                            new Date().toISOString().slice(0, 16)
+                          }
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
           </div>
-          <div className="space-y-4 justify-self-end">
+          <div className="space-y-4 md:justify-self-end">
             <Controller
               name="cover_image"
               control={form.control}
@@ -257,7 +390,7 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
                           <img
                             src={coverImagePreview}
                             alt="Cover preview"
-                            className="h-40 w-40 rounded object-cover"
+                            className="size-52 rounded object-cover"
                           />
                           <button
                             type="button"
@@ -272,7 +405,7 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
                         <label
                           htmlFor="cover-image-upload"
                           className={cn(
-                            "flex h-40 w-40 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed",
+                            "flex size-52 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed",
                             isPending && "cursor-not-allowed opacity-50",
                           )}
                         >
@@ -303,7 +436,7 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
           </div>
           <Button
             type="submit"
-            className="col-start-2 w-fit justify-self-end"
+            className="col-span-2 w-fit justify-self-end"
             disabled={isPending}
           >
             {isPending ? (
@@ -317,6 +450,6 @@ export default function QuizSettingsForm({ quiz }: QuizSettingsFormProps) {
           </Button>
         </form>
       </Form>
-    </>
+    </div>
   );
 }

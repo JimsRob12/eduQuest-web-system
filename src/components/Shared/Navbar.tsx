@@ -51,8 +51,9 @@ const AUTH_ITEMS: {
 ];
 
 export default function Navbar() {
-  const { user, logout, loading } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -74,6 +75,21 @@ export default function Navbar() {
       toast.error(`Failed to create quiz: ${error.message}`);
     },
   });
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      toast.success("Logged out successfully!");
+      navigate("/login");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Failed to log out: ${errorMessage}`);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const closeMenu = () => setMenuOpen(false);
@@ -141,8 +157,8 @@ export default function Navbar() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>Profile</DropdownMenuItem>
                     <DropdownMenuItem>Settings</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => logout()}>
-                      {loading ? "Logging out.." : "Log out"}
+                    <DropdownMenuItem onClick={handleLogout}>
+                      {isLoggingOut ? "Logging out.." : "Log out"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -194,7 +210,7 @@ export default function Navbar() {
                   className="flex w-fit items-center gap-1"
                   onClick={() => logout()}
                 >
-                  {loading ? (
+                  {isLoggingOut ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Logging out..

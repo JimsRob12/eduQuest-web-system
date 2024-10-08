@@ -17,17 +17,12 @@ import {
   updateRole,
 } from "@/services/api/apiAuth";
 import toast from "react-hot-toast";
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: "professor" | "student" | null;
-}
+import { User } from "@/lib/types";
 
 interface AuthContextProps {
   user: User | null;
   loading: boolean;
+  initialized: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   setUserRole: (role: "professor" | "student") => Promise<void>;
   googleSignUp: () => Promise<void>;
@@ -48,30 +43,28 @@ export const useAuth = () => {
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [initialized, setInitialized] = useState(false);
   const queryClient = useQueryClient();
 
   // Mutation for signing up with email
   const signUpMutation = useMutation({
     mutationFn: signUpWithEmail,
-    onMutate: () => setLoading(true),
     onSuccess: (data) => {
       if (data.session) {
+        setUser({
+          id: data.session.user.id,
+          email: data.session.user.email!,
+          name: data.session.user.user_metadata.name || "",
+          role: data.session.user.user_metadata.role || null,
+        });
         queryClient.invalidateQueries({ queryKey: ["session"] });
-      } else {
-        toast.error("Sign up error: Session is null");
       }
-    },
-    onSettled: () => setLoading(false),
-    onError: (error: any) => {
-      toast.error(`Sign up error: ${error.message}`);
     },
   });
 
   // Mutation for signing in with email
   const signInWithEmailMutation = useMutation({
     mutationFn: signInWithEmail,
-    onMutate: () => setLoading(true),
     onSuccess: (data) => {
       const { session } = data;
       if (session?.user) {
@@ -81,38 +74,31 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           name: session.user.user_metadata.name || "",
           role: session.user.user_metadata.role || null,
         });
-        queryClient.invalidateQueries({ queryKey: ["session"] });
       }
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     },
-    onSettled: () => setLoading(false),
   });
 
   // Mutation for Google sign-in
   const signInWithGoogleMutation = useMutation({
     mutationFn: signInWithGoogle,
-    onMutate: () => setLoading(true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["session"] });
     },
-    onSettled: () => setLoading(false),
   });
 
   // Mutation for signing out
   const signOutMutation = useMutation({
     mutationFn: signOut,
-    onMutate: () => setLoading(true),
     onSuccess: () => {
       setUser(null);
-      toast.success("Successfully Logged Out");
       queryClient.invalidateQueries({ queryKey: ["session"] });
     },
-    onSettled: () => setLoading(false),
   });
 
   // Mutation for updating the user role
   const updateUserRoleMutation = useMutation({
     mutationFn: updateRole,
-    onMutate: () => setLoading(true),
     onSuccess: (data, variables) => {
       if (user) {
         setUser({
@@ -121,11 +107,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             ? (variables.role as "professor" | "student")
             : null,
         });
-        toast.success(`User role updated to ${variables.role}`);
         queryClient.invalidateQueries({ queryKey: ["session"] });
       }
     },
-    onSettled: () => setLoading(false),
     onError: (error: any) => {
       toast.error(`Role update error: ${error.message}`);
     },
@@ -134,7 +118,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   // Fetch initial session when component mounts
   useEffect(() => {
     const fetchInitialSession = async () => {
-      setLoading(true);
       const session = await getInitialSession();
       if (session) {
         setUser({
@@ -144,7 +127,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           role: session.user.user_metadata.role || null,
         });
       }
-      setLoading(false);
+      setInitialized(true);
     };
     fetchInitialSession();
 
@@ -159,7 +142,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUser(null);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -192,11 +174,20 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     await signOutMutation.mutateAsync();
   };
 
+  const loading =
+    !initialized ||
+    signUpMutation.isPending ||
+    signInWithEmailMutation.isPending ||
+    signInWithGoogleMutation.isPending ||
+    signOutMutation.isPending ||
+    updateUserRoleMutation.isPending;
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
+        initialized,
         signUp,
         googleSignUp,
         setUserRole,
