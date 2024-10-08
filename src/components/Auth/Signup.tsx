@@ -97,20 +97,7 @@ const Signup: React.FC = () => {
       return;
     }
 
-    setIsSigningUp(true);
-
-    try {
-      await googleSignUp();
-      toast.success("Successfully signed up with Google!");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("An unknown error occurred.");
-      }
-    } finally {
-      setIsSigningUp(false);
-    }
+    await googleSignUp();
   };
 
   return (
