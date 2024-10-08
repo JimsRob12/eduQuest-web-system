@@ -21,6 +21,7 @@ import { useQuizData } from "./useQuizData";
 import { formatQuestionType, questionTypeIcon } from "@/lib/helpers";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { useMediaQuery } from "react-responsive";
+import Loader from "@/components/Shared/Loader";
 
 interface QuizPreviewDialogProps {
   open: boolean;
@@ -191,7 +192,7 @@ const QuizPreviewDialog = ({ open, onOpenChange }: QuizPreviewDialogProps) => {
     );
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <Loader />;
   if (isError) return <div>Error loading quiz data</div>;
 
   return (

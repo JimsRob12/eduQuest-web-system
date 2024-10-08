@@ -54,6 +54,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import QuizTypeModal from "./quiz-type-modal";
+import Loader from "@/components/Shared/Loader";
 
 const iconMapping = {
   Scale: Scale,
@@ -244,7 +245,7 @@ export default function CustomizeQuiz() {
     }
   };
 
-  if (isPending) return <div>Loading...</div>;
+  if (isPending) return <Loader />;
   if (isError) return <div>Error loading questions</div>;
 
   const totalPoints = Array.isArray(questions)

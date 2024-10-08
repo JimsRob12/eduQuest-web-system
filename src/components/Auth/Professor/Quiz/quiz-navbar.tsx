@@ -10,6 +10,7 @@ import QuizPreviewDialog from "./question-preview-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateQuizAndQuestions } from "@/services/api/apiQuiz";
 import toast from "react-hot-toast";
+import Loader from "@/components/Shared/Loader";
 
 export default function QuizNavbar() {
   const { quizId } = useParams<{ quizId: string }>();
@@ -118,7 +119,7 @@ export default function QuizNavbar() {
     }
   }, [location.pathname]);
 
-  if (isPending) return <div>Loading...</div>;
+  if (isPending) return <Loader />;
   if (isError) return <div>Error loading quiz data</div>;
 
   return (

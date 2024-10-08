@@ -30,6 +30,7 @@ import CustomizeQuiz from "./components/Auth/Professor/Quiz/quiz-customize";
 import QuizGenerate from "./components/Auth/Professor/Quiz/quiz-generate";
 import MaxQuestionsSelector from "./components/Auth/Professor/Quiz/quiz-questions-selector";
 import QuizEditQuestion from "./components/Auth/Professor/Quiz/question-edit";
+import Loader from "./components/Shared/Loader";
 
 // Define route configurations
 const publicRoutes = [
@@ -73,7 +74,7 @@ const App: React.FC = () => {
   const { loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
 
   return (
