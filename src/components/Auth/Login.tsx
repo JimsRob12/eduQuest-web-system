@@ -87,6 +87,11 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleSignIn = async () => {
+    if (!recaptchaToken) {
+      toast.error("Please complete the reCAPTCHA verification.");
+      return;
+    }
+
     setIsLoggingIn(true);
     try {
       await googleLogin();

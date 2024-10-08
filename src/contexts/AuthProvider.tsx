@@ -22,6 +22,7 @@ import { User } from "@/lib/types";
 interface AuthContextProps {
   user: User | null;
   loading: boolean;
+  initialized: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   setUserRole: (role: "professor" | "student") => Promise<void>;
   googleSignUp: () => Promise<void>;
@@ -42,6 +43,7 @@ export const useAuth = () => {
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [initialized, setInitialized] = useState(false);
   const queryClient = useQueryClient();
 
   // Mutation for signing up with email
@@ -49,13 +51,14 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     mutationFn: signUpWithEmail,
     onSuccess: (data) => {
       if (data.session) {
+        setUser({
+          id: data.session.user.id,
+          email: data.session.user.email!,
+          name: data.session.user.user_metadata.name || "",
+          role: data.session.user.user_metadata.role || null,
+        });
         queryClient.invalidateQueries({ queryKey: ["session"] });
-      } else {
-        toast.error("Sign up error: Session is null");
       }
-    },
-    onError: (error: any) => {
-      toast.error(`Sign up error: ${error.message}`);
     },
   });
 
@@ -124,6 +127,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           role: session.user.user_metadata.role || null,
         });
       }
+      setInitialized(true);
     };
     fetchInitialSession();
 
@@ -171,6 +175,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loading =
+    !initialized ||
     signUpMutation.isPending ||
     signInWithEmailMutation.isPending ||
     signInWithGoogleMutation.isPending ||
@@ -182,6 +187,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         loading,
+        initialized,
         signUp,
         googleSignUp,
         setUserRole,

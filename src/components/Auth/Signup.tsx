@@ -90,6 +90,11 @@ const Signup: React.FC = () => {
   };
 
   const handleGoogleSignIn = async () => {
+    if (!recaptchaToken) {
+      toast.error("Please complete the reCAPTCHA verification.");
+      return;
+    }
+
     setIsSigningUp(true);
 
     try {

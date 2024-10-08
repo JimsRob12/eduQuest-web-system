@@ -12,10 +12,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
   children,
 }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, initialized } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  if (!initialized || loading) {
     return <Loader />;
   }
 
