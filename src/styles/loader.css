@@ -29,3 +29,15 @@
     transform: rotate(1turn);
   }
 }
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .loader {
+    color: #fff;
+    border-color: #fff;
+  }
+  .loader::before,
+  .loader::after {
+    border-color: #fff;
+  }
+}
