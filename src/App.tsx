@@ -93,7 +93,14 @@ const App: React.FC = () => {
               ))}
 
               {/* Role Assignment Route */}
-              <Route path="/role-assignment" element={<RoleAssignment />} />
+              <Route
+                path="/role-assignment"
+                element={
+                  <ProtectedRoute>
+                    <RoleAssignment />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Professor Protected Routes */}
               <Route

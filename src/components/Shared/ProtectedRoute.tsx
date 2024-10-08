@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 import Loader from "./Loader";
 
@@ -13,20 +13,25 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
 }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
-    return <Loader/>;
+    return <Loader />;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!user.role) {
+  if (!user.role && location.pathname !== "/role-assignment") {
     return <Navigate to="/role-assignment" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (user.role && location.pathname === "/role-assignment") {
+    return <Navigate to="/" replace />;
+  }
+
+  if (allowedRoles && user.role && !allowedRoles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
 
