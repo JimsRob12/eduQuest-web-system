@@ -74,8 +74,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           name: session.user.user_metadata.name || "",
           role: session.user.user_metadata.role || null,
         });
-        queryClient.invalidateQueries({ queryKey: ["session"] });
       }
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     },
   });
 

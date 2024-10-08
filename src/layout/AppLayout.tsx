@@ -5,9 +5,10 @@ import Navbar from "@/components/Shared/Navbar";
 import { useAuth } from "@/contexts/AuthProvider";
 import QuizNavbar from "@/components/Auth/Professor/Quiz/quiz-navbar";
 import QuizEditQuestionNavbar from "@/components/Auth/Professor/Quiz/question-navbar";
+import Loader from "@/components/Shared/Loader";
 
 function AppLayout() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
   const [isProfessorQuizRoute, setIsProfessorQuizRoute] = useState(false);
   const [isQuizEditQuestionRoute, setIsQuizEditQuestionRoute] = useState(false);
@@ -32,6 +33,10 @@ function AppLayout() {
       return <Navbar />;
     }
   };
+
+  if (loading) {
+    return <Loader />;
+  }
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-zinc-50 px-6 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:px-12 lg:px-16">

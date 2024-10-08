@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./contexts/ThemeProvider";
-import { useAuth } from "./contexts/AuthProvider";
 import AppLayout from "./layout/AppLayout";
 import ProtectedRoute from "./components/Shared/ProtectedRoute";
 import PublicRoute from "./components/Shared/PublicRoute";
@@ -30,7 +29,7 @@ import CustomizeQuiz from "./components/Auth/Professor/Quiz/quiz-customize";
 import QuizGenerate from "./components/Auth/Professor/Quiz/quiz-generate";
 import MaxQuestionsSelector from "./components/Auth/Professor/Quiz/quiz-questions-selector";
 import QuizEditQuestion from "./components/Auth/Professor/Quiz/question-edit";
-import Loader from "./components/Shared/Loader";
+import EmailVerification from "./components/Auth/EmailVerification";
 
 // Define route configurations
 const publicRoutes = [
@@ -42,6 +41,7 @@ const publicRoutes = [
   { path: "/privacy", element: <PrivacyPolicyPage /> },
   { path: "/login", element: <Login /> },
   { path: "/signup", element: <Signup /> },
+  { path: "/email-verification", element: <EmailVerification /> },
 ];
 
 const professorRoutes = [
@@ -71,12 +71,6 @@ const studentRoutes = [
 ];
 
 const App: React.FC = () => {
-  const { loading } = useAuth();
-
-  if (loading) {
-    return <Loader />;
-  }
-
   return (
     <>
       <ThemeProvider>

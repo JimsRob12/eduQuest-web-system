@@ -88,7 +88,7 @@ export const updateUser = async ({
       avatar_url: avatar_url,
     },
   });
-// di nagsasave yung file
+  // di nagsasave yung file
   if (error) throw new Error(error.message);
 
   return data;

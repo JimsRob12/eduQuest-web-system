@@ -92,19 +92,7 @@ const Login: React.FC = () => {
       return;
     }
 
-    setIsLoggingIn(true);
-    try {
-      await googleLogin();
-      toast.success("Successfully Logged In with Google!");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("An unknown error occurred.");
-      }
-    } finally {
-      setIsLoggingIn(false);
-    }
+    await googleLogin();
   };
 
   return (

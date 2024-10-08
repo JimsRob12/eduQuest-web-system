@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -46,6 +46,7 @@ const itemVariants = {
 
 const Signup: React.FC = () => {
   const { signUp, googleSignUp } = useAuth();
+  const navigate = useNavigate();
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -75,6 +76,7 @@ const Signup: React.FC = () => {
       toast.success(
         "Successfully signed up! Please check your email for confirmation.",
       );
+      navigate("/email-verification", { state: { email: data.email } });
 
       recaptchaRef.current?.reset();
       setRecaptchaToken(null);
