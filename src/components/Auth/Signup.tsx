@@ -114,7 +114,7 @@ const Signup: React.FC = () => {
             className="text-lg font-semibold text-purple-700"
             variants={itemVariants}
           >
-            EduQuest
+            Quiz Bee with You
           </motion.h1>
 
           <motion.div variants={itemVariants}>

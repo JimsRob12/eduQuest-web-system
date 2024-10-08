@@ -65,7 +65,7 @@ export default function Header() {
     >
       <motion.div>
         <motion.p custom={0} className="text-sm md:text-base">
-          {splitText("Welcome to EduQuest")}
+          {splitText("Welcome to Quiz Bee with You")}
         </motion.p>
         <motion.h1 custom={1} className="mt-2 text-5xl md:text-7xl">
           {splitText("The ")}

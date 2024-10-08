@@ -240,6 +240,7 @@ export async function generateQuestions(
       //     },
       //   ]
       // }
+      console.log(generateQuestions.data.questions);
 
       console.log("Generated questions:", generateQuestions.data.questions);
       return generateQuestions.data.questions;

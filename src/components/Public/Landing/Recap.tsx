@@ -9,7 +9,7 @@ export default function Recap() {
             create
           </div>
           <div className="rounded-xl border border-zinc-900 bg-zinc-900 px-4 font-black text-zinc-50 shadow-[0px_4px_0px_#f0f0f0]">
-            eduQuest
+            Quiz Bee with You
           </div>
           <div className="rounded-full border border-zinc-900 px-4 text-xs text-zinc-900">
             learn
