@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Cat } from "lucide-react";
+import { Cat, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +11,6 @@ const AnimalIconInput = () => {
 
   const {
     data: classData,
-    isPending,
     isError,
     error,
     refetch,
@@ -21,16 +20,12 @@ const AnimalIconInput = () => {
     enabled: false, // This prevents the query from running automatically
   });
 
-  console.log({ classData, isPending, isError, error });
-  console.log(classCode);
-
   const handleJoin = async () => {
     if (classCode.length < 36) {
       alert("Please enter a valid class code (36 characters)");
       return;
     }
 
-    console.log("Joining class with code:", classCode);
     setIsJoining(true);
     try {
       await refetch();
@@ -42,7 +37,11 @@ const AnimalIconInput = () => {
   return (
     <div className="flex h-[calc(100%-10rem)] flex-col items-center justify-center">
       <div className="mb-8 animate-bounce text-purple-500">
-        <Cat size={120} strokeWidth={1.5} />
+        {isJoining ? (
+          <Loader2 size={120} className="animate-spin" />
+        ) : (
+          <Cat size={120} strokeWidth={1.5} />
+        )}
       </div>
       <div className="text-center">
         <h1 className="mb-6 text-3xl font-bold text-purple-500">

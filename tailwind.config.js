@@ -18,6 +18,7 @@ export default {
       fontFamily: {
         sans: ["Rubik", "sans-serif"],
         serif: ["Playfair Display", "serif"],
+        pixel: ["DotGothic16", "sans-serif"],
       },
       colors: {},
       keyframes: {
