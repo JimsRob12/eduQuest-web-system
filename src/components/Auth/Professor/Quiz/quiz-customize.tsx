@@ -502,9 +502,9 @@ export default function CustomizeQuiz() {
                                         Edit
                                       </button>
                                       <Trash
-                                        className={`size-6 cursor-pointer rounded-md p-1 ${
+                                        className={`size-6 cursor-pointer rounded-md p-1 text-white ${
                                           isIncomplete
-                                            ? "bg-red-500 text-white"
+                                            ? "bg-red-500"
                                             : "bg-red-600"
                                         }`}
                                         onClick={() =>
