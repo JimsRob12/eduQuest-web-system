@@ -38,7 +38,7 @@ export default function FAQPage() {
           variants={itemVariants}
         >
           <p>Frequently Asked Questions</p>
-          <p>Here are some common questions about EduQuest</p>
+          <p>Here are some common questions about Quiz Bee with You</p>
         </motion.div>
       </motion.div>
 

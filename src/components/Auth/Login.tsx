@@ -104,7 +104,7 @@ const Login: React.FC = () => {
       className="mt-8 grid h-[calc(100%-8rem)] items-center gap-8 md:mt-14 md:grid-cols-[0.8fr_1fr] md:gap-16"
     >
       <motion.div className="space-y-8" variants={itemVariants}>
-        <h1 className="text-lg font-semibold text-purple-700">EduQuest</h1>
+        <h1 className="text-lg font-semibold text-purple-700">Quiz Bee with You</h1>
 
         <div>
           <motion.h2
