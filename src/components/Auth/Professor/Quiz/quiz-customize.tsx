@@ -95,6 +95,7 @@ export default function CustomizeQuiz() {
     onSuccess: () => {
       toast.success("Bulk update successful");
       queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
+      queryClient.resetQueries({ queryKey: ["questions"] });
     },
     onError: (error: Error) => {
       toast.error(error.message);

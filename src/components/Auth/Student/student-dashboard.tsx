@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Cat, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -36,16 +36,30 @@ const AnimalIconInput = () => {
 
   return (
     <div className="flex h-[calc(100%-10rem)] flex-col items-center justify-center">
-      <div className="mb-8 animate-bounce text-purple-500">
+      <div className="text-purple-500">
         {isJoining ? (
-          <Loader2 size={120} className="animate-spin" />
+          <Loader2 size={120} className="mb-8 animate-spin" />
+        ) : isError ? (
+          <img
+            src="/cat-error.gif"
+            className="mb-4 w-32"
+            style={{
+              transform: "scale(-1, 1)",
+            }}
+          />
         ) : (
-          <Cat size={120} strokeWidth={1.5} />
+          <img
+            src="/cat-join.gif"
+            className="-mb-4 w-32 animate-bounce"
+            style={{
+              transform: "scale(-1, 1)",
+            }}
+          />
         )}
       </div>
       <div className="text-center">
         <h1 className="mb-6 text-3xl font-bold text-purple-500">
-          Join Quiz Class
+          Join Quiz <span className="w-64"></span>
         </h1>
         {classData && (
           <p className="my-2 text-green-500">Successfully joined the class!</p>
@@ -56,7 +70,7 @@ const AnimalIconInput = () => {
           </p>
         )}
       </div>
-      <div className="flex space-x-2">
+      <div className="relative flex space-x-2">
         <Input
           type="text"
           value={classCode}
@@ -64,6 +78,7 @@ const AnimalIconInput = () => {
           placeholder="Enter class code"
           className="w-64"
         />
+
         <Button onClick={handleJoin} disabled={isJoining}>
           {isJoining ? "Joining..." : "Join"}
         </Button>

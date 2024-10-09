@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Loader2, Menu, Plus, X } from "lucide-react";
 import { ModeToggle } from "./theme-toggle";
@@ -24,8 +24,11 @@ const PUBLIC_NAV_ITEMS = [
   { path: "/privacy", label: "Privacy Policy" },
 ];
 
-const AUTH_NAV_ITEMS = [
-  { path: "/home", label: "Home" },
+const getAuthNavItems = (role: "professor" | "student" | null) => [
+  {
+    path: role === "professor" ? "/professor/dashboard" : "/student/dashboard",
+    label: "Home",
+  },
   { path: "/activity", label: "Activity" },
   { path: "/reports", label: "Reports" },
 ];
@@ -53,11 +56,18 @@ const AUTH_ITEMS: {
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
-  const navItems = user ? AUTH_NAV_ITEMS : PUBLIC_NAV_ITEMS;
+  const navItems = user ? getAuthNavItems(user.role) : PUBLIC_NAV_ITEMS;
+
+  useEffect(() => {
+    const index = navItems.findIndex((item) => item.path === location.pathname);
+    setActiveIndex(index);
+  }, [location, navItems]);
 
   const { mutate: createNewQuiz, isPending: isCreatingQuiz } = useMutation({
     mutationFn: () => {
@@ -94,9 +104,24 @@ export default function Navbar() {
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const closeMenu = () => setMenuOpen(false);
 
-  const NavItem = ({ to, label }: { to: string; label: string }) => (
-    <NavLink to={to} onClick={closeMenu}>
+  const NavItem = ({
+    to,
+    label,
+    index,
+  }: {
+    to: string;
+    label: string;
+    index?: number;
+  }) => (
+    <NavLink
+      to={to}
+      onClick={closeMenu}
+      className={({ isActive }) =>
+        `relative font-bold md:px-4 md:py-2 ${isActive ? "md:text-purple-600" : "md:text-gray-600"}`
+      }
+    >
       {label}
+      {index === activeIndex && <PixelatedArrow />}
     </NavLink>
   );
 
@@ -110,8 +135,8 @@ export default function Navbar() {
             <img src="/edu-quest-logo.png" alt="Logo" className="w-14" />
           </NavLink>
           <li className="hidden items-center gap-4 md:flex">
-            {navItems.map(({ path, label }) => (
-              <NavItem key={path} to={path} label={label} />
+            {navItems.map(({ path, label }, index) => (
+              <NavItem key={path} to={path} label={label} index={index} />
             ))}
           </li>
         </ul>
@@ -151,8 +176,10 @@ export default function Navbar() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" sideOffset={10}>
                     <DropdownMenuLabel className="flex flex-col">
-                      <p className="flex gap-1">{user.name}</p>
-                      <p className="text-xs font-normal">{user.email}</p>
+                      <p className="flex gap-1 font-default">{user.name}</p>
+                      <p className="font-default text-xs font-normal">
+                        {user.email}
+                      </p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>Profile</DropdownMenuItem>
@@ -233,5 +260,13 @@ export default function Navbar() {
         </div>
       </div>
     </>
+  );
+}
+
+function PixelatedArrow() {
+  return (
+    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 rotate-180 transform">
+      <div className="pixelated-arrow"></div>
+    </div>
   );
 }

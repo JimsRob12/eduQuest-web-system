@@ -72,8 +72,8 @@ export default function RoleAssignment() {
                       disabled={loading}
                     >
                       <img
-                        src="/role-student.png"
-                        className="mb-4 w-52 md:w-64"
+                        src="/role-student.gif"
+                        className="mb-4 w-32 md:w-36"
                       />
                       <label className="text-lg font-semibold">Student</label>
                       <p className="w-44 text-xs text-gray-500 md:text-sm">
@@ -91,7 +91,7 @@ export default function RoleAssignment() {
                       disabled={loading}
                     >
                       <img
-                        src="/role-teacher.png"
+                        src="/role-teacher.gif"
                         className="mb-4 w-32 md:w-44"
                       />
                       <label className="text-lg font-semibold">Teacher</label>

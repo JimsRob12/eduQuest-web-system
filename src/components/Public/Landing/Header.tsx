@@ -67,7 +67,7 @@ export default function Header() {
         <motion.p custom={0} className="text-sm md:text-base">
           {splitText("Welcome to Quiz Bee with You")}
         </motion.p>
-        <motion.h1 custom={1} className="mt-2 text-5xl md:text-7xl">
+        <motion.h1 custom={1} className="mt-2 text-5xl font-bold md:text-7xl">
           {splitText("The ")}
           <span className="relative">
             {splitText("best")}
@@ -84,7 +84,7 @@ export default function Header() {
           <br />
           <motion.span
             custom={3}
-            className="relative font-serif font-semibold italic text-purple-900 dark:text-purple-500"
+            className="font-pixel relative font-semibold italic text-purple-900 dark:text-purple-500"
           >
             {splitText("Knowledge")}
             <motion.img
@@ -97,7 +97,7 @@ export default function Header() {
           {splitText("and")}
           <motion.span
             custom={5}
-            className="relative z-10 font-serif font-semibold italic text-yellow-500"
+            className="font-pixel relative z-10 font-semibold italic text-yellow-500"
           >
             {" "}
             {splitText("Play")}

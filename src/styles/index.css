@@ -17,3 +17,23 @@ input::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+@keyframes bounce-horizontal {
+  0%,
+  100% {
+    transform: translateY(-25%);
+  }
+  50% {
+    transform: translateY(25%);
+  }
+}
+
+.pixelated-arrow {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #8b40ec; /* purple-600 */
+  image-rendering: pixelated;
+  animation: bounce-horizontal 0.5s infinite;
+}
