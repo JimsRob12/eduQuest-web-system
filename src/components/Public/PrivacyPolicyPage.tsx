@@ -48,7 +48,7 @@ export default function PrivacyPolicyPage() {
       {/* Right Section: Content */}
       <motion.div
         variants={containerVariants}
-        className="space-y-4 overflow-y-auto text-xs md:h-[calc(100vh-12rem)] md:text-sm"
+        className="space-y-4 overflow-y-auto font-default text-xs md:h-[calc(100vh-12rem)] md:text-sm"
       >
         {/* Each Content Section */}
         {policyData.map(({ title, content, isList }, index) => (

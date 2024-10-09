@@ -16,17 +16,6 @@ const staggerContainer: Variants = {
   },
 };
 
-const wiggle: Variants = {
-  animate: {
-    rotate: [0, 7, -5, 5, -5, 0],
-    transition: {
-      duration: 5,
-      repeat: Infinity,
-      repeatType: "loop",
-    },
-  },
-};
-
 export default function LandingPage() {
   return (
     <>
@@ -36,18 +25,6 @@ export default function LandingPage() {
         variants={staggerContainer}
         className="relative my-8 flex h-[calc(100%-12rem)] w-full flex-col items-center justify-center space-y-8"
       >
-        <motion.img
-          src="/eyy.png"
-          className="absolute -bottom-3 right-14 z-10 w-16 md:bottom-8 md:right-28 md:w-44"
-          variants={wiggle}
-          animate="animate"
-        />
-        <img
-          src="/eyy-extension.png"
-          className="absolute -bottom-12 -right-10 z-0 w-32 md:-right-28 md:w-80"
-          // variants={slightWiggle}
-          // animate="animate"
-        />
         <Header />
         <CallToActionButtons />
       </motion.div>

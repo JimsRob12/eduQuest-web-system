@@ -64,9 +64,17 @@ export default function Header() {
       className="flex w-full flex-col items-center justify-center space-y-6 text-center"
     >
       <motion.div>
-        <motion.p custom={0} className="text-sm md:text-base">
-          {splitText("Welcome to Quiz Bee with You")}
-        </motion.p>
+        <motion.div className="relative flex w-full justify-between">
+          <motion.img src="student-welcome.gif" className="w-20" />
+          <motion.p
+            custom={0}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 -translate-y-1/2 transform text-sm md:text-base"
+          >
+            {splitText("Welcome to Quiz Bee with You")}
+          </motion.p>
+          <motion.img src="wizard-welcome.gif" className="w-48" />
+        </motion.div>
+
         <motion.h1 custom={1} className="mt-2 text-5xl font-bold md:text-7xl">
           {splitText("The ")}
           <span className="relative">
@@ -102,13 +110,13 @@ export default function Header() {
             {" "}
             {splitText("Play")}
             <br />
-            <motion.img
+            {/* <motion.img
               custom={6}
               variants={elementFadeIn}
               src="/arrow-down.png"
               className="absolute -bottom-8 -right-8 z-0 w-14 md:-bottom-14 md:-right-14 md:w-24"
               animate={{ rotate: 20 }}
-            />
+            /> */}
           </motion.span>{" "}
           {splitText("Come Together")}
         </motion.h1>

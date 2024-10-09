@@ -35,7 +35,7 @@ export default function TermsPage() {
 
       <motion.div
         variants={itemVariants}
-        className="h-[calc(100vh-15rem)] space-y-4 overflow-y-auto text-xs md:text-sm"
+        className="h-[calc(100vh-15rem)] space-y-4 overflow-y-auto font-default text-xs md:text-sm"
       >
         <motion.p variants={itemVariants}>
           By accessing and using the Quiz Bee with You platform, you agree to
