@@ -6,7 +6,7 @@ export function BlogCarousel() {
   ));
 
   return (
-    <div className="-mx-6 w-screen bg-zinc-50 px-6 py-10 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16">
+    <div className="-mx-6 w-screen px-6 py-10 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16">
       <div className="pl-4">
         <h2 className="mb-2 font-sans text-lg font-bold text-black dark:text-white md:mb-4 md:text-4xl">
           <span className="relative">

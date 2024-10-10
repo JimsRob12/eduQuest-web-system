@@ -6,6 +6,7 @@ import {
   Copy,
   EllipsisVertical,
   FileQuestion,
+  Play,
   Plus,
   Trash,
 } from "lucide-react";
@@ -27,7 +28,7 @@ interface QuizCardProps {
   user: User;
   onEdit: (quizId: string) => void;
   onDelete: (quizId: string) => void;
-  nav : any;
+  nav: ReturnType<typeof useNavigate>;
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({
@@ -35,7 +36,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
   user,
   onEdit,
   onDelete,
-  nav
+  nav,
 }) => {
   const handleCopyCode = () => {
     if (quiz.class_code) {
@@ -53,16 +54,16 @@ const QuizCard: React.FC<QuizCardProps> = ({
     }
   };
 
-  const handleStartGame = () => {   
-    nav("professor/class/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby")
-  }
+  const handleStartGame = () => {
+    nav("professor/class/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby");
+  };
 
   return (
     <div key={quiz.quiz_id} className="my-2 flex gap-4 rounded border p-3">
       <img
         src={quiz.cover_image || "/edu-quest-logo.png"}
         alt={quiz.title}
-        className={`h-28 object-cover ${!quiz.cover_image && "rounded bg-zinc-100 p-2 dark:bg-zinc-800"}`}
+        className={`hidden h-28 object-cover md:block ${!quiz.cover_image && "rounded bg-zinc-100 p-2 dark:bg-zinc-800"}`}
       />
       <div className="flex flex-grow flex-col justify-between">
         <div className="space-y-1">
@@ -76,9 +77,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
             {quiz.status}
           </p>
           <h3 className="text-lg font-bold">{quiz.title}</h3>
-          <div className="flex items-center gap-1 opacity-60">
-            <FileQuestion size={18} />
-            <p className="text-sm">
+          <div className="flex items-center gap-1 text-xs opacity-60 md:text-sm">
+            <FileQuestion className="size-4 md:size-5" />
+            <p>
               {quiz.quiz_questions?.length ?? 0} Question
               {quiz.quiz_questions?.length !== 1 ? "s" : ""}
               {quiz.subject && (
@@ -92,7 +93,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
           {formatTimeAgo(new Date(quiz.created_at))}
         </p>
       </div>
-      <div className="flex flex-col items-end justify-between">
+      <div className="flex flex-col items-end justify-between gap-1">
         <Popover>
           <PopoverTrigger>
             <EllipsisVertical size={18} />
@@ -108,21 +109,21 @@ const QuizCard: React.FC<QuizCardProps> = ({
             </Button>
           </PopoverContent>
         </Popover>
-        {quiz.status.toLowerCase() === "active" && 
-          <Button            
-            className="gap-1"
+        {quiz.status.toLowerCase() === "active" && (
+          <Button
+            className="h-fit gap-1 text-xs md:h-full md:text-sm"
             onClick={handleStartGame}
           >
-            <Copy size={14} />
+            <Play size={14} />
             Start Game
           </Button>
-        }
+        )}
         {quiz.status.toLowerCase() === "draft" ? (
           <Button onClick={() => onEdit(quiz.quiz_id)}>Continue editing</Button>
         ) : (
           <Button
             variant="secondary"
-            className="gap-1"
+            className="h-fit gap-1 text-xs md:h-full md:text-sm"
             onClick={handleCopyCode}
           >
             <Copy size={14} />
@@ -139,10 +140,9 @@ export default function ProfessorDashboard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { quizzes = [], isPending, isError } = useGetQuizzes();
-    
+
   const safeQuizzes: Quiz[] = Array.isArray(quizzes) ? quizzes : [quizzes];
-  console.log(safeQuizzes);
-  
+
   const activeQuizzes = safeQuizzes.filter(
     (quiz: Quiz) => quiz.status === "active",
   );
