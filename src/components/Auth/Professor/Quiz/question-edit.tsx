@@ -21,7 +21,7 @@ export default function QuizEditQuestion() {
     updateRightAnswer,
   } = useQuestionEdit();
 
-  const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF8C33"];
+  const colors = ["#FF5733", "#17c237", "#3357FF", "#FF33A1", "#FF8C33"];
   const lightColors = ["#FF8C66", "#37a753", "#668CFF", "#FF66C2", "#FFB366"];
   const isTabletorMobile = useMediaQuery({ query: "(max-width: 1024px)" });
 
@@ -66,7 +66,7 @@ export default function QuizEditQuestion() {
 
   return (
     <div className="mt-8 flex w-full items-center justify-center md:h-[calc(100%-8rem)]">
-      <div className="w-[70vw] rounded-xl bg-zinc-200 p-4 dark:bg-zinc-900">
+      <div className="w-[70vw] rounded-xl bg-slate-300 p-4 dark:bg-zinc-900">
         <Textarea
           value={question}
           onChange={(e) => updateQuestion(e.target.value)}
@@ -176,7 +176,7 @@ export default function QuizEditQuestion() {
         )}
         {questionType.toLowerCase() === "fill in the blank" && (
           <>
-            <div className="relative my-4 flex items-center justify-center rounded-lg bg-zinc-950 p-4">
+            <div className="relative my-4 flex items-center justify-center rounded-lg bg-slate-400 p-4 dark:bg-zinc-950">
               <h2 className="absolute left-4 top-2 text-sm font-semibold">
                 Correct Answer
               </h2>
@@ -188,7 +188,7 @@ export default function QuizEditQuestion() {
               />
             </div>
 
-            <div className="relative flex flex-col items-center justify-center rounded-lg bg-zinc-950 p-4">
+            <div className="relative flex flex-col items-center justify-center rounded-lg bg-slate-400 p-4 dark:bg-zinc-950">
               <h2 className="absolute left-4 top-2 text-sm font-semibold opacity-50">
                 Student View
               </h2>
@@ -208,7 +208,7 @@ export default function QuizEditQuestion() {
                   ? rightAnswer.split("").map((char, index) => (
                       <div
                         key={index}
-                        className="flex size-12 items-center justify-center rounded-lg bg-zinc-700 text-center text-white"
+                        className="flex size-12 items-center justify-center rounded-lg bg-slate-700 text-center text-white dark:bg-zinc-700"
                       >
                         {char}
                       </div>

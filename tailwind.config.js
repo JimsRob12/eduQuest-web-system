@@ -16,8 +16,9 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Rubik", "sans-serif"],
+        sans: ["DotGothic16", "sans-serif"],
         serif: ["Playfair Display", "serif"],
+        default: ["Rubik", "sans-serif"],
       },
       colors: {},
       keyframes: {

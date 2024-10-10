@@ -15,7 +15,7 @@ export default function Recap() {
             learn
           </div>
         </div>
-        <h1 className="text-center text-5xl font-black md:text-7xl">
+        <h1 className="text-center text-5xl font-bold md:text-7xl">
           <span className="flex items-center justify-center gap-2 text-zinc-900">
             <img src="/flower.png" className="w-10" />
             let's get
@@ -25,7 +25,6 @@ export default function Recap() {
         </h1>
         <CallToActionButtons
           align="center"
-          hideArrow
           firstButtonNavLink="NavLink"
           firstButtonText="Sign up"
           firstButtonTo="/signup"

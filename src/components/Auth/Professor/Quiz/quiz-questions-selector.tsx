@@ -90,10 +90,10 @@ export default function MaxQuestionsSelector() {
               key={option}
               onClick={() => handleOptionClick(option)}
               variant={"outline"}
-              className={`rounded-lg p-4 py-6 text-black shadow-lg transition-transform hover:scale-105 dark:text-white ${selectedOption === option ? "bg-gradient-to-r from-purple-500 to-indigo-500" : ""}`}
+              className={`rounded-lg border-2 p-4 py-6 shadow-lg transition-transform hover:scale-105 ${selectedOption === option ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white" : "text-black dark:text-white"}`}
               disabled={isLoading}
             >
-              <span className="text-white">{option} Questions</span>
+              <span>{option} Questions</span>
             </Button>
           ))}
         </div>

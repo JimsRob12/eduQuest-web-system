@@ -1,5 +1,3 @@
-// File: AboutPage.tsx
-
 import React, { ReactNode } from "react";
 import { motion } from "framer-motion";
 
@@ -25,7 +23,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   subtitle,
   className = "",
 }) => (
-  <h2 className={`text-2xl font-bold md:text-4xl ${className}`}>
+  <h2 className={`text-2xl md:text-4xl ${className}`}>
     {title}
     <br />
     <span className="opacity-50">{subtitle}</span>

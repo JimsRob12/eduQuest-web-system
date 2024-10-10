@@ -151,16 +151,37 @@ const App: React.FC = () => {
       <Toaster
         position="top-center"
         gutter={12}
-        containerStyle={{ margin: "8px" }}
+        containerStyle={{
+          margin: "8px",
+        }}
         toastOptions={{
-          success: { duration: 3000 },
-          error: { duration: 5000 },
+          success: {
+            duration: 3000,
+            style: {
+              background: "#5cdb5c",
+              color: "#000",
+            },
+            icon: "🎉",
+          },
+          error: {
+            duration: 5000,
+            style: {
+              background: "#ff6b6b",
+              color: "#000",
+            },
+            icon: "💔",
+          },
           style: {
             fontSize: "16px",
             maxWidth: "500px",
             padding: "16px 24px",
-            backgroundColor: "white",
-            color: "var(--color-grey-700)",
+            backgroundColor: "#f0f0f0",
+            color: "#000",
+            border: "4px solid #000",
+            boxShadow: "4px 4px 0 #000",
+            fontFamily: "'Press Start 2P', cursive",
+            imageRendering: "pixelated",
+            borderRadius: "0",
           },
         }}
       />
