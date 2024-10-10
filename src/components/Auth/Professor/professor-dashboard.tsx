@@ -27,6 +27,7 @@ interface QuizCardProps {
   user: User;
   onEdit: (quizId: string) => void;
   onDelete: (quizId: string) => void;
+  nav : any;
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({
@@ -34,6 +35,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
   user,
   onEdit,
   onDelete,
+  nav
 }) => {
   const handleCopyCode = () => {
     if (quiz.class_code) {
@@ -50,6 +52,10 @@ const QuizCard: React.FC<QuizCardProps> = ({
       toast.error("No quiz code available.");
     }
   };
+
+  const handleStartGame = () => {   
+    nav("professor/class/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby")
+  }
 
   return (
     <div key={quiz.quiz_id} className="my-2 flex gap-4 rounded border p-3">
@@ -102,6 +108,15 @@ const QuizCard: React.FC<QuizCardProps> = ({
             </Button>
           </PopoverContent>
         </Popover>
+        {quiz.status.toLowerCase() === "active" && 
+          <Button            
+            className="gap-1"
+            onClick={handleStartGame}
+          >
+            <Copy size={14} />
+            Start Game
+          </Button>
+        }
         {quiz.status.toLowerCase() === "draft" ? (
           <Button onClick={() => onEdit(quiz.quiz_id)}>Continue editing</Button>
         ) : (
@@ -124,8 +139,10 @@ export default function ProfessorDashboard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { quizzes = [], isPending, isError } = useGetQuizzes();
-
+    
   const safeQuizzes: Quiz[] = Array.isArray(quizzes) ? quizzes : [quizzes];
+  console.log(safeQuizzes);
+  
   const activeQuizzes = safeQuizzes.filter(
     (quiz: Quiz) => quiz.status === "active",
   );
@@ -207,6 +224,7 @@ export default function ProfessorDashboard() {
                 user={user!}
                 onEdit={handleEditQuiz}
                 onDelete={handleDeleteQuiz}
+                nav={navigate}
               />
             ))
           ) : (
@@ -222,6 +240,7 @@ export default function ProfessorDashboard() {
                 user={user!}
                 onEdit={handleEditQuiz}
                 onDelete={handleDeleteQuiz}
+                nav={navigate}
               />
             ))
           ) : (

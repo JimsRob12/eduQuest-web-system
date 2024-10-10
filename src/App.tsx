@@ -31,6 +31,10 @@ import MaxQuestionsSelector from "./components/Auth/Professor/Quiz/quiz-question
 import QuizEditQuestion from "./components/Auth/Professor/Quiz/question-edit";
 import EmailVerification from "./components/Auth/EmailVerification";
 
+// dummy
+import { GameLobby } from "./components/Auth/Professor/dummy/room";
+import SGameLobby from "./components/Auth/Student/dummy/room";
+
 // Define route configurations
 const publicRoutes = [
   { path: "/", element: <LandingPage /> },
@@ -64,10 +68,17 @@ const professorRoutes = [
     path: "/professor/quiz/:quizId/add-question/:type",
     element: <AddQuestion />,
   },
+  {
+    path: "/professor/dashboard/professor/class/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby",
+    element: <GameLobby />,
+  }
 ];
 
 const studentRoutes = [
   { path: "/student/dashboard", element: <StudentDashboard /> },
+
+  { path: "/student/join/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby", 
+    element: <SGameLobby /> },
 ];
 
 const App: React.FC = () => {

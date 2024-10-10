@@ -10,6 +10,7 @@ export function useGetQuizzes() {
     queryKey: ["quizzes", ownerId],
     queryFn: async () => {
       const data = await getQuizzesByOwnerId(ownerId!);
+            
       if (!data) {
         throw new Error("Quiz not found");
       }
