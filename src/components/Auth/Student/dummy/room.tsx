@@ -5,10 +5,9 @@ import {
     gameEventHandler, 
     getQuizQuestionsStud,
     updateLeaderBoard,
-    reconnectGame,
-    getTimer,
+    reconnectGame,    
     getEndGame,
-    getShowLeaderboard,
+    getExitLeaderboard,
     submitAnswer } from '@/services/api/apiRoom';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +30,7 @@ const SGameLobby: React.FC = () => {
     const navigate = useNavigate()
     const classCode = '9f945506-f7a8-483c-97d9-b237d0b2a5bd';
 
+    
     useEffect(() => {
         const fetchParticipants = async () => {
           
@@ -51,58 +51,55 @@ const SGameLobby: React.FC = () => {
                                                                                
     }, [classCode]);
 
-    useEffect(() => {        
+        
+    useEffect(() => {    
+        
         const getQuestion = async () => {
             if (gameStart) {
-                const question = await getQuizQuestionsStud(classCode);
-                setQuestions(question)
-                setTimeLeft(question[0].time)                
+                const question = await getQuizQuestionsStud(classCode, setTimeLeft);                                
+                setQuestions(question)                            
+                
             }           
         }
         getQuestion()
             
     }, [gameStart]);
 
-       
-    useEffect(() => {  
-
-        const handleNextQuestion = async () => {                
+    
+    const handleNextQuestion = async () => {                
             
-            await getEndGame(setGameStart)
+        await getEndGame(setGameStart)
 
-            setCurrentQuestionIndex(currentQuestionIndex + 1);            
-            const question = await getQuizQuestionsStud(classCode);
-            console.log(question);
-            
-            setQuestions(question)
-            setTimeLeft(question[0].time)              
-   
+        setCurrentQuestionIndex(currentQuestionIndex + 1);            
+        const question = await getQuizQuestionsStud(classCode, setTimeLeft);
+        console.log(question);
+              
+        setQuestions(question)                         
     };
-
-        const startTimer = async () => {                        
-            await getTimer(setTimeLeft)
-            console.log(timeLeft);
-            
-         }
-
+    useEffect(() => {  
+                   
         if (gameStart && timeLeft >= 0) {            
             const interval = setInterval(() => {
                 setTimeLeft((prevTime) => Math.max(prevTime - 1, 0)); 
                 }, 1000);
                 
             if (timeLeft <= 0) {
-                getShowLeaderboard(setLeaderBoard);
                 setLeaderBoard(true)
-                setTimeout(() => {
-                    setLeaderBoard(false)
+                
+                setTimeout(() => {         
+                    getExitLeaderboard(setLeaderBoard);                        
                     handleNextQuestion();
-                    startTimer();
+                    
                 }, 10000); 
+                
+
             }
             return () => {
                 clearInterval(interval);
             }
         }
+      
+       
                  
     }, [timeLeft, gameStart]);        
 
@@ -167,15 +164,15 @@ const SGameLobby: React.FC = () => {
             <div>
                 <h1>Question {currentQuestionIndex + 1}</h1>
                 <div style={styles.question}>
-                    <h2>{questions[0].question}</h2>
+                    <h2>{questions.question}</h2>
                     <div style={styles.choices}>
-                        {questions[0].distractor.map((choice, index) => (
+                        {questions.distractor.map((choice, index) => (
                             <button 
                                 onClick={() => 
-                                    handleAnswer(questions[0].quiz_question_id, 
+                                    handleAnswer(questions.quiz_question_id, 
                                     user?.id,
                                     choice,
-                                    questions[0].points
+                                    questions.points
                                 )}
                                 key={index} 
                                 className='bg-blue-500 m-2 p-2 text-white

@@ -7,11 +7,15 @@ import { getClassById } from "@/services/api/apiClass";
 
 // eto api
 import { joinRoom } from "@/services/api/apiRoom";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const AnimalIconInput = () => {
   const [classCode, setClassCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
 
+  const {user} = useAuth()
+  const navigate = useNavigate()
   const {
     data: classData,
     isError,
@@ -24,32 +28,31 @@ const AnimalIconInput = () => {
   });
 
   // eto yung code pre 
-  // const handleJoinClass = async (event: React.FormEvent) => {
-  //   event.preventDefault();
-  //   // Add logic to handle joining the class using classCode
-  //   const studentId = user ? user.id : null;
-  //   const name = user ? user.name : "";
-  //   const success = await joinRoom(classCode, studentId!, name);
-  //   if (success){      
-  //     navigate('/student/join/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby')
-  //   }
-    
-  //   setClassCode(''); 
-  // };
-
-  const handleJoin = async () => {
-    if (classCode.length < 36) {
-      alert("Please enter a valid class code (36 characters)");
-      return;
-    }
-
-    setIsJoining(true);
-    try {
-      await refetch();
-    } finally {
-      setIsJoining(false);
-    }
+  const handleJoin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    // Add logic to handle joining the class using classCode
+    const studentId = user ? user.id : null;
+    const name = user ? user.name : "";
+    const success = await joinRoom(classCode, studentId!, name);
+    if (success){      
+      navigate('/student/join/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby')
+    }    
+    setClassCode(''); 
   };
+
+  // const handleJoin = async () => {
+  //   if (classCode.length < 36) {
+  //     alert("Please enter a valid class code (36 characters)");
+  //     return;
+  //   }
+
+  //   setIsJoining(true);
+  //   try {
+  //     await refetch();
+  //   } finally {
+  //     setIsJoining(false);
+  //   }
+  // };
 
   return (
     <div className="flex h-[calc(100%-10rem)] flex-col items-center justify-center">

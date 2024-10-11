@@ -7,7 +7,7 @@ import {
     getQuestionsProf,
     sendNextQuestion,
     sendEndGame,
-    sendShowLeaderboard, 
+    sendExitLeaderboard, 
     sendTimer} from '@/services/api/apiRoom';
 
 
@@ -39,8 +39,8 @@ export const GameLobby: React.FC = () => {
         const getQuestions = async () => {
             if (gameStart) {
                 const questions = await getQuestionsProf(classCode);
-                setQuestions(questions)
-                setTimeLeft(questions[0].time)                
+                setQuestions(questions)                
+                setTimeLeft(questions[0].time)                                
             }           
         }
         getQuestions()
@@ -51,52 +51,56 @@ export const GameLobby: React.FC = () => {
         if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
             const index = currentQuestionIndex + 1            
-            sendNextQuestion(questions[index].quiz_question_id,
+            await sendNextQuestion(questions[index].quiz_question_id,
                 questions[index].question, questions[index].distractor,
                 questions[index].time, questions[index].image_url,
                 questions[index].points, questions[index].question_type,
-                questions[index].order, classCode
+                questions[index].order, classCode            
             )
-            sendTimer(classCode,questions[currentQuestionIndex].time) 
-        } else {
-            
+            setTimeLeft(questions[currentQuestionIndex].time)
+        } else {            
             sendEndGame(classCode)
-            setGameStart(false);            
+            setGameStart(false);
+            // sendShowLeaderboard(classCode)            
         }
     };
 
     useEffect(() => {  
-        const startTimer = async () => {                        
-            await getTimer(setTimeLeft)
-            console.log(timeLeft);
-            
-         }
-   
+        
+       
         if (gameStart && timeLeft >= 0) {            
             const interval = setInterval(() => {
                 setTimeLeft((prevTime) => Math.max(prevTime - 1, 0)); 
                 }, 1000);
                 
             if (timeLeft <= 0) {
-                sendShowLeaderboard(classCode);
-                setLeaderBoard(true)
-                handleNextQuestion();
-                setTimeout(() => {
-                    setLeaderBoard(false)
-                    startTimer()                    
+                
+                setLeaderBoard(true)                
+                setTimeout(() => {         
+                    handleNextQuestion();
+                    sendExitLeaderboard(classCode);
+                    setLeaderBoard(false)               
                 }, 10000); 
+                                
+                
             }
             return () => {
                 clearInterval(interval);
             }
         }
-                 
+      
     }, [timeLeft, gameStart]);  
 
     
 
-    const startHandler = () => {
-        startGame(classCode)
+    const startHandler = () => {                
+        if(students.length) {
+            startGame(classCode)
+        } else {
+            console.log("no students yet joined");
+            
+        }
+        
     }
     return (
         leaderBoard  ? ( <>

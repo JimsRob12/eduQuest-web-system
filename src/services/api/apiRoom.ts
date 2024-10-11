@@ -1,11 +1,9 @@
-
-import { send } from "process";
 import supabase from "../supabase";
 
 // Function to start the game and notify all subscribers
 export async function startGame(classCode: string) {
 
-    const { data, error: updateError } = await supabase
+    const { error: updateError } = await supabase
         .from('quiz')
         .update({ status: 'in game' })
         .eq('class_code', classCode)
@@ -15,8 +13,7 @@ export async function startGame(classCode: string) {
         console.error('Error updating quiz status:', updateError);
         return;
     } 
-    
-    
+        
     const channel = supabase.channel('room1');
     
     channel.send({
@@ -45,71 +42,100 @@ export async function reconnectGame(classCode: string) {
 }
 
 export async function endGame(classCode: string) {
-    const { data, error } = await supabase
-        .from("temp_room")
-        .delete()
-        .eq('class_code', classCode);
+    // const { data, error } = await supabase
+    //     .from("temp_room")
+    //     .delete()
+    //     .eq('class_code', classCode);
 
-    if (error) {
-        console.error("Game not ended:", error);
-        return false;
-    }
+    // if (error) {
+    //     console.error("Game not ended:", error);
+    //     return false;
+    // }
 
-    console.log("Game Ended:", data);
+    const { error: updateError } = await supabase
+        .from('quiz')
+        .update({ status: 'active' })
+        .eq('class_code', classCode)
+        .select()
+    
+    if (updateError) {
+        console.error('Error updating quiz status:', updateError);
+        return;
+    } 
+
+    // console.log("Game Ended:", data);
     return true;
 }
 
 export async function getParticipants(classCode: string, setStudents:any) {
     const { data: initialParticipants, error } = await supabase
-        .from('temp_room')
-        .select('*')
-        .eq('class_code', classCode);
+    .from('temp_room')
+    .select('*')
+    .eq('class_code', classCode);
 
-      if (error) {
+    if (error) {
         console.error('Error fetching participants:', error);
         return;
-      }
-
-      // Map the initial participants into the correct format
-      const formattedParticipants = initialParticipants.map((student) => ({
+    }
+    console.log(initialParticipants);
+    
+    
+    const formattedParticipants = initialParticipants.map((student) => ({
         placement: 0,
         quiz_student_id: student.quiz_student_id,
         right_answer: 0,
         score: 0,
         student_name: student.student_name,
         wrong_answer: 0,
-      }));
+    }));
 
-      setStudents(formattedParticipants);
+    setStudents(formattedParticipants);
 
     supabase
-    .channel('schema-db-changes')
+    .channel('db-changes')
     .on(
     'postgres_changes',
     {
         event: 'INSERT',
         schema: 'public',
-        table: "temp_room"
+        table: 'temp_room',
     },
-        (payload) => {
-            const newStudent = {
-                placement: 0,
-                quiz_student_id: payload.new.quiz_student_id,
-                right_answer: 0,
-                score: 0,
-                student_name: payload.new.student_name,
-                wrong_answer: 0,
-            };
-          
-            if (classCode === payload.new.class_code) {
-                setStudents((prevStudent) => [...prevStudent, newStudent])
-                
-              
-                            
-            }   
+    (payload) => {
+        const newStudent = {
+        id: payload.new.id,
+        placement: 0,
+        quiz_student_id: payload.new.quiz_student_id,
+        right_answer: 0,
+        score: 0,
+        student_name: payload.new.student_name,
+        wrong_answer: 0,
+        };
+
+        // If classCode matches, add the new student
+        if (classCode === payload.new.class_code) {
+        setStudents((prevStudents) => [...prevStudents, newStudent]);
+        console.log("Student added:", newStudent);
         }
+    }
     )
-    .subscribe()
+    .on(
+    'postgres_changes',
+    {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'temp_room',
+    },
+    (payload) => {
+        setStudents((prevStudents) =>
+            prevStudents.filter(
+            (student) => student.id !== payload.old.id
+            )
+        );
+        console.log("Student removed:", payload.old);
+    }
+    )
+    .subscribe();
+    
 
 }
 
@@ -235,10 +261,11 @@ export async function sendNextQuestion(quiz_question_id, question,
     if (fetchError) {
         console.error("Error fetching questions from temp_room_questions:", fetchError);        
     }
-    
-    
-    
+            
     if (existingQuestions) {
+
+        const startTime = new Date().toISOString();    
+        const endTime = new Date(new Date().getTime() + time * 1000).toISOString(); 
         
         const { error: updateError } = await supabase
             .from('temp_room_questions')
@@ -250,7 +277,9 @@ export async function sendNextQuestion(quiz_question_id, question,
                 image_url: image_url,
                 points: points,
                 question_type: question_type,
-                order: order
+                order: order,
+                start_time: startTime,
+                end_time: endTime
             })
             .eq('id', existingQuestions.id);
     
@@ -262,6 +291,8 @@ export async function sendNextQuestion(quiz_question_id, question,
         console.log(`Updated question for class code ${classCode}.`);
     } else {
         
+        const startTime = new Date().toISOString();    
+        const endTime = new Date(new Date().getTime() + time * 1000).toISOString(); 
         const { error: insertError } = await supabase
             .from('temp_room_questions')
             .insert([{
@@ -273,7 +304,9 @@ export async function sendNextQuestion(quiz_question_id, question,
                 image_url: image_url,
                 points: points,
                 question_type: question_type,
-                order: order
+                order: order,
+                start_time: startTime,
+                end_time: endTime
             }]);
     
         if (insertError) {
@@ -289,27 +322,43 @@ export async function sendNextQuestion(quiz_question_id, question,
 }
 
 export async function sendTimer(classCode, time) {
+             
     const channel = supabase.channel('room1');
-
-    await channel.send({
+    const startTime = new Date().toISOString();
+    
+    const endTime = new Date(new Date().getTime() + time * 1000).toISOString(); 
+    channel.send({
         type: 'broadcast',
-        event: 'timer-started',
-        payload: { classCode, startTime: new Date().toISOString(), duration: time },
-      });
+        event: 'timer',
+        payload: { 
+            classCode, 
+            startTime, 
+            endTime,        
+        },
+    });
+    channel.unsubscribe()
+    console.log(`timer sent: ${classCode}`);
 }
 
 export async function getTimer(setTimeLeft) {
+        
+    const channel = supabase.channel('room1')
+    .on('broadcast', { event: 'timer' }, (payload) => {
+        console.log('Timer started event received:', payload.payload);
+        
+        const { startTime, endTime } = payload.payload;
+    
+        const startTimeDate = new Date(startTime);
+        const endTimeDate = new Date(endTime);
+        
+        const currentTime = new Date();
+        
+        const totalDuration = Math.floor((endTimeDate - startTimeDate) / 1000); 
+        const elapsedTime = Math.floor((currentTime - startTimeDate) / 1000);  
+        const remainingTime = Math.max(totalDuration - elapsedTime, 0); 
 
-    const channel = supabase.channel(`room1`)
-    .on('broadcast', { event: 'timer-started' }, (payload) => {
-        console.log('Game started event received:', payload.payload);
-              
-        const { startTime, duration } = payload.payload;        
-        const startTimeDate = new Date(startTime);        
-        const currentTime = new Date();        
-        const elapsedTime = Math.floor((currentTime - startTimeDate) / 1000);         
-        const remainingTime = duration - elapsedTime;           
-        setTimeLeft(Math.max(remainingTime, 0));
+        
+        setTimeLeft(remainingTime);
     })
     .subscribe();
 
@@ -326,19 +375,9 @@ export async function sendEndGame(classCode) {
         payload: { classCode }, 
     });
     channel.unsubscribe()
-}
- 
-export async function sendShowLeaderboard(classCode) {
-    const channel = supabase.channel('room1');
-    
-    channel.send({
-        type: 'broadcast',
-        event: 'quiz-game-leaderboard',
-        payload: { classCode }, 
-    });
-    channel.unsubscribe()
-}
 
+    endGame(classCode)
+}
 export async function getEndGame(setGameStart) {
     const channel = supabase.channel(`room1`)
     .on('broadcast', { event: 'quiz-game-ended' }, (payload) => {
@@ -351,11 +390,24 @@ export async function getEndGame(setGameStart) {
     return () => channel.unsubscribe();
 }
  
-export async function getShowLeaderboard(setLeaderBoard) {
+export async function sendExitLeaderboard(classCode) {
+    const channel = supabase.channel('room1');
+    
+    channel.send({
+        type: 'broadcast',
+        event: 'quiz-next-question',
+        payload: { classCode }, 
+    });
+    
+    console.log("sent");
+    return () => channel.unsubscribe();
+    
+}
+export async function getExitLeaderboard(setLeaderBoard) {
     const channel = supabase.channel(`room1`)
-        .on('broadcast', { event: 'quiz-game-leaderboard' }, (payload) => {
+        .on('broadcast', { event: 'quiz-next-question' }, (payload) => {
             console.log('Game started event received:', payload);
-            setLeaderBoard(true);
+            setLeaderBoard(false);
         })
         .subscribe();
 
@@ -363,7 +415,34 @@ export async function getShowLeaderboard(setLeaderBoard) {
     return () => channel.unsubscribe();
 }
 
-export async function getQuizQuestionsStud(classCode: string) {
+const getRemainingTime = (start, end) => {
+    const startTime  = new Date(start);
+    const endTime  = new Date(end);
+    
+    const timeDifferenceInMillis = endTime - startTime;
+    
+    const timeDifferenceInSeconds = Math.floor(timeDifferenceInMillis / 1000);
+    
+    return timeDifferenceInSeconds
+}
+
+export async function getQuizQuestionsStud(classCode: string, setTimeLeft) {
+
+    // const { data: question, error } = await supabase
+    //     .from('temp_room_questions')
+    //     .select('*')
+    //     .eq('class_code', classCode)
+    //     .order('order', { ascending: true })
+    //     .single(); 
+
+    // if (error) {
+    //     console.error('Error fetching questions:', error);
+    //     return;
+    // }
+    // setTimeLeft(getRemainingTime(question.start_time, 
+    //     question.end_time))
+    // return question;
+
     return new Promise((resolve, reject) => {
         let question = [];
 
@@ -388,45 +467,25 @@ export async function getQuizQuestionsStud(classCode: string) {
                         image_url: payload.new.image_url,
                         points: payload.new.points,
                         question_type: payload.new.question_type,
-                        order: payload.new.order                
+                        order: payload.new.order,
+                        start_time:payload.new.start_time,
+                        end_time:payload.new.end_time,
+
                     };
 
                     // Check if the class_code matches
                     if (classCode === payload.new.class_code) {
-                        question = [newQuestion];
+                        
                         console.log("Question received: ", newQuestion);
-                        resolve(question); // Resolve the promise with the question array
+                        setTimeLeft(getRemainingTime(newQuestion.start_time, 
+                            newQuestion.end_time))
+                        resolve(newQuestion);
                     }
                 }
             )
             .subscribe();
     });
 }
-
-    // const { data: initialQuestion, error } = await supabase
-    //     .from('temp_room_questions')
-    //     .select('*')
-    //     .eq('class_code', classCode)
-    //     .order('order', { ascending: true }); 
-
-    // if (error) {
-    //     console.error('Error fetching questions:', error);
-    //     return;
-    // }
-        
-    // const question = initialQuestion.map((question) => ({
-    //     quiz_question_id: question.quiz_question_id,
-    //     class_code: question.class_code,
-    //     question: question.question,
-    //     distractor: question.distractor,
-    //     time: question.time,
-    //     image_url: question.image_url,
-    //     points: question.points,
-    //     question_type: question.question_type,
-    //     order: question.order,
-    // }));
-
-
 async function checkAnswer(questionId: string, 
     answer: string): Promise<boolean> {    
     const { error, count } = await supabase
