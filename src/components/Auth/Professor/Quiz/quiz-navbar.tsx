@@ -4,11 +4,21 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Play, Save, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import QuizSettingsForm from "./quiz-settings-form";
 import { useQuizData } from "./useQuizData";
 import QuizPreviewDialog from "./question-preview-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateQuizAndQuestions } from "@/services/api/apiQuiz";
+import { updateQuizAndQuestions, deleteQuiz } from "@/services/api/apiQuiz";
 import toast from "react-hot-toast";
 import Loader from "@/components/Shared/Loader";
 
@@ -21,9 +31,12 @@ export default function QuizNavbar() {
   const [editedTitle, setEditedTitle] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [formErrors, setFormErrors] = useState<string[]>([]); // for form of quiz settings
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   const queryClient = useQueryClient();
+
+  const isGenerateQuizPage = location.pathname.endsWith("/generate-quiz");
 
   const {
     quiz,
@@ -44,6 +57,19 @@ export default function QuizNavbar() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteQuiz(quiz!.owner_id, quizId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
+      queryClient.invalidateQueries({ queryKey: ["questions", quizId] });
+      toast.success("Quiz deleted successfully");
+      navigate(`/professor/dashboard`);
+    },
+    onError: (error) => {
+      toast.error("Failed to delete quiz: " + error.message);
+    },
+  });
+
   useEffect(() => {
     if (quiz) {
       setEditedTitle(quiz.title || "Untitled Quiz");
@@ -55,6 +81,24 @@ export default function QuizNavbar() {
       titleRef.current.focus();
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    const handleBackNavigation = (e: PopStateEvent) => {
+      if (isGenerateQuizPage) {
+        e.preventDefault();
+        setIsAlertOpen(true);
+      }
+    };
+
+    if (isGenerateQuizPage) {
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", handleBackNavigation);
+
+      return () => {
+        window.removeEventListener("popstate", handleBackNavigation);
+      };
+    }
+  }, [isGenerateQuizPage]);
 
   const handleTitleClick = () => setIsEditing(true);
 
@@ -103,21 +147,29 @@ export default function QuizNavbar() {
     }
   };
 
-  useEffect(() => {
-    const blockBackNavigation = () => {
-      window.history.pushState(null, "", window.location.href);
-    };
-
-    const generateQuizPattern = /\/professor\/quiz\/[^/]+\/generate-quiz/;
-    if (generateQuizPattern.test(location.pathname)) {
-      window.history.pushState(null, "", window.location.href);
-      window.addEventListener("popstate", blockBackNavigation);
-
-      return () => {
-        window.removeEventListener("popstate", blockBackNavigation);
-      };
+  const handleBackClick = () => {
+    if (isGenerateQuizPage) {
+      setIsAlertOpen(true);
+    } else {
+      navigate(-1);
     }
-  }, [location.pathname]);
+  };
+
+  const handleBackNavigation = () => {
+    setIsAlertOpen(false);
+    if (isGenerateQuizPage && quiz && quizId) {
+      deleteMutation.mutate();
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const handleCancelBackNavigation = () => {
+    setIsAlertOpen(false);
+    if (isGenerateQuizPage) {
+      window.history.pushState(null, "", window.location.href);
+    }
+  };
 
   if (isPending) return <Loader />;
   if (isError) return <div>Error loading quiz data</div>;
@@ -125,7 +177,7 @@ export default function QuizNavbar() {
   return (
     <div className="-mx-6 flex w-screen flex-wrap items-center justify-between px-6 py-4 shadow-xl md:-mx-12 lg:-mx-16">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate(-1)}>
+        <button onClick={handleBackClick}>
           <ChevronLeft className="rounded border p-1" />
         </button>
         {isEditing ? (
@@ -187,6 +239,31 @@ export default function QuizNavbar() {
         </Button>
       </div>
       <QuizPreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} />
+      {isGenerateQuizPage && (
+        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+          <AlertDialogContent className="dark:text-white">
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Are you sure you want to go back?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                If you go back, your current quiz progress will be discarded and
+                the quiz will be deleted. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelBackNavigation}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleBackNavigation}>
+                {deleteMutation.isPending
+                  ? "Deleting..."
+                  : "Delete and Go Back"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

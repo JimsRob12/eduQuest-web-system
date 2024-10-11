@@ -71,14 +71,16 @@ const professorRoutes = [
   {
     path: "/professor/dashboard/professor/class/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby",
     element: <GameLobby />,
-  }
+  },
 ];
 
 const studentRoutes = [
   { path: "/student/dashboard", element: <StudentDashboard /> },
 
-  { path: "/student/join/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby", 
-    element: <SGameLobby /> },
+  {
+    path: "/student/join/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby",
+    element: <SGameLobby />,
+  },
 ];
 
 const App: React.FC = () => {
