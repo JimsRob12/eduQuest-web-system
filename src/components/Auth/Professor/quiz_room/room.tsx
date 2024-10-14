@@ -14,9 +14,16 @@ import { QuizQuestions as Questions } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Student {
   student_name: string;
+  student_avatar: string;
 }
 
 const GameLobby: React.FC = () => {
@@ -151,11 +158,28 @@ const GameLobby: React.FC = () => {
         </div>
         <div className="w-full max-w-md border-t border-gray-300 pt-4">
           {students.length > 0 ? (
-            students.map((student, index) => (
-              <div key={index} className="border-b border-gray-200 py-2">
-                {student.student_name}
-              </div>
-            ))
+            students.map((student, index) => {
+              console.log(student.student_avatar);
+              return (
+                <TooltipProvider delayDuration={100} key={index}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center border-b border-gray-200 py-2">
+                        <img
+                          src={student.student_avatar}
+                          alt={`${student.student_name}'s avatar`}
+                          className="size-12 rounded-full object-cover"
+                        />
+                        <p className="ml-4">{student.student_name}</p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add to library</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            })
           ) : (
             <div>Waiting for students to join..</div>
           )}

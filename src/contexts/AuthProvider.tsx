@@ -58,7 +58,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           role: data.session.user.user_metadata.role || null,
           avatar:
             data.session.user.user_metadata.picture ||
-            "https://w7.pngwing.com/pngs/680/217/png-transparent-avatar-man-8-bit-guy-dude-gaming-graphics-computer-generated-technology.png",
+            "https://cdn.vectorstock.com/i/1000v/95/74/graduation-cap-student-avatar-pixel-art-cartoon-vector-17509574.jpg",
         });
         queryClient.invalidateQueries({ queryKey: ["session"] });
       }
@@ -78,7 +78,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           role: session.user.user_metadata.role || null,
           avatar:
             data.session.user.user_metadata.picture ||
-            "https://w7.pngwing.com/pngs/680/217/png-transparent-avatar-man-8-bit-guy-dude-gaming-graphics-computer-generated-technology.png",
+            "https://cdn.vectorstock.com/i/1000v/95/74/graduation-cap-student-avatar-pixel-art-cartoon-vector-17509574.jpg",
         });
       }
       queryClient.invalidateQueries({ queryKey: ["session"] });
@@ -133,7 +133,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           role: session.user.user_metadata.role || null,
           avatar:
             session.user.user_metadata.picture ||
-            "https://w7.pngwing.com/pngs/680/217/png-transparent-avatar-man-8-bit-guy-dude-gaming-graphics-computer-generated-technology.png",
+            "https://cdn.vectorstock.com/i/1000v/95/74/graduation-cap-student-avatar-pixel-art-cartoon-vector-17509574.jpg",
         });
       }
       setInitialized(true);
@@ -149,7 +149,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           role: session.user.user_metadata.role || null,
           avatar:
             session.user.user_metadata.picture ||
-            "https://w7.pngwing.com/pngs/680/217/png-transparent-avatar-man-8-bit-guy-dude-gaming-graphics-computer-generated-technology.png",
+            "https://cdn.vectorstock.com/i/1000v/95/74/graduation-cap-student-avatar-pixel-art-cartoon-vector-17509574.jpg",
         });
       } else {
         setUser(null);

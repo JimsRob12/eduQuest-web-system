@@ -84,6 +84,8 @@ export async function getParticipants(classCode: string, setStudents: any) {
     right_answer: 0,
     score: 0,
     student_name: student.student_name,
+    student_avatar: student.student_avatar,
+    student_email: student.student_email,
     wrong_answer: 0,
   }));
 
@@ -106,6 +108,8 @@ export async function getParticipants(classCode: string, setStudents: any) {
           right_answer: 0,
           score: 0,
           student_name: payload.new.student_name,
+          student_avatar: payload.new.student_avatar,
+          student_email: payload.new.student_email,
           wrong_answer: 0,
         };
 
@@ -167,6 +171,7 @@ export async function joinRoom(
       class_code: classCode,
       student_name: studentName,
       student_avatar: user.avatar,
+      student_email: user.email,
     })
     .select()
     .single();
