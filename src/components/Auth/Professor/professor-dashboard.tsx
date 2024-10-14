@@ -55,7 +55,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
   };
 
   const handleStartGame = () => {
-    nav("professor/class/9f945506-f7a8-483c-97d9-b237d0b2a5bd/gamelobby");
+    nav(`professor/class/${quiz.class_code}/gamelobby`);
   };
 
   return (

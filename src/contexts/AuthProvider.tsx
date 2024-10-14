@@ -56,6 +56,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           email: data.session.user.email!,
           name: data.session.user.user_metadata.name || "",
           role: data.session.user.user_metadata.role || null,
+          avatar:
+            data.session.user.user_metadata.picture ||
+            "https://w7.pngwing.com/pngs/680/217/png-transparent-avatar-man-8-bit-guy-dude-gaming-graphics-computer-generated-technology.png",
         });
         queryClient.invalidateQueries({ queryKey: ["session"] });
       }
@@ -73,6 +76,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email!,
           name: session.user.user_metadata.name || "",
           role: session.user.user_metadata.role || null,
+          avatar:
+            data.session.user.user_metadata.picture ||
+            "https://w7.pngwing.com/pngs/680/217/png-transparent-avatar-man-8-bit-guy-dude-gaming-graphics-computer-generated-technology.png",
         });
       }
       queryClient.invalidateQueries({ queryKey: ["session"] });
@@ -125,6 +131,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email!,
           name: session.user.user_metadata.name || "",
           role: session.user.user_metadata.role || null,
+          avatar:
+            session.user.user_metadata.picture ||
+            "https://w7.pngwing.com/pngs/680/217/png-transparent-avatar-man-8-bit-guy-dude-gaming-graphics-computer-generated-technology.png",
         });
       }
       setInitialized(true);
@@ -138,6 +147,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email!,
           name: session.user.user_metadata.name || "",
           role: session.user.user_metadata.role || null,
+          avatar:
+            session.user.user_metadata.picture ||
+            "https://w7.pngwing.com/pngs/680/217/png-transparent-avatar-man-8-bit-guy-dude-gaming-graphics-computer-generated-technology.png",
         });
       } else {
         setUser(null);

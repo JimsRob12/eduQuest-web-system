@@ -7,6 +7,21 @@
   }
 }
 
+:root {
+  --shadow-color: #3b1b55;
+  --dark-shadow-color: #aaa4b1;
+}
+
+.button-default {
+  --shadow-color: #3b1b55;
+  --dark-shadow-color: #aaa4b1;
+}
+
+.button-destructive {
+  --shadow-color: #b91c1c;
+  --dark-shadow-color: #7f1d1d;
+}
+
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
