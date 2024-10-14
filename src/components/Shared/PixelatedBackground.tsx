@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Helper function to create predefined 8-bit characters using pixel shapes
 const createCharacterShape = (type: string) => {
@@ -42,11 +43,16 @@ const createShootingStar = () => {
   });
 };
 
+const PIXEL_COUNT = 500; // Reduced from 1500
+const CHARACTER_COUNT = 3; // Reduced from 5
+const SHOOTING_STAR_COUNT = 5; // Reduced from 10
+
 export const PixelatedBackground = ({
   isDarkMode,
 }: {
   isDarkMode: boolean;
 }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [elements, setElements] = useState<
     {
       x: number;
@@ -62,13 +68,14 @@ export const PixelatedBackground = ({
   >([]);
 
   const generateElements = useCallback(() => {
-    const newElements = [];
     const colors = isDarkMode
       ? ["#1a2639", "#1e3a5f", "#3d5a80", "#98c1d9"]
       : ["#e0f0e3", "#c6dea6", "#7ebdc3", "#b7d3f2"];
 
+    const newElements = [];
+
     // Add pixels for the background
-    for (let i = 0; i < 1500; i++) {
+    for (let i = 0; i < PIXEL_COUNT; i++) {
       newElements.push({
         x: Math.random() * 100,
         y: Math.random() * 100,
@@ -80,7 +87,7 @@ export const PixelatedBackground = ({
     }
 
     // Add 8-bit characters
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < CHARACTER_COUNT; i++) {
       const characterType = i % 2 === 0 ? "character1" : "character2";
       newElements.push({
         x: Math.random() * 100,
@@ -88,21 +95,21 @@ export const PixelatedBackground = ({
         shape: createCharacterShape(characterType),
         type: "character",
         speed: Math.random() * 0.02 + 0.005,
-        size: 5, // Size of the overall 8-bit character
+        size: 5,
       });
     }
 
     // Add shooting stars (meteors)
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < SHOOTING_STAR_COUNT; i++) {
       newElements.push({
         x: Math.random() * 100,
         y: Math.random() * 100,
         shape: createShootingStar(),
         type: "shootingStar",
-        speed: Math.random() * 0.05 + 0.02, // Shooting stars move fast
+        speed: Math.random() * 0.05 + 0.02,
         directionX: Math.random() * 0.05 + 0.03,
         directionY: Math.random() * 0.05 + 0.03,
-        size: 5, // Shooting star size
+        size: 5,
       });
     }
 
@@ -114,65 +121,67 @@ export const PixelatedBackground = ({
   }, [isDarkMode, generateElements]);
 
   useEffect(() => {
-    const animationFrame = requestAnimationFrame(function animate() {
-      setElements((prevElements) =>
-        prevElements.map((element) => {
-          if (element.type === "shootingStar") {
-            return {
-              ...element,
-              x: (element.x + (element.directionX ?? 0)) % 100,
-              y: (element.y + (element.directionY ?? 0)) % 100,
-            };
-          }
-          return {
-            ...element,
-            y: (element.y + element.speed) % 100,
-            x: element.x + Math.sin(element.y * 0.1) * 0.02,
-          };
-        }),
-      );
-      requestAnimationFrame(animate);
-    });
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    return () => cancelAnimationFrame(animationFrame);
-  }, []);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  return (
-    <svg
-      className="absolute inset-0 h-full w-full"
-      xmlns="http://www.w3.org/2000/svg"
-      preserveAspectRatio="none"
-    >
-      <filter id="blur">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
-      </filter>
-      <g filter="url(#blur)">
-        {elements.map((element, index) =>
-          element.type === "character" || element.type === "shootingStar" ? (
-            element.shape?.map((pixel, idx) => (
-              <rect
-                key={`${index}-${idx}`}
-                x={`${element.x + pixel.x}%`}
-                y={`${element.y + pixel.y}%`}
-                width={`${pixel.size}%`}
-                height={`${pixel.size}%`}
-                fill={pixel.color}
-                opacity="0.9"
-              />
-            ))
-          ) : (
-            <rect
-              key={index}
-              x={`${element.x}%`}
-              y={`${element.y}%`}
-              width={`${element.size}%`}
-              height={`${element.size}%`}
-              fill={element.color}
-              opacity="0.7"
-            />
-          ),
-        )}
-      </g>
-    </svg>
-  );
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    let animationFrameId: number;
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      elements.forEach((element) => {
+        if (element.type === "shootingStar") {
+          element.x = (element.x + (element.directionX ?? 0)) % 100;
+          element.y = (element.y + (element.directionY ?? 0)) % 100;
+        } else {
+          element.y = (element.y + element.speed) % 100;
+          element.x += Math.sin(element.y * 0.1) * 0.02;
+        }
+
+        if (element.type === "character" || element.type === "shootingStar") {
+          element.shape?.forEach((pixel: any) => {
+            ctx.fillStyle = pixel.color;
+            ctx.globalAlpha = 0.9;
+            ctx.fillRect(
+              ((element.x + pixel.x) / 100) * canvas.width,
+              ((element.y + pixel.y) / 100) * canvas.height,
+              (pixel.size / 100) * canvas.width,
+              (pixel.size / 100) * canvas.height,
+            );
+          });
+        } else {
+          ctx.fillStyle = element.color;
+          ctx.globalAlpha = 0.7;
+          ctx.fillRect(
+            (element.x / 100) * canvas.width,
+            (element.y / 100) * canvas.height,
+            (element.size / 100) * canvas.width,
+            (element.size / 100) * canvas.height,
+          );
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", resizeCanvas);
+    };
+  }, [elements]);
+
+  return <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />;
 };
