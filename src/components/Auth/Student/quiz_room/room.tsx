@@ -28,6 +28,7 @@ import {
   joinRoom,
 } from "@/services/api/apiRoom";
 import { QuizQuestions as Question } from "@/lib/types";
+import toast from "react-hot-toast";
 
 interface Student {
   student_name: string;
@@ -54,7 +55,10 @@ const SGameLobby: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(5);
   const [leaderBoard, setLeaderBoard] = useState(false);
-  const [displayNameRequired, setDisplayNameRequired] = useState(false);
+  const [displayName, setDisplayName] = useState<string | null>(
+    localStorage.getItem("displayName"),
+  );
+  const [displayNameRequired, setDisplayNameRequired] = useState(!displayName);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -67,13 +71,15 @@ const SGameLobby: React.FC = () => {
     const autoJoin = async () => {
       if (classId && user && !joined) {
         const studentId = user.id ?? "";
-        const name = user.name || "";
+        const name = displayName || user.name || "";
         if (!name) {
           setDisplayNameRequired(true);
         } else {
-          const success = await joinRoom(classId, studentId, user);
+          const success = await joinRoom(classId, studentId, user, name);
           if (success) {
             setJoined(true);
+            setDisplayNameRequired(false);
+            if (displayName) localStorage.setItem("displayName", displayName);
           } else {
             console.error("Failed to auto-join the room");
           }
@@ -82,7 +88,7 @@ const SGameLobby: React.FC = () => {
     };
 
     autoJoin();
-  }, [classId, user, joined]);
+  }, [classId, user, joined, displayName]);
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -202,8 +208,10 @@ const SGameLobby: React.FC = () => {
       if (success) {
         setJoined(true);
         setDisplayNameRequired(false);
+        setDisplayName(values.username);
+        localStorage.setItem("displayName", values.username);
       } else {
-        console.error("Failed to join the room");
+        toast.error("Failed to join the room");
       }
     }
   };
