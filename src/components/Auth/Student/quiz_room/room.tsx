@@ -17,17 +17,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
-  getParticipants,
   leaveRoom,
   gameEventHandler,
   getQuizQuestionsStud,
   updateLeaderBoard,
-  getEndGame,
-  getExitLeaderboard,
   submitAnswer,
   joinRoom,
 } from "@/services/api/apiRoom";
-import { QuizQuestions as Question, Student } from "@/lib/types";
+import { QuizQuestions as Question } from "@/lib/types";
 import toast from "react-hot-toast";
 import supabase from "@/services/supabase";
 import {
@@ -38,9 +35,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// interface Student {
-//   student_name: string;
-// }
+import soundOnMount from "/sounds/game-start.mp3";
+import soundOnLoop from "/sounds/lobby-sound.mp3";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -53,16 +49,15 @@ const SGameLobby: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
   const navigate = useNavigate();
 
-  const [students, setStudents] = useState<Student[]>([]);
+  // const [students, setStudents] = useState<Student[]>([]);
   const [gameStart, setGameStart] = useState(false);
   const [joined, setJoined] = useState(false);
   const [score, setScore] = useState(0);
   const [rightAns, setRightAns] = useState(0);
   const [wrongAns, setWrongAns] = useState(0);
-  const [questions, setQuestions] = useState<Question | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(5);
-  const [leaderBoard, setLeaderBoard] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(
     localStorage.getItem("displayName"),
   );
@@ -100,12 +95,6 @@ const SGameLobby: React.FC = () => {
   }, [classId, user, joined, displayName]);
 
   useEffect(() => {
-    const fetchParticipants = async () => {
-      if (classId && joined) {
-        await getParticipants(classId, setStudents);
-      }
-    };
-
     const checkGameStatus = async () => {
       if (classId && joined) {
         await gameEventHandler(classId, setGameStart);
@@ -113,7 +102,6 @@ const SGameLobby: React.FC = () => {
     };
 
     if (joined) {
-      fetchParticipants();
       checkGameStatus();
     }
   }, [classId, joined]);
@@ -125,7 +113,8 @@ const SGameLobby: React.FC = () => {
           classId,
           setTimeLeft,
         )) as unknown as Question;
-        setQuestions(question);
+        setCurrentQuestion(question);
+        setShowLeaderboard(false);
       }
     };
     getQuestion();
@@ -137,17 +126,42 @@ const SGameLobby: React.FC = () => {
         setTimeLeft((prevTime) => Math.max(prevTime - 1, 0));
       }, 1000);
 
-      if (timeLeft <= 0) {
-        setLeaderBoard(true);
+      if (timeLeft === 0) {
+        clearInterval(interval);
+        setShowLeaderboard(true);
+        updateLeaderBoard(
+          classId!,
+          user!.id,
+          user!.name || "",
+          score,
+          rightAns,
+          wrongAns,
+        );
 
         setTimeout(() => {
-          getExitLeaderboard(setLeaderBoard);
-          handleNextQuestion();
+          getQuestion();
         }, 10000);
       }
+
       return () => clearInterval(interval);
     }
   }, [timeLeft, gameStart]);
+
+  const getQuestion = async () => {
+    if (classId) {
+      const question = (await getQuizQuestionsStud(
+        classId,
+        setTimeLeft,
+      )) as unknown as Question;
+      if (question) {
+        setCurrentQuestion(question);
+        setShowLeaderboard(false);
+      } else {
+        // If no more questions, end the game
+        setGameStart(false);
+      }
+    }
+  };
 
   useEffect(() => {
     if (classId && user?.id) {
@@ -171,18 +185,6 @@ const SGameLobby: React.FC = () => {
     navigate("/student/dashboard");
   };
 
-  const handleNextQuestion = async () => {
-    if (classId) {
-      await getEndGame(setGameStart);
-      setCurrentQuestionIndex((prev) => prev + 1);
-      const question = (await getQuizQuestionsStud(
-        classId,
-        setTimeLeft,
-      )) as unknown as Question;
-      setQuestions(question);
-    }
-  };
-
   const leaveHandler = () => {
     if (classId && user?.id) {
       const response = leaveRoom(classId, user.id);
@@ -204,29 +206,8 @@ const SGameLobby: React.FC = () => {
       setScore((prev) => prev + qScore);
       setRightAns((prev) => prev + 1);
     }
+    setTimeLeft(0); // Force show leaderboard after answering
   };
-
-  useEffect(() => {
-    const updateLeaderBoardData = async () => {
-      if (
-        rightAns !== 0 &&
-        wrongAns !== 0 &&
-        score !== 0 &&
-        classId &&
-        user?.id
-      ) {
-        await updateLeaderBoard(
-          classId,
-          user.id,
-          user.name || "",
-          score,
-          rightAns,
-          wrongAns,
-        );
-      }
-    };
-    updateLeaderBoardData();
-  }, [rightAns, wrongAns, score, classId, user]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (classId && user) {
@@ -246,6 +227,56 @@ const SGameLobby: React.FC = () => {
       }
     }
   };
+
+  useEffect(() => {
+    let soundMount: HTMLAudioElement | null = null;
+    let soundLoop: HTMLAudioElement | null = null;
+
+    // Preload the audio files
+    const preloadSounds = () => {
+      soundMount = new Audio(soundOnMount);
+      soundMount.preload = "auto"; // Preload the mount sound
+      soundLoop = new Audio(soundOnLoop);
+      soundLoop.preload = "auto"; // Preload the loop sound
+    };
+
+    const playSounds = () => {
+      if (soundMount) {
+        // Attempt to play the mount sound
+        soundMount.play().catch((error) => {
+          console.error("Mount sound blocked by autoplay policies:", error);
+        });
+
+        soundMount.onended = () => {
+          if (soundLoop) {
+            soundLoop.loop = true;
+            // Attempt to play the loop sound
+            soundLoop.play().catch((error) => {
+              console.error("Loop sound blocked by autoplay policies:", error);
+            });
+          }
+        };
+      }
+    };
+
+    // Preload sounds initially
+    preloadSounds();
+
+    // Trigger sound play after the first user interaction (click/tap)
+    const handleUserInteraction = () => {
+      document.removeEventListener("click", handleUserInteraction); // Remove listener after interaction
+      playSounds(); // Play sound instantly after interaction
+    };
+
+    document.addEventListener("click", handleUserInteraction);
+
+    // Cleanup event listeners and sounds on unmount
+    return () => {
+      if (soundMount) soundMount.pause();
+      if (soundLoop) soundLoop.pause();
+      document.removeEventListener("click", handleUserInteraction);
+    };
+  }, []);
 
   if (displayNameRequired) {
     return (
@@ -290,20 +321,18 @@ const SGameLobby: React.FC = () => {
 
   if (kickedDialogOpen)
     return (
-      <>
-        <Dialog open={kickedDialogOpen} onOpenChange={handleKickedDialogClose}>
-          <DialogContent className="dark:text-white">
-            <DialogHeader>
-              <DialogTitle>You have been removed from the game</DialogTitle>
-              <DialogDescription>
-                The game owner has removed you from this game session. You will
-                be redirected to your dashboard.
-              </DialogDescription>
-            </DialogHeader>
-            <Button onClick={handleKickedDialogClose}>OK</Button>
-          </DialogContent>
-        </Dialog>
-      </>
+      <Dialog open={kickedDialogOpen} onOpenChange={handleKickedDialogClose}>
+        <DialogContent className="dark:text-white">
+          <DialogHeader>
+            <DialogTitle>You have been removed from the game</DialogTitle>
+            <DialogDescription>
+              The game owner has removed you from this game session. You will be
+              redirected to your dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={handleKickedDialogClose}>OK</Button>
+        </DialogContent>
+      </Dialog>
     );
 
   if (!joined) {
@@ -311,14 +340,6 @@ const SGameLobby: React.FC = () => {
       <div className="flex h-[calc(100%-5rem)] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
         <span className="ml-2">Joining the game...</span>
-      </div>
-    );
-  }
-
-  if (leaderBoard) {
-    return (
-      <div className="flex h-[calc(100%-5rem)] items-center justify-center">
-        <h1 className="text-3xl font-bold">LeaderBoard</h1>
       </div>
     );
   }
@@ -333,40 +354,39 @@ const SGameLobby: React.FC = () => {
           </Button>
         </div>
         <div className="w-full max-w-md space-y-4">
-          {students.length > 0 ? (
-            students.map((student, index) => (
-              <div key={index} className="rounded-lg p-4 shadow">
-                {student.student_name}
-              </div>
-            ))
-          ) : (
-            <div className="text-center text-gray-500">
-              No students currently joined.
-            </div>
-          )}
+          <div className="text-center text-gray-500">
+            Waiting for the game to start...
+          </div>
         </div>
       </div>
     );
   }
 
-  return questions ? (
+  if (showLeaderboard) {
+    return (
+      <div className="flex h-[calc(100%-5rem)] items-center justify-center">
+        <h1 className="text-3xl font-bold">Leaderboard</h1>
+        {/* Add leaderboard content here */}
+      </div>
+    );
+  }
+
+  return currentQuestion ? (
     <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center p-4">
-      <h1 className="mb-8 text-3xl font-bold">
-        Question {currentQuestionIndex + 1}
-      </h1>
+      <h1 className="mb-8 text-3xl font-bold">Question</h1>
       <div className="mb-8 w-full max-w-2xl">
-        <h2 className="mb-4 text-xl">{questions.question}</h2>
+        <h2 className="mb-4 text-xl">{currentQuestion.question}</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {questions.distractor &&
-            questions.distractor.map((choice, index) => (
+          {currentQuestion.distractor &&
+            currentQuestion.distractor.map((choice, index) => (
               <Button
                 key={index}
                 onClick={() =>
                   handleAnswer(
-                    questions.quiz_question_id,
+                    currentQuestion.quiz_question_id,
                     user?.id || "",
                     choice,
-                    questions.points!,
+                    currentQuestion.points!,
                   )
                 }
                 className="w-full"

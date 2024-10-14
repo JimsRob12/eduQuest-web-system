@@ -417,48 +417,95 @@ function getRemainingTime(start: string, end: string): number {
 export function getQuizQuestionsStud(
   classCode: string,
   setTimeLeft: Dispatch<SetStateAction<number>>,
-): Promise<TempQuizQuestionPayload> {
-  return new Promise((resolve, reject) => {
+): Promise<TempQuizQuestionPayload | null> {
+  return new Promise((resolve) => {
+    // First, attempt to fetch the current question
     supabase
-      .channel("schema-db-changes")
+      .from("temp_room_questions")
+      .select("*")
+      .eq("class_code", classCode)
+      .order("start_time", { ascending: false })
+      .limit(1)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          if (error.code === "PGRST116") {
+            console.log(
+              "No current question found. Waiting for first question.",
+            );
+            resolve(null);
+          } else {
+            console.error("Error fetching current question:", error);
+            resolve(null);
+          }
+        } else if (data) {
+          const currentQuestion: TempQuizQuestionPayload = {
+            quiz_question_id: data.quiz_question_id,
+            class_code: classCode,
+            question: data.question,
+            distractor: data.distractor,
+            time: data.time,
+            image_url: data.image_url,
+            points: data.points,
+            question_type: data.question_type,
+            order: data.order,
+            start_time: data.start_time,
+            end_time: data.end_time,
+          };
+          console.log("Current question fetched: ", currentQuestion);
+          setTimeLeft(
+            getRemainingTime(
+              currentQuestion.start_time,
+              currentQuestion.end_time,
+            ),
+          );
+          resolve(currentQuestion);
+        }
+      });
+
+    // Set up subscription for future updates
+    const channel = supabase
+      .channel(`room-questions-${classCode}`)
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "temp_room_questions",
+          filter: `class_code=eq.${classCode}`,
         },
         (payload: { new: Partial<TempQuizQuestionPayload> }) => {
           try {
-            // Ensure the necessary fields are present
-            if (classCode === payload.new.class_code) {
-              const newQuestion: TempQuizQuestionPayload = {
-                quiz_question_id: payload.new.quiz_question_id!,
-                class_code: classCode,
-                question: payload.new.question!,
-                distractor: payload.new.distractor!,
-                time: payload.new.time!,
-                image_url: payload.new.image_url!,
-                points: payload.new.points!,
-                question_type: payload.new.question_type!,
-                order: payload.new.order!,
-                start_time: payload.new.start_time!,
-                end_time: payload.new.end_time!,
-              };
-
-              console.log("Question received: ", newQuestion);
-              setTimeLeft(
-                getRemainingTime(newQuestion.start_time, newQuestion.end_time),
-              );
-              resolve(newQuestion);
-            }
+            const newQuestion: TempQuizQuestionPayload = {
+              quiz_question_id: payload.new.quiz_question_id!,
+              class_code: classCode,
+              question: payload.new.question!,
+              distractor: payload.new.distractor!,
+              time: payload.new.time!,
+              image_url: payload.new.image_url!,
+              points: payload.new.points!,
+              question_type: payload.new.question_type!,
+              order: payload.new.order!,
+              start_time: payload.new.start_time!,
+              end_time: payload.new.end_time!,
+            };
+            console.log("New question received: ", newQuestion);
+            setTimeLeft(
+              getRemainingTime(newQuestion.start_time, newQuestion.end_time),
+            );
+            resolve(newQuestion);
           } catch (error) {
             console.error("Error processing payload:", error);
-            reject(error);
+            resolve(null);
           }
         },
       )
       .subscribe();
+
+    // Return a cleanup function to unsubscribe when component unmounts
+    return () => {
+      supabase.removeChannel(channel);
+    };
   });
 }
 
