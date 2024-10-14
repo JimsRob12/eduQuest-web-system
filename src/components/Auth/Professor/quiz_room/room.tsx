@@ -9,17 +9,19 @@ import {
   sendNextQuestion,
   sendEndGame,
   sendExitLeaderboard,
+  kickStudent,
 } from "@/services/api/apiRoom";
 import { QuizQuestions as Questions, Student } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy } from "lucide-react";
+import { Copy, X } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import toast from "react-hot-toast";
 
 // interface Participant {
 //   student_name: string;
@@ -121,6 +123,21 @@ const GameLobby: React.FC = () => {
     }
   };
 
+  const handleKickStudent = async (studentId: string) => {
+    if (classId) {
+      const success = await kickStudent(classId, studentId);
+      if (success) {
+        toast.success("Student kicked successfully");
+        // Update the students list
+        setStudents(
+          students.filter((student) => student.quiz_student_id !== studentId),
+        );
+      } else {
+        toast.error("Failed to kick student");
+      }
+    }
+  };
+
   const startHandler = () => {
     if (students.length && classId) {
       startGame(classId);
@@ -168,13 +185,24 @@ const GameLobby: React.FC = () => {
                 <TooltipProvider delayDuration={100} key={index}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex cursor-pointer items-center border-b border-gray-200 pb-4">
-                        <img
-                          src={student.student_avatar}
-                          alt={`${student.student_name}'s avatar`}
-                          className="size-12 rounded-full object-cover"
-                        />
-                        <p className="ml-4">{student.student_name}</p>
+                      <div className="flex cursor-pointer items-center justify-between border-b border-gray-200 pb-4">
+                        <div className="flex items-center">
+                          <img
+                            src={student.student_avatar}
+                            alt={`${student.student_name}'s avatar`}
+                            className="size-12 rounded-full object-cover"
+                          />
+                          <p className="ml-4">{student.student_name}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            handleKickStudent(student.quiz_student_id)
+                          }
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="text-left">

@@ -29,6 +29,14 @@ import {
 } from "@/services/api/apiRoom";
 import { QuizQuestions as Question, Student } from "@/lib/types";
 import toast from "react-hot-toast";
+import supabase from "@/services/supabase";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // interface Student {
 //   student_name: string;
@@ -59,6 +67,7 @@ const SGameLobby: React.FC = () => {
     localStorage.getItem("displayName"),
   );
   const [displayNameRequired, setDisplayNameRequired] = useState(!displayName);
+  const [kickedDialogOpen, setKickedDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -139,6 +148,28 @@ const SGameLobby: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [timeLeft, gameStart]);
+
+  useEffect(() => {
+    if (classId && user?.id) {
+      const channel = supabase
+        .channel(classId)
+        .on("broadcast", { event: "student_kicked" }, (payload) => {
+          if (payload.payload.student_id === user.id) {
+            setKickedDialogOpen(true);
+          }
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [classId, user?.id]);
+
+  const handleKickedDialogClose = () => {
+    setKickedDialogOpen(false);
+    navigate("/student/dashboard");
+  };
 
   const handleNextQuestion = async () => {
     if (classId) {
@@ -256,6 +287,24 @@ const SGameLobby: React.FC = () => {
       </div>
     );
   }
+
+  if (kickedDialogOpen)
+    return (
+      <>
+        <Dialog open={kickedDialogOpen} onOpenChange={handleKickedDialogClose}>
+          <DialogContent className="dark:text-white">
+            <DialogHeader>
+              <DialogTitle>You have been removed from the game</DialogTitle>
+              <DialogDescription>
+                The game owner has removed you from this game session. You will
+                be redirected to your dashboard.
+              </DialogDescription>
+            </DialogHeader>
+            <Button onClick={handleKickedDialogClose}>OK</Button>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
 
   if (!joined) {
     return (

@@ -183,6 +183,31 @@ export async function leaveRoom(
   }
 }
 
+export async function kickStudent(
+  classCode: string,
+  studentId: string,
+): Promise<boolean> {
+  try {
+    // Remove the student from the temp_room table
+    await supabase.from("temp_room").delete().match({
+      quiz_student_id: studentId,
+      class_code: classCode,
+    });
+
+    // Broadcast a "student_kicked" event using Supabase Realtime
+    await supabase.channel(classCode).send({
+      type: "broadcast",
+      event: "student_kicked",
+      payload: { student_id: studentId },
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error kicking the student:", error);
+    return false;
+  }
+}
+
 // Game event handling functions
 export function gameEventHandler(
   classCode: string,
