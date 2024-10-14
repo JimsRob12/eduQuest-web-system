@@ -10,7 +10,7 @@ import {
   sendEndGame,
   sendExitLeaderboard,
 } from "@/services/api/apiRoom";
-import { QuizQuestions as Questions } from "@/lib/types";
+import { QuizQuestions as Questions, Student } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy } from "lucide-react";
@@ -21,10 +21,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface Student {
-  student_name: string;
-  student_avatar: string;
-}
+// interface Participant {
+//   student_name: string;
+//   student_avatar: string;
+//   student_email: string;
+// }
 
 const GameLobby: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -99,14 +100,18 @@ const GameLobby: React.FC = () => {
       setCurrentQuestionIndex(nextIndex);
       const nextQuestion = questions[nextIndex];
       await sendNextQuestion(
-        nextQuestion.quiz_question_id,
-        nextQuestion.question,
-        nextQuestion.distractor,
-        nextQuestion.time,
-        nextQuestion.image_url,
-        nextQuestion.points,
-        nextQuestion.question_type,
-        nextQuestion.order,
+        {
+          quiz_question_id: nextQuestion.quiz_question_id,
+          question: nextQuestion.question,
+          distractor: nextQuestion.distractor,
+          time: nextQuestion.time,
+          image_url: nextQuestion.image_url,
+          points: nextQuestion.points,
+          question_type: nextQuestion.question_type,
+          order: nextQuestion.order,
+          quiz_id: nextQuestion.quiz_id,
+          right_answer: nextQuestion.right_answer,
+        },
         classId,
       );
       setTimeLeft(nextQuestion.time);
@@ -159,12 +164,11 @@ const GameLobby: React.FC = () => {
         <div className="w-full max-w-md border-t border-gray-300 pt-4">
           {students.length > 0 ? (
             students.map((student, index) => {
-              console.log(student.student_avatar);
               return (
                 <TooltipProvider delayDuration={100} key={index}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center border-b border-gray-200 py-2">
+                      <div className="flex cursor-pointer items-center border-b border-gray-200 pb-4">
                         <img
                           src={student.student_avatar}
                           alt={`${student.student_name}'s avatar`}
@@ -173,8 +177,11 @@ const GameLobby: React.FC = () => {
                         <p className="ml-4">{student.student_name}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Add to library</p>
+                    <TooltipContent className="text-left">
+                      <p className="text-sm font-bold">
+                        {student.student_name}
+                      </p>
+                      <p>{student.student_email}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

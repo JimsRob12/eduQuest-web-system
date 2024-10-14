@@ -27,12 +27,12 @@ import {
   submitAnswer,
   joinRoom,
 } from "@/services/api/apiRoom";
-import { QuizQuestions as Question } from "@/lib/types";
+import { QuizQuestions as Question, Student } from "@/lib/types";
 import toast from "react-hot-toast";
 
-interface Student {
-  student_name: string;
-}
+// interface Student {
+//   student_name: string;
+// }
 
 const formSchema = z.object({
   username: z.string().min(2, {

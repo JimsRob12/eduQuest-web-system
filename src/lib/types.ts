@@ -6,6 +6,17 @@ export interface User {
   role: "professor" | "student" | null;
 }
 
+export interface Student {
+  placement: number;
+  quiz_student_id: string;
+  right_answer: number;
+  score: number;
+  student_name: string;
+  student_avatar: string;
+  student_email: string;
+  wrong_answer: number;
+}
+
 export interface Quiz {
   class_code: string;
   quiz_id: string;
@@ -35,6 +46,20 @@ export interface QuizQuestions {
   points?: number;
   question_type: string;
   order: number;
+}
+
+export interface TempQuizQuestionPayload {
+  quiz_question_id: string;
+  class_code: string;
+  question: string;
+  distractor: string;
+  time: number;
+  image_url: string;
+  points: number;
+  question_type: string;
+  order: number;
+  start_time: string;
+  end_time: string;
 }
 
 export enum Subject {

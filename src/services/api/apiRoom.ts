@@ -1,140 +1,128 @@
-import { User } from "@/lib/types";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  QuizQuestions,
+  Student,
+  TempQuizQuestionPayload,
+  User,
+} from "@/lib/types";
+import { Dispatch, SetStateAction } from "react";
 import supabase from "../supabase";
 
 // Function to start the game and notify all subscribers
-export async function startGame(classCode: string) {
-  const { error: updateError } = await supabase
-    .from("quiz")
-    .update({ status: "in game" })
-    .eq("class_code", classCode)
-    .select();
+export async function startGame(classCode: string): Promise<void> {
+  try {
+    await supabase
+      .from("quiz")
+      .update({ status: "in game" })
+      .eq("class_code", classCode)
+      .select();
 
-  if (updateError) {
-    console.error("Error updating quiz status:", updateError);
-    return;
+    const channel = supabase.channel("room1");
+    channel.send({
+      type: "broadcast",
+      event: "quiz-game-started",
+      payload: { classCode },
+    });
+    channel.unsubscribe();
+    console.log(`Game started for quiz ID: ${classCode}`);
+  } catch (error) {
+    console.error("Error updating quiz status:", error);
   }
-
-  const channel = supabase.channel("room1");
-
-  channel.send({
-    type: "broadcast",
-    event: "quiz-game-started",
-    payload: { classCode },
-  });
-  channel.unsubscribe();
-  console.log(`Game started for quiz ID: ${classCode}`);
 }
 
-export async function reconnectGame(classCode: string) {
-  const { data, error } = await supabase
-    .from("quiz")
-    .select("status")
-    .eq("class_code", classCode)
-    .single();
-
-  if (error) {
+export async function reconnectGame(classCode: string): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from("quiz")
+      .select("status")
+      .eq("class_code", classCode)
+      .single();
+    return data?.status === "in game";
+  } catch (error) {
     console.error("Error checking quiz status:", error);
     return false;
   }
-
-  return data?.status === "in game";
 }
 
-export async function endGame(classCode: string) {
-  // const { data, error } = await supabase
-  //     .from("temp_room")
-  //     .delete()
-  //     .eq('class_code', classCode);
-
-  // if (error) {
-  //     console.error("Game not ended:", error);
-  //     return false;
-  // }
-
-  const { error: updateError } = await supabase
-    .from("quiz")
-    .update({ status: "active" })
-    .eq("class_code", classCode)
-    .select();
-
-  if (updateError) {
-    console.error("Error updating quiz status:", updateError);
-    return;
+export async function endGame(classCode: string): Promise<boolean> {
+  try {
+    await supabase
+      .from("quiz")
+      .update({ status: "active" })
+      .eq("class_code", classCode)
+      .select();
+    return true;
+  } catch (error) {
+    console.error("Error updating quiz status:", error);
+    return false;
   }
-
-  // console.log("Game Ended:", data);
-  return true;
 }
 
-export async function getParticipants(classCode: string, setStudents: any) {
-  const { data: initialParticipants, error } = await supabase
-    .from("temp_room")
-    .select("*")
-    .eq("class_code", classCode);
+export async function getParticipants(
+  classCode: string,
+  setStudents: Dispatch<SetStateAction<Student[]>>,
+): Promise<void> {
+  try {
+    const { data: initialParticipants } = await supabase
+      .from("temp_room")
+      .select("*")
+      .eq("class_code", classCode);
 
-  if (error) {
-    console.error("Error fetching participants:", error);
-    return;
-  }
-  console.log(initialParticipants);
-
-  const formattedParticipants = initialParticipants.map((student) => ({
-    placement: 0,
-    quiz_student_id: student.quiz_student_id,
-    right_answer: 0,
-    score: 0,
-    student_name: student.student_name,
-    student_avatar: student.student_avatar,
-    student_email: student.student_email,
-    wrong_answer: 0,
-  }));
-
-  setStudents(formattedParticipants);
-
-  supabase
-    .channel("db-changes")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "temp_room",
-      },
-      (payload) => {
-        const newStudent = {
-          id: payload.new.id,
+    if (initialParticipants) {
+      const formattedParticipants: Student[] = initialParticipants.map(
+        (student) => ({
           placement: 0,
-          quiz_student_id: payload.new.quiz_student_id,
+          quiz_student_id: student.quiz_student_id,
           right_answer: 0,
           score: 0,
-          student_name: payload.new.student_name,
-          student_avatar: payload.new.student_avatar,
-          student_email: payload.new.student_email,
+          student_name: student.student_name,
+          student_avatar: student.student_avatar,
+          student_email: student.student_email,
           wrong_answer: 0,
-        };
+        }),
+      );
 
-        // If classCode matches, add the new student
-        if (classCode === payload.new.class_code) {
-          setStudents((prevStudents) => [...prevStudents, newStudent]);
-          console.log("Student added:", newStudent);
-        }
-      },
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "DELETE",
-        schema: "public",
-        table: "temp_room",
-      },
-      (payload) => {
-        setStudents((prevStudents) =>
-          prevStudents.filter((student) => student.id !== payload.old.id),
-        );
-        console.log("Student removed:", payload.old);
-      },
-    )
-    .subscribe();
+      setStudents(formattedParticipants);
+
+      // Set up real-time subscription for participant changes
+      supabase
+        .channel("db-changes")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "temp_room" },
+          (payload) => {
+            if (classCode === payload.new.class_code) {
+              const newStudent: Student = {
+                placement: 0,
+                quiz_student_id: payload.new.quiz_student_id,
+                right_answer: 0,
+                score: 0,
+                student_name: payload.new.student_name,
+                student_avatar: payload.new.student_avatar,
+                student_email: payload.new.student_email,
+                wrong_answer: 0,
+              };
+              setStudents((prevStudents) => [...prevStudents, newStudent]);
+            }
+          },
+        )
+        .on(
+          "postgres_changes",
+          { event: "DELETE", schema: "public", table: "temp_room" },
+          (payload) => {
+            setStudents((prevStudents) =>
+              prevStudents.filter(
+                (student) =>
+                  student.quiz_student_id !== payload.old.quiz_student_id,
+              ),
+            );
+          },
+        )
+        .subscribe();
+    }
+  } catch (error) {
+    console.error("Error fetching participants:", error);
+  }
 }
 
 export async function joinRoom(
@@ -142,73 +130,67 @@ export async function joinRoom(
   studentId: string,
   user: User,
   username?: string,
-) {
-  const { data: existingRecord, error: fetchError } = await supabase
-    .from("temp_room")
-    .select("*")
-    .match({
-      quiz_student_id: studentId,
-      class_code: classCode,
-    })
-    .single();
+): Promise<boolean> {
+  try {
+    const { data: existingRecord } = await supabase
+      .from("temp_room")
+      .select("*")
+      .match({
+        quiz_student_id: studentId,
+        class_code: classCode,
+      })
+      .single();
 
-  if (fetchError && fetchError.code !== "PGRST116") {
-    console.error("Error checking quiz existence:", fetchError);
-    return false;
-  }
+    if (existingRecord) {
+      console.log("Record already exists:", existingRecord);
+      return true;
+    }
 
-  if (existingRecord) {
-    console.log("Record already exists:", existingRecord);
+    const studentName = user.name || username;
+
+    await supabase
+      .from("temp_room")
+      .insert({
+        quiz_student_id: studentId,
+        class_code: classCode,
+        student_name: studentName,
+        student_avatar: user.avatar,
+        student_email: user.email,
+      })
+      .select()
+      .single();
+
     return true;
-  }
-
-  const studentName = user.name || username;
-
-  const { data, error } = await supabase
-    .from("temp_room")
-    .insert({
-      quiz_student_id: studentId,
-      class_code: classCode,
-      student_name: studentName,
-      student_avatar: user.avatar,
-      student_email: user.email,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error creating quiz:", error);
+  } catch (error) {
+    console.error("Error joining room:", error);
     return false;
   }
-
-  console.log("Quiz created:", data);
-  // success join
-  return true;
 }
 
-export async function leaveRoom(classCode: string, studentId: string) {
-  const { data, error } = await supabase.from("temp_room").delete().match({
-    quiz_student_id: studentId,
-    class_code: classCode,
-  });
-
-  if (error) {
+export async function leaveRoom(
+  classCode: string,
+  studentId: string,
+): Promise<boolean> {
+  try {
+    await supabase.from("temp_room").delete().match({
+      quiz_student_id: studentId,
+      class_code: classCode,
+    });
+    return true;
+  } catch (error) {
     console.error("Error leaving the room:", error);
     return false;
   }
-
-  console.log("Successfully left the room:", data);
-  return true;
 }
 
-export async function gameEventHandler(
+// Game event handling functions
+export function gameEventHandler(
   classCode: string,
-  setGameStart: (value: boolean) => void,
-) {
+  setGameStart: Dispatch<SetStateAction<boolean>>,
+): () => void {
   const channel = supabase
     .channel(`room1`)
-    .on("broadcast", { event: "quiz-game-started" }, (payload) => {
-      console.log("Game started event received:", payload);
+    .on("broadcast", { event: "quiz-game-started" }, () => {
       setGameStart(true);
     })
     .subscribe();
@@ -216,142 +198,96 @@ export async function gameEventHandler(
   return () => channel.unsubscribe();
 }
 
-export async function getQuestionsProf(classCode: string) {
-  const { data: quizData, error: quizError } = await supabase
-    .from("quiz")
-    .select("quiz_id")
-    .eq("class_code", classCode)
-    .single();
+export async function getQuestionsProf(
+  classCode: string,
+): Promise<QuizQuestions[]> {
+  try {
+    const { data: quizData } = await supabase
+      .from("quiz")
+      .select("quiz_id")
+      .eq("class_code", classCode)
+      .single();
 
-  if (quizError) {
-    console.error("Error fetching quiz ID:", quizError);
+    if (!quizData) {
+      throw new Error("Quiz not found");
+    }
+
+    const { data: questionsData } = await supabase
+      .from("quiz_questions")
+      .select(
+        "quiz_question_id, right_answer, question, distractor, time, image_url, points, question_type, order",
+      )
+      .eq("quiz_id", quizData.quiz_id)
+      .order("order", { ascending: true });
+
+    if (questionsData && questionsData.length > 0) {
+      await sendNextQuestion(
+        { ...questionsData[0], quiz_id: quizData.quiz_id },
+        classCode,
+      );
+    }
+
+    return (
+      questionsData?.map((question) => ({
+        ...question,
+        quiz_id: quizData.quiz_id,
+      })) || []
+    );
+  } catch (error) {
+    console.error("Error fetching quiz questions:", error);
     return [];
   }
-
-  const quizId = quizData.quiz_id;
-
-  const { data: questionsData, error: questionsError } = await supabase
-    .from("quiz_questions")
-    .select(
-      "quiz_question_id, right_answer, question, distractor, time, image_url, points, question_type, order",
-    )
-    .eq("quiz_id", quizId)
-    .order("order", { ascending: true });
-
-  if (questionsError) {
-    console.error("Error fetching quiz questions:", questionsError);
-    return [];
-  }
-
-  // send first q
-  sendNextQuestion(
-    questionsData[0].quiz_question_id,
-    questionsData[0].question,
-    questionsData[0].distractor,
-    questionsData[0].time,
-    questionsData[0].image_url,
-    questionsData[0].points,
-    questionsData[0].question_type,
-    questionsData[0].order,
-    classCode,
-  );
-  console.log("Quiz questions retrieved:", questionsData);
-  return questionsData;
 }
 
 export async function sendNextQuestion(
-  quiz_question_id,
-  question,
-  distractor,
-  time,
-  image_url,
-  points,
-  question_type,
-  order,
-  classCode,
-) {
-  const { data: existingQuestions, error: fetchError } = await supabase
-    .from("temp_room_questions")
-    .select("quiz_question_id, id")
-    .eq("class_code", classCode)
-    .single();
-
-  if (fetchError) {
-    console.error(
-      "Error fetching questions from temp_room_questions:",
-      fetchError,
-    );
-  }
-
-  if (existingQuestions) {
+  question: QuizQuestions,
+  classCode: string,
+): Promise<boolean> {
+  try {
     const startTime = new Date().toISOString();
-    const endTime = new Date(new Date().getTime() + time * 1000).toISOString();
+    const endTime = new Date(
+      new Date().getTime() + question.time * 1000,
+    ).toISOString();
 
-    const { error: updateError } = await supabase
+    const { data: existingQuestion } = await supabase
       .from("temp_room_questions")
-      .update({
-        quiz_question_id: quiz_question_id,
-        question: question,
-        distractor: distractor,
-        time: time,
-        image_url: image_url,
-        points: points,
-        question_type: question_type,
-        order: order,
-        start_time: startTime,
-        end_time: endTime,
-      })
-      .eq("id", existingQuestions.id);
+      .select("id")
+      .eq("class_code", classCode)
+      .single();
 
-    if (updateError) {
-      console.error(
-        "Error updating question in temp_room_questions:",
-        updateError,
-      );
-      return false;
-    }
-
-    console.log(`Updated question for class code ${classCode}.`);
-  } else {
-    const startTime = new Date().toISOString();
-    const endTime = new Date(new Date().getTime() + time * 1000).toISOString();
-    const { error: insertError } = await supabase
-      .from("temp_room_questions")
-      .insert([
+    if (existingQuestion) {
+      await supabase
+        .from("temp_room_questions")
+        .update({
+          ...question,
+          start_time: startTime,
+          end_time: endTime,
+        })
+        .eq("id", existingQuestion.id);
+    } else {
+      await supabase.from("temp_room_questions").insert([
         {
-          quiz_question_id: quiz_question_id,
+          ...question,
           class_code: classCode,
-          question: question,
-          distractor: distractor,
-          time: time,
-          image_url: image_url,
-          points: points,
-          question_type: question_type,
-          order: order,
           start_time: startTime,
           end_time: endTime,
         },
       ]);
-
-    if (insertError) {
-      console.error(
-        "Error inserting question into temp_room_questions:",
-        insertError,
-      );
-      return false;
     }
 
-    console.log("Question inserted successfully into temp_room_questions");
+    return true;
+  } catch (error) {
+    console.error("Error sending next question:", error);
+    return false;
   }
-
-  return true;
 }
 
-export async function sendTimer(classCode, time) {
+// Timer functions
+export function sendTimer(classCode: string, time: number): void {
   const channel = supabase.channel("room1");
   const startTime = new Date().toISOString();
-
   const endTime = new Date(new Date().getTime() + time * 1000).toISOString();
+
   channel.send({
     type: "broadcast",
     event: "timer",
@@ -362,34 +298,35 @@ export async function sendTimer(classCode, time) {
     },
   });
   channel.unsubscribe();
-  console.log(`timer sent: ${classCode}`);
 }
 
-export async function getTimer(setTimeLeft) {
+export function getTimer(
+  setTimeLeft: Dispatch<SetStateAction<number>>,
+): () => void {
   const channel = supabase
     .channel("room1")
     .on("broadcast", { event: "timer" }, (payload) => {
-      console.log("Timer started event received:", payload.payload);
-
       const { startTime, endTime } = payload.payload;
-
       const startTimeDate = new Date(startTime);
       const endTimeDate = new Date(endTime);
-
       const currentTime = new Date();
 
-      const totalDuration = Math.floor((endTimeDate - startTimeDate) / 1000);
-      const elapsedTime = Math.floor((currentTime - startTimeDate) / 1000);
+      const totalDuration = Math.floor(
+        (endTimeDate.getTime() - startTimeDate.getTime()) / 1000,
+      );
+      const elapsedTime = Math.floor(
+        (currentTime.getTime() - startTimeDate.getTime()) / 1000,
+      );
       const remainingTime = Math.max(totalDuration - elapsedTime, 0);
 
-      setTimeLeft(remainingTime);
+      setTimeLeft(() => remainingTime);
     })
     .subscribe();
 
   return () => channel.unsubscribe();
 }
 
-export async function sendEndGame(classCode) {
+export async function sendEndGame(classCode: string) {
   const channel = supabase.channel("room1");
 
   channel.send({
@@ -401,7 +338,10 @@ export async function sendEndGame(classCode) {
 
   endGame(classCode);
 }
-export async function getEndGame(setGameStart) {
+
+export async function getEndGame(
+  setGameStart: Dispatch<SetStateAction<boolean>>,
+) {
   const channel = supabase
     .channel(`room1`)
     .on("broadcast", { event: "quiz-game-ended" }, (payload) => {
@@ -413,7 +353,7 @@ export async function getEndGame(setGameStart) {
   return () => channel.unsubscribe();
 }
 
-export async function sendExitLeaderboard(classCode) {
+export function sendExitLeaderboard(classCode: string): () => void {
   const channel = supabase.channel("room1");
 
   channel.send({
@@ -422,14 +362,17 @@ export async function sendExitLeaderboard(classCode) {
     payload: { classCode },
   });
 
-  console.log("sent");
+  console.log("Exit leaderboard signal sent");
   return () => channel.unsubscribe();
 }
-export async function getExitLeaderboard(setLeaderBoard) {
+
+export function getExitLeaderboard(
+  setLeaderBoard: Dispatch<SetStateAction<boolean>>,
+): () => void {
   const channel = supabase
     .channel(`room1`)
     .on("broadcast", { event: "quiz-next-question" }, (payload) => {
-      console.log("Game started event received:", payload);
+      console.log("Next question event received:", payload);
       setLeaderBoard(false);
     })
     .subscribe();
@@ -437,37 +380,20 @@ export async function getExitLeaderboard(setLeaderBoard) {
   return () => channel.unsubscribe();
 }
 
-const getRemainingTime = (start, end) => {
+// Time calculation function
+function getRemainingTime(start: string, end: string): number {
   const startTime = new Date(start);
   const endTime = new Date(end);
+  const timeDifferenceInMillis = endTime.getTime() - startTime.getTime();
+  return Math.floor(timeDifferenceInMillis / 1000);
+}
 
-  const timeDifferenceInMillis = endTime - startTime;
-
-  const timeDifferenceInSeconds = Math.floor(timeDifferenceInMillis / 1000);
-
-  return timeDifferenceInSeconds;
-};
-
-export async function getQuizQuestionsStud(classCode: string, setTimeLeft) {
-  // const { data: question, error } = await supabase
-  //     .from('temp_room_questions')
-  //     .select('*')
-  //     .eq('class_code', classCode)
-  //     .order('order', { ascending: true })
-  //     .single();
-
-  // if (error) {
-  //     console.error('Error fetching questions:', error);
-  //     return;
-  // }
-  // setTimeLeft(getRemainingTime(question.start_time,
-  //     question.end_time))
-  // return question;
-
+// Student question retrieval function
+export function getQuizQuestionsStud(
+  classCode: string,
+  setTimeLeft: Dispatch<SetStateAction<number>>,
+): Promise<TempQuizQuestionPayload> {
   return new Promise((resolve, reject) => {
-    let question = [];
-
-    // Create the Supabase channel
     supabase
       .channel("schema-db-changes")
       .on(
@@ -477,54 +403,61 @@ export async function getQuizQuestionsStud(classCode: string, setTimeLeft) {
           schema: "public",
           table: "temp_room_questions",
         },
-        (payload) => {
-          // Build the new question object from the payload
-          const newQuestion = {
-            quiz_question_id: payload.new.quiz_question_id,
-            class_code: classCode,
-            question: payload.new.question,
-            distractor: payload.new.distractor,
-            time: payload.new.time,
-            image_url: payload.new.image_url,
-            points: payload.new.points,
-            question_type: payload.new.question_type,
-            order: payload.new.order,
-            start_time: payload.new.start_time,
-            end_time: payload.new.end_time,
-          };
+        (payload: { new: Partial<TempQuizQuestionPayload> }) => {
+          try {
+            // Ensure the necessary fields are present
+            if (classCode === payload.new.class_code) {
+              const newQuestion: TempQuizQuestionPayload = {
+                quiz_question_id: payload.new.quiz_question_id!,
+                class_code: classCode,
+                question: payload.new.question!,
+                distractor: payload.new.distractor!,
+                time: payload.new.time!,
+                image_url: payload.new.image_url!,
+                points: payload.new.points!,
+                question_type: payload.new.question_type!,
+                order: payload.new.order!,
+                start_time: payload.new.start_time!,
+                end_time: payload.new.end_time!,
+              };
 
-          // Check if the class_code matches
-          if (classCode === payload.new.class_code) {
-            console.log("Question received: ", newQuestion);
-            setTimeLeft(
-              getRemainingTime(newQuestion.start_time, newQuestion.end_time),
-            );
-            resolve(newQuestion);
+              console.log("Question received: ", newQuestion);
+              setTimeLeft(
+                getRemainingTime(newQuestion.start_time, newQuestion.end_time),
+              );
+              resolve(newQuestion);
+            }
+          } catch (error) {
+            console.error("Error processing payload:", error);
+            reject(error);
           }
         },
       )
       .subscribe();
   });
 }
+
+// Answer checking function
 async function checkAnswer(
   questionId: string,
   answer: string,
 ): Promise<boolean> {
-  const { error, count } = await supabase
-    .from("quiz_questions")
-    .select("quiz_question_id", { count: "exact" })
-    .eq("quiz_question_id", questionId)
-    .eq("right_answer", answer)
-    .single();
+  try {
+    const { count } = await supabase
+      .from("quiz_questions")
+      .select("quiz_question_id", { count: "exact" })
+      .eq("quiz_question_id", questionId)
+      .eq("right_answer", answer)
+      .single();
 
-  if (error) {
-    console.error("Error fetching question:", error);
+    return count ? count > 0 : false;
+  } catch (error) {
+    console.error("Error checking answer:", error);
     return false;
   }
-
-  return count ? count > 0 : false;
 }
 
+// Leaderboard update function
 export async function updateLeaderBoard(
   classCode: string,
   studentId: string,
@@ -532,98 +465,73 @@ export async function updateLeaderBoard(
   score: number,
   rightAns: number,
   wrongAns: number,
-) {
-  const { data: existingStudent, error: studentError } = await supabase
-    .from("quiz_students")
-    .select("quiz_student_id, score")
-    .match({
-      quiz_student_id: studentId,
-      class_code: classCode,
-    })
-    .single();
-
-  if (studentError && studentError.code !== "PGRST116") {
-    console.error("Error checking student existence:", studentError);
-    return;
-  }
-
-  if (!existingStudent) {
-    const { error: insertError } = await supabase.from("quiz_students").insert([
-      {
-        quiz_student_id: studentId,
-        student_name: studentName,
-        score: score,
-        class_code: classCode,
-      },
-    ]);
-
-    if (insertError) {
-      console.error("Error inserting new student:", insertError);
-      return;
-    }
-
-    console.log("New student added:", studentId);
-  } else {
-    const { error: updateError } = await supabase
+): Promise<any[] | undefined> {
+  try {
+    const { data: existingStudent } = await supabase
       .from("quiz_students")
-      .update({
-        score: score,
-        right_answer: rightAns,
-        wrong_answer: wrongAns,
-      })
+      .select("quiz_student_id, score")
       .match({
         quiz_student_id: studentId,
         class_code: classCode,
-      });
+      })
+      .single();
 
-    if (updateError) {
-      console.error("Error updating student score:", updateError);
-      return;
+    if (!existingStudent) {
+      await supabase.from("quiz_students").insert([
+        {
+          quiz_student_id: studentId,
+          student_name: studentName,
+          score: score,
+          class_code: classCode,
+        },
+      ]);
+      console.log("New student added:", studentId);
+    } else {
+      await supabase
+        .from("quiz_students")
+        .update({
+          score: score,
+          right_answer: rightAns,
+          wrong_answer: wrongAns,
+        })
+        .match({
+          quiz_student_id: studentId,
+          class_code: classCode,
+        });
+      console.log("Student score updated:", studentId);
     }
 
-    console.log("Student score updated:", studentId);
+    const { data: allStudents } = await supabase
+      .from("quiz_students")
+      .select(
+        "quiz_student_id, score, id, right_answer, wrong_answer, student_name",
+      )
+      .eq("class_code", classCode)
+      .order("score", { ascending: false });
+
+    if (allStudents) {
+      const updates = allStudents.map((student, index) => ({
+        id: student.id,
+        quiz_student_id: student.quiz_student_id,
+        placement: index + 1,
+      }));
+
+      await supabase.from("quiz_students").upsert(updates);
+      console.log("Leaderboard updated successfully.");
+      return allStudents;
+    }
+  } catch (error) {
+    console.error("Error updating leaderboard:", error);
   }
-
-  const { data: allStudents, error: leaderboardError } = await supabase
-    .from("quiz_students")
-    .select(
-      "quiz_student_id, score, id, right_answer, wrong_answer, student_name",
-    )
-    .eq("class_code", classCode)
-    .order("score", { ascending: false });
-
-  if (leaderboardError) {
-    console.error("Error fetching leaderboard:", leaderboardError);
-    return;
-  }
-
-  const updates = allStudents.map((student, index) => ({
-    id: student.id,
-    quiz_student_id: student.quiz_student_id,
-    placement: index + 1,
-  }));
-
-  const { error: placementError } = await supabase
-    .from("quiz_students")
-    .upsert(updates);
-
-  if (placementError) {
-    console.error("Error updating placements:", placementError);
-    return;
-  }
-
-  console.log("Leaderboard updated successfully.");
-
-  return allStudents;
 }
 
+// Answer submission function
 export async function submitAnswer(
   questionId: string,
   studentId: string,
   answer: string,
-) {
+): Promise<boolean> {
   const isCorrect = await checkAnswer(questionId, answer);
-  console.log(isCorrect);
-
+  console.log("Answer is correct:", isCorrect);
   return isCorrect;
 }
