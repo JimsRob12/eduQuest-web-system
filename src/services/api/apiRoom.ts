@@ -9,13 +9,36 @@ import { Dispatch, SetStateAction } from "react";
 import supabase from "../supabase";
 
 // Function to start the game and notify all subscribers
-export async function startGame(classCode: string): Promise<void> {
+export async function startGame(
+  classCode: string,
+  userId: string,
+): Promise<void> {
   try {
+    // Check if the user is the game owner
+    const { data: quizData } = await supabase
+      .from("quiz")
+      .select("created_by")
+      .eq("class_code", classCode)
+      .single();
+
+    if (quizData?.created_by !== userId) {
+      throw new Error("Only the game owner can start the game");
+    }
+
+    const { data: statusData } = await supabase
+      .from("quiz")
+      .select("status")
+      .eq("class_code", classCode)
+      .single();
+
+    if (statusData?.status === "in game") {
+      throw new Error("Game is already in progress");
+    }
+
     await supabase
       .from("quiz")
       .update({ status: "in game" })
-      .eq("class_code", classCode)
-      .select();
+      .eq("class_code", classCode);
 
     const channel = supabase.channel("room1");
     channel.send({
@@ -26,7 +49,8 @@ export async function startGame(classCode: string): Promise<void> {
     channel.unsubscribe();
     console.log(`Game started for quiz ID: ${classCode}`);
   } catch (error) {
-    console.error("Error updating quiz status:", error);
+    console.error("Error starting game:", error);
+    throw error;
   }
 }
 
