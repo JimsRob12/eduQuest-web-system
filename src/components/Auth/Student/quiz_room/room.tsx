@@ -347,17 +347,17 @@ const SGameLobby: React.FC = () => {
   if (!gameStart) {
     return (
       <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center">
-        <div className="mb-8 text-center">
-          <h1 className="mb-4 text-3xl font-bold">Game Lobby</h1>
-          <Button onClick={leaveHandler} variant="destructive">
-            Leave Game
-          </Button>
-        </div>
+        <h1 className="mb-5 text-7xl font-bold uppercase text-purple-800 md:text-9xl">
+          Game Lobby
+        </h1>
         <div className="w-full max-w-md space-y-4">
           <div className="text-center text-gray-500">
             Waiting for the game to start...
           </div>
         </div>
+        <Button className="mt-8" onClick={leaveHandler} variant="destructive">
+          Leave Game
+        </Button>
       </div>
     );
   }

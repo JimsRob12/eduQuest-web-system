@@ -14,7 +14,7 @@ import {
 import { QuizQuestions as Questions, Student } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, X } from "lucide-react";
+import { CircleX, Copy } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -22,6 +22,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import toast from "react-hot-toast";
+import { useTheme } from "@/contexts/ThemeProvider";
+import { useMediaQuery } from "react-responsive";
+import ProgressBar from "@/components/Shared/progressbar";
 
 // interface Participant {
 //   student_name: string;
@@ -38,6 +41,12 @@ const GameLobby: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(30);
   const [leaderBoard, setLeaderBoard] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const { theme } = useTheme();
+  const isTabletorMobile = useMediaQuery({ query: "(max-width: 1024px)" });
+
+  const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF8C33"];
+  const lightColors = ["#FF8C66", "#37a753", "#668CFF", "#FF66C2", "#FFB366"];
 
   const currentQuestion = questions[currentQuestionIndex];
   const shareableLink = `${window.location.origin}/student/join/${classId}/gamelobby`;
@@ -152,6 +161,88 @@ const GameLobby: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const renderMultipleChoice = () => {
+    if (!currentQuestion) return null;
+
+    return (
+      <div
+        className="mt-4 grid gap-2 rounded-lg"
+        style={{
+          gridTemplateColumns: isTabletorMobile
+            ? `repeat(1, 1fr)`
+            : `repeat(${currentQuestion.distractor?.length || 0}, 1fr)`,
+        }}
+      >
+        {currentQuestion.distractor?.map((answer, index) => {
+          const bgColor =
+            theme === "dark"
+              ? lightColors[index % lightColors.length]
+              : colors[index % colors.length];
+
+          return (
+            <div
+              key={index}
+              className="rounded-lg p-1 transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56"
+              style={{
+                backgroundColor: bgColor,
+                color: "#fff",
+              }}
+            >
+              <div className="mt-2 flex h-full items-center justify-center rounded-lg border-none p-2 text-lg">
+                {answer}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderTrueFalse = () => {
+    if (!currentQuestion) return null;
+
+    return (
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        {["True", "False"].map((option) => (
+          <div
+            key={option}
+            className="rounded-lg bg-purple-800 bg-opacity-20 p-4 text-left transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56"
+          >
+            {option}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderFillInTheBlank = () => {
+    if (!currentQuestion) return null;
+
+    return (
+      <div className="mt-4 flex flex-col items-center justify-center rounded-lg bg-zinc-200 p-4 dark:bg-zinc-800">
+        <h1 className="mb-4 text-center font-bold opacity-70">
+          Type your answer in the boxes
+        </h1>
+        <div
+          className="grid gap-1"
+          style={{
+            gridTemplateColumns: `repeat(${Math.min(
+              currentQuestion.right_answer.length,
+              isTabletorMobile ? 5 : 10,
+            )}, 1fr)`,
+          }}
+        >
+          {currentQuestion.right_answer.split("").map((_, index) => (
+            <div
+              key={index}
+              className="flex size-12 items-center justify-center rounded-lg bg-zinc-700 text-center text-white"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   if (leaderBoard) {
     return <h1 className="text-center text-2xl font-bold">LeaderBoard</h1>;
   }
@@ -159,16 +250,9 @@ const GameLobby: React.FC = () => {
   if (!gameStart) {
     return (
       <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center text-center">
-        <div className="mb-5">
-          <h1 className="mb-4 text-3xl font-bold">Game Lobby</h1>
-          <Button
-            className="rounded-md shadow-[0px_4px_0px_#3b1b55] transition-all duration-300 hover:translate-y-1 hover:shadow-none dark:shadow-[0px_4px_0px_#aaa4b1] dark:hover:shadow-none"
-            onClick={startHandler}
-            disabled={!(students.length > 0)}
-          >
-            Start Game
-          </Button>
-        </div>
+        <h1 className="mb-5 text-7xl font-bold uppercase text-purple-800 md:text-9xl">
+          Game Lobby
+        </h1>
         <div className="mb-8">
           <h2 className="mb-2 text-2xl font-bold">Share Link</h2>
           <div className="flex items-center space-x-2">
@@ -178,22 +262,15 @@ const GameLobby: React.FC = () => {
             </Button>
           </div>
         </div>
-        <div className="w-full max-w-md border-t border-gray-300 pt-4">
+        <div className="flex w-full max-w-md justify-center gap-6 border-t border-gray-300 pt-4">
           {students.length > 0 ? (
             students.map((student, index) => {
+              const ghostNumber = (index % 4) + 1;
               return (
                 <TooltipProvider delayDuration={100} key={index}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex cursor-pointer items-center justify-between border-b border-gray-200 pb-4">
-                        <div className="flex items-center">
-                          <img
-                            src={student.student_avatar}
-                            alt={`${student.student_name}'s avatar`}
-                            className="size-12 rounded-full object-cover"
-                          />
-                          <p className="ml-4">{student.student_name}</p>
-                        </div>
+                      <div className="flex w-24 cursor-pointer flex-col items-center justify-between border-gray-200 pb-4">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -201,8 +278,16 @@ const GameLobby: React.FC = () => {
                             handleKickStudent(student.quiz_student_id)
                           }
                         >
-                          <X className="h-4 w-4" />
+                          <CircleX className="h-4 w-4" />
                         </Button>
+                        <img
+                          src={`/ghost-${ghostNumber}.png`}
+                          alt={`${student.student_name}'s avatar`}
+                          className="w-12 object-cover text-xs"
+                        />
+                        <p className="text-sm font-semibold">
+                          {student.student_name}
+                        </p>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="text-left">
@@ -219,28 +304,43 @@ const GameLobby: React.FC = () => {
             <div>Waiting for students to join..</div>
           )}
         </div>
+        <Button
+          className="mt-8 rounded-md shadow-[0px_4px_0px_#3b1b55] transition-all duration-300 hover:translate-y-1 hover:shadow-none dark:shadow-[0px_4px_0px_#aaa4b1] dark:hover:shadow-none"
+          onClick={startHandler}
+          disabled={!(students.length > 0)}
+        >
+          Start Game
+        </Button>
       </div>
     );
   }
 
   return currentQuestion ? (
     <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center text-center">
-      <h1 className="mb-4 text-2xl font-bold">
-        Question {currentQuestionIndex + 1}
-      </h1>
-      <div className="mb-6">
-        <h2 className="mb-4 text-xl">{currentQuestion.question}</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {currentQuestion.distractor &&
-            currentQuestion.distractor.map((choice, index) => (
-              <Button
-                key={index}
-                className="rounded border border-gray-300 bg-gray-200 px-4 py-2 text-lg font-semibold hover:bg-gray-300"
-              >
-                {choice}
-              </Button>
-            ))}
-        </div>
+      <div className="flex w-full items-center justify-between">
+        <h1 className="mb-4 text-2xl font-bold">
+          Question {currentQuestionIndex + 1}
+        </h1>
+        <p className="text-xl font-bold">
+          {currentQuestion.points} point{currentQuestion.points! > 1 && "s"}
+        </p>
+      </div>
+      <div className="mb-4 w-full">
+        <ProgressBar
+          progress={(timeLeft / currentQuestion.time) * 100}
+          height={24}
+        />
+      </div>
+      <div className="mb-6 w-full">
+        <h2 className="mb-4 flex h-44 items-center justify-center rounded-lg bg-zinc-200 text-xl dark:bg-zinc-800">
+          {currentQuestion.question}
+        </h2>
+        {currentQuestion.question_type.toLowerCase() === "mcq" &&
+          renderMultipleChoice()}
+        {currentQuestion.question_type.toLowerCase() === "boolean" &&
+          renderTrueFalse()}
+        {currentQuestion.question_type.toLowerCase() === "short" &&
+          renderFillInTheBlank()}
       </div>
       <div className="text-lg font-bold">Time Left: {timeLeft} seconds</div>
     </div>
