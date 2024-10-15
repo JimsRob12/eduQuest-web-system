@@ -27,6 +27,7 @@ import { useTheme } from "@/contexts/ThemeProvider";
 import { useMediaQuery } from "react-responsive";
 import ProgressBar from "@/components/Shared/progressbar";
 import supabase from "@/services/supabase";
+import { useAuth } from "@/contexts/AuthProvider";
 
 // interface Participant {
 //   student_name: string;
@@ -35,6 +36,7 @@ import supabase from "@/services/supabase";
 // }
 
 const GameLobby: React.FC = () => {
+  const { user } = useAuth();
   const { classId } = useParams<{ classId: string }>();
   const [students, setStudents] = useState<Student[]>([]);
   const [gameStart, setGameStart] = useState(false);
@@ -172,7 +174,7 @@ const GameLobby: React.FC = () => {
 
   const startHandler = () => {
     if (students.length && classId) {
-      startGame(classId);
+      startGame(classId, user!.id);
     } else {
       console.log("No students have joined yet");
     }
