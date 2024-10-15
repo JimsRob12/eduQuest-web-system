@@ -149,7 +149,6 @@ const GameLobby: React.FC = () => {
       //   },
       //   classId,
       // );
-            
       setTimeLeft(nextQuestion.time);
     } else if (classId) {
       sendEndGame(classId);

@@ -17,11 +17,11 @@ export async function startGame(
     // Check if the user is the game owner
     const { data: quizData } = await supabase
       .from("quiz")
-      .select("created_by")
+      .select("owner_id")
       .eq("class_code", classCode)
       .single();
 
-    if (quizData?.created_by !== userId) {
+    if (quizData?.owner_id !== userId) {
       throw new Error("Only the game owner can start the game");
     }
 
