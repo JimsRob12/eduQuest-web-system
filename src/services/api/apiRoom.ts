@@ -176,13 +176,19 @@ export async function leaveRoom(
       quiz_student_id: studentId,
       class_code: classCode,
     });
+
+    await supabase.channel(classCode).send({
+      type: "broadcast",
+      event: "student_left",
+      payload: { student_id: studentId },
+    });
+
     return true;
   } catch (error) {
     console.error("Error leaving the room:", error);
     return false;
   }
 }
-
 export async function kickStudent(
   classCode: string,
   studentId: string,

@@ -25,6 +25,7 @@ import toast from "react-hot-toast";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { useMediaQuery } from "react-responsive";
 import ProgressBar from "@/components/Shared/progressbar";
+import supabase from "@/services/supabase";
 
 // interface Participant {
 //   student_name: string;
@@ -104,6 +105,26 @@ const GameLobby: React.FC = () => {
       }, 10000);
     }
   }, [timeLeft, gameStart, classId]);
+
+  useEffect(() => {
+    if (classId) {
+      const channel = supabase
+        .channel(classId)
+        .on("broadcast", { event: "student_left" }, (payload) => {
+          setStudents((prevStudents) =>
+            prevStudents.filter(
+              (student) =>
+                student.quiz_student_id !== payload.payload.student_id,
+            ),
+          );
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [classId]);
 
   const handleNextQuestion = async () => {
     if (currentQuestionIndex < questions.length - 1 && classId) {
@@ -262,7 +283,7 @@ const GameLobby: React.FC = () => {
             </Button>
           </div>
         </div>
-        <div className="flex w-full max-w-md justify-center gap-6 border-t border-gray-300 pt-4">
+        <div className="flex w-full max-w-md flex-wrap justify-center gap-6 border-t border-gray-300 pt-4">
           {students.length > 0 ? (
             students.map((student, index) => {
               const ghostNumber = (index % 4) + 1;
