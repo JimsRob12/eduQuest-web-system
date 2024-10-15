@@ -1,10 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  QuizQuestions,
-  Student,
-  TempQuizQuestionPayload,
-  User,
-} from "@/lib/types";
+import { QuizQuestions, Student, User } from "@/lib/types";
 import { Dispatch, SetStateAction } from "react";
 import supabase from "../supabase";
 
@@ -166,11 +161,10 @@ export async function joinRoom(
     //   console.error("Error fetching quiz status:", error);
     //   return false;
     // }
-  
-    // if (data && data.status !== 'in game') {
-    //   return false        
-    // }
 
+    // if (data && data.status !== 'in game') {
+    //   return false
+    // }
 
     const { data: existingRecord } = await supabase
       .from("temp_room")
@@ -333,7 +327,7 @@ export async function sendNextQuestion(
     //   .select("id")
     //   .eq("class_code", classCode)
     //   .single();
-    
+
     // if (existingQuestion) {
     //   await supabase
     //     .from("temp_room_questions")
@@ -353,7 +347,7 @@ export async function sendNextQuestion(
     //     },
     //   ]);
     // }
-    console.log('sent question');
+    console.log("sent question");
     return true;
   } catch (error) {
     console.error("Error sending next question:", error);
@@ -460,53 +454,53 @@ export function getExitLeaderboard(
 }
 
 // Time calculation function
-function getRemainingTime(start: string, end: string): number {
-  const startTime = new Date(start);
-  const endTime = new Date(end);
-  const timeDifferenceInMillis = endTime.getTime() - startTime.getTime();
-  return Math.floor(timeDifferenceInMillis / 1000);
-}
+// function getRemainingTime(start: string, end: string): number {
+//   const startTime = new Date(start);
+//   const endTime = new Date(end);
+//   const timeDifferenceInMillis = endTime.getTime() - startTime.getTime();
+//   return Math.floor(timeDifferenceInMillis / 1000);
+// }
 
 export async function getQuizQuestionsStud(
-    classCode: string,
-  ): Promise<QuizQuestions[]> {
-    try {
-      const { data: quizData } = await supabase
-        .from("quiz")
-        .select("quiz_id")
-        .eq("class_code", classCode)
-        .single();
-  
-      if (!quizData) {
-        throw new Error("Quiz not found");
-      }
-  
-      const { data: questionsData } = await supabase
-        .from("quiz_questions")
-        .select(
-          "quiz_question_id, right_answer, question, distractor, time, image_url, points, question_type, order",
-        )
-        .eq("quiz_id", quizData.quiz_id)
-        .order("order", { ascending: true });
-  
-      if (questionsData && questionsData.length > 0) {
-        await sendNextQuestion(
-          { ...questionsData[0], quiz_id: quizData.quiz_id },
-          classCode,
-        );
-      }
-  
-      return (
-        questionsData?.map((question) => ({
-          ...question,
-          quiz_id: quizData.quiz_id,
-        })) || []
-      );
-    } catch (error) {
-      console.error("Error fetching quiz questions:", error);
-      return [];
+  classCode: string,
+): Promise<QuizQuestions[]> {
+  try {
+    const { data: quizData } = await supabase
+      .from("quiz")
+      .select("quiz_id")
+      .eq("class_code", classCode)
+      .single();
+
+    if (!quizData) {
+      throw new Error("Quiz not found");
     }
+
+    const { data: questionsData } = await supabase
+      .from("quiz_questions")
+      .select(
+        "quiz_question_id, right_answer, question, distractor, time, image_url, points, question_type, order",
+      )
+      .eq("quiz_id", quizData.quiz_id)
+      .order("order", { ascending: true });
+
+    if (questionsData && questionsData.length > 0) {
+      await sendNextQuestion(
+        { ...questionsData[0], quiz_id: quizData.quiz_id },
+        classCode,
+      );
+    }
+
+    return (
+      questionsData?.map((question) => ({
+        ...question,
+        quiz_id: quizData.quiz_id,
+      })) || []
+    );
+  } catch (error) {
+    console.error("Error fetching quiz questions:", error);
+    return [];
   }
+}
 
 // Student question retrieval function
 // export function getQuizQuestionsStud(

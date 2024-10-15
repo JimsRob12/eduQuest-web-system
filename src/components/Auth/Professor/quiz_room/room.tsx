@@ -4,10 +4,8 @@ import { useParams } from "react-router-dom";
 import {
   getParticipants,
   startGame,
-  endGame,
   gameEventHandler,
   getQuestionsProf,
-  sendNextQuestion,
   sendEndGame,
   sendExitLeaderboard,
   kickStudent,
@@ -28,12 +26,6 @@ import { useMediaQuery } from "react-responsive";
 import ProgressBar from "@/components/Shared/progressbar";
 import supabase from "@/services/supabase";
 import { useAuth } from "@/contexts/AuthProvider";
-
-// interface Participant {
-//   student_name: string;
-//   student_avatar: string;
-//   student_email: string;
-// }
 
 const GameLobby: React.FC = () => {
   const { user } = useAuth();
@@ -134,21 +126,6 @@ const GameLobby: React.FC = () => {
       const nextIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(nextIndex);
       const nextQuestion = questions[nextIndex];
-      // await sendNextQuestion(
-      //   {
-      //     quiz_question_id: nextQuestion.quiz_question_id,
-      //     question: nextQuestion.question,
-      //     distractor: nextQuestion.distractor,
-      //     time: nextQuestion.time,
-      //     image_url: nextQuestion.image_url,
-      //     points: nextQuestion.points,
-      //     question_type: nextQuestion.question_type,
-      //     order: nextQuestion.order,
-      //     quiz_id: nextQuestion.quiz_id,
-      //     right_answer: nextQuestion.right_answer,
-      //   },
-      //   classId,
-      // );
       setTimeLeft(nextQuestion.time);
     } else if (classId) {
       sendEndGame(classId);
@@ -174,14 +151,6 @@ const GameLobby: React.FC = () => {
   const startHandler = () => {
     if (students.length && classId) {
       startGame(classId, user!.id);
-    } else {
-      console.log("No students have joined yet");
-    }
-  };
-
-  const leaveHandler = () => {
-    if (students.length && classId) {
-      endGame(classId);
     } else {
       console.log("No students have joined yet");
     }
