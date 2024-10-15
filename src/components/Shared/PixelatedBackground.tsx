@@ -146,7 +146,8 @@ export const PixelatedBackground = ({
           element.y = (element.y + (element.directionY ?? 0)) % 100;
         } else {
           element.y = (element.y + element.speed) % 100;
-          element.x += Math.sin(element.y * 0.1) * 0.02;
+          element.x =
+            (element.x + Math.sin(element.y * 0.1) * 0.02 + 100) % 100;
         }
 
         if (element.type === "character" || element.type === "shootingStar") {
