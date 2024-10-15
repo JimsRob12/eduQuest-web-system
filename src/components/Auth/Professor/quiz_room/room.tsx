@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import {
   getParticipants,
   startGame,
+  endGame,
   gameEventHandler,
   getQuestionsProf,
   sendNextQuestion,
@@ -101,21 +102,22 @@ const GameLobby: React.FC = () => {
       const nextIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(nextIndex);
       const nextQuestion = questions[nextIndex];
-      await sendNextQuestion(
-        {
-          quiz_question_id: nextQuestion.quiz_question_id,
-          question: nextQuestion.question,
-          distractor: nextQuestion.distractor,
-          time: nextQuestion.time,
-          image_url: nextQuestion.image_url,
-          points: nextQuestion.points,
-          question_type: nextQuestion.question_type,
-          order: nextQuestion.order,
-          quiz_id: nextQuestion.quiz_id,
-          right_answer: nextQuestion.right_answer,
-        },
-        classId,
-      );
+      // await sendNextQuestion(
+      //   {
+      //     quiz_question_id: nextQuestion.quiz_question_id,
+      //     question: nextQuestion.question,
+      //     distractor: nextQuestion.distractor,
+      //     time: nextQuestion.time,
+      //     image_url: nextQuestion.image_url,
+      //     points: nextQuestion.points,
+      //     question_type: nextQuestion.question_type,
+      //     order: nextQuestion.order,
+      //     quiz_id: nextQuestion.quiz_id,
+      //     right_answer: nextQuestion.right_answer,
+      //   },
+      //   classId,
+      // );
+            
       setTimeLeft(nextQuestion.time);
     } else if (classId) {
       sendEndGame(classId);
@@ -146,6 +148,14 @@ const GameLobby: React.FC = () => {
     }
   };
 
+  const leaveHandler = () => {
+    if (students.length && classId) {
+      endGame(classId);
+    } else {
+      console.log("No students have joined yet");
+    }
+  };
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareableLink);
     setCopied(true);
@@ -167,6 +177,13 @@ const GameLobby: React.FC = () => {
             disabled={!(students.length > 0)}
           >
             Start Game
+          </Button>
+          <Button
+            className="rounded-md shadow-[0px_4px_0px_#3b1b55] ml-2 transition-all duration-300 hover:translate-y-1 hover:shadow-none dark:shadow-[0px_4px_0px_#aaa4b1] dark:hover:shadow-none"
+            onClick={leaveHandler}
+            disabled={!(students.length > 0)}
+          >
+            Leave Game
           </Button>
         </div>
         <div className="mb-8">

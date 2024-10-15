@@ -132,6 +132,22 @@ export async function joinRoom(
   username?: string,
 ): Promise<boolean> {
   try {
+    // const { data, error } = await supabase
+    //   .from("quiz")
+    //   .select('status')
+    //   .eq("class_code", classCode)
+    //   .single();
+
+    // if (error) {
+    //   console.error("Error fetching quiz status:", error);
+    //   return false;
+    // }
+  
+    // if (data && data.status !== 'in game') {
+    //   return false        
+    // }
+
+
     const { data: existingRecord } = await supabase
       .from("temp_room")
       .select("*")
@@ -274,32 +290,40 @@ export async function sendNextQuestion(
       new Date().getTime() + question.time * 1000,
     ).toISOString();
 
-    const { data: existingQuestion } = await supabase
-      .from("temp_room_questions")
-      .select("id")
-      .eq("class_code", classCode)
-      .single();
-
-    if (existingQuestion) {
-      await supabase
-        .from("temp_room_questions")
-        .update({
-          ...question,
-          start_time: startTime,
-          end_time: endTime,
-        })
-        .eq("id", existingQuestion.id);
-    } else {
-      await supabase.from("temp_room_questions").insert([
-        {
-          ...question,
-          class_code: classCode,
-          start_time: startTime,
-          end_time: endTime,
-        },
-      ]);
-    }
-
+    await supabase.from("temp_room_questions").insert([
+      {
+        ...question,
+        class_code: classCode,
+        start_time: startTime,
+        end_time: endTime,
+      },
+    ]);
+    // const { data: existingQuestion } = await supabase
+    //   .from("temp_room_questions")
+    //   .select("id")
+    //   .eq("class_code", classCode)
+    //   .single();
+    
+    // if (existingQuestion) {
+    //   await supabase
+    //     .from("temp_room_questions")
+    //     .update({
+    //       ...question,
+    //       start_time: startTime,
+    //       end_time: endTime,
+    //     })
+    //     .eq("id", existingQuestion.id);
+    // } else {
+    //   await supabase.from("temp_room_questions").insert([
+    //     {
+    //       ...question,
+    //       class_code: classCode,
+    //       start_time: startTime,
+    //       end_time: endTime,
+    //     },
+    //   ]);
+    // }
+    console.log('sent question');
     return true;
   } catch (error) {
     console.error("Error sending next question:", error);
@@ -413,101 +437,142 @@ function getRemainingTime(start: string, end: string): number {
   return Math.floor(timeDifferenceInMillis / 1000);
 }
 
+export async function getQuizQuestionsStud(
+    classCode: string,
+  ): Promise<QuizQuestions[]> {
+    try {
+      const { data: quizData } = await supabase
+        .from("quiz")
+        .select("quiz_id")
+        .eq("class_code", classCode)
+        .single();
+  
+      if (!quizData) {
+        throw new Error("Quiz not found");
+      }
+  
+      const { data: questionsData } = await supabase
+        .from("quiz_questions")
+        .select(
+          "quiz_question_id, right_answer, question, distractor, time, image_url, points, question_type, order",
+        )
+        .eq("quiz_id", quizData.quiz_id)
+        .order("order", { ascending: true });
+  
+      if (questionsData && questionsData.length > 0) {
+        await sendNextQuestion(
+          { ...questionsData[0], quiz_id: quizData.quiz_id },
+          classCode,
+        );
+      }
+  
+      return (
+        questionsData?.map((question) => ({
+          ...question,
+          quiz_id: quizData.quiz_id,
+        })) || []
+      );
+    } catch (error) {
+      console.error("Error fetching quiz questions:", error);
+      return [];
+    }
+  }
+
 // Student question retrieval function
-export function getQuizQuestionsStud(
-  classCode: string,
-  setTimeLeft: Dispatch<SetStateAction<number>>,
-): Promise<TempQuizQuestionPayload | null> {
-  return new Promise((resolve) => {
-    // First, attempt to fetch the current question
-    supabase
-      .from("temp_room_questions")
-      .select("*")
-      .eq("class_code", classCode)
-      .order("start_time", { ascending: false })
-      .limit(1)
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          if (error.code === "PGRST116") {
-            console.log(
-              "No current question found. Waiting for first question.",
-            );
-            resolve(null);
-          } else {
-            console.error("Error fetching current question:", error);
-            resolve(null);
-          }
-        } else if (data) {
-          const currentQuestion: TempQuizQuestionPayload = {
-            quiz_question_id: data.quiz_question_id,
-            class_code: classCode,
-            question: data.question,
-            distractor: data.distractor,
-            time: data.time,
-            image_url: data.image_url,
-            points: data.points,
-            question_type: data.question_type,
-            order: data.order,
-            start_time: data.start_time,
-            end_time: data.end_time,
-          };
-          console.log("Current question fetched: ", currentQuestion);
-          setTimeLeft(
-            getRemainingTime(
-              currentQuestion.start_time,
-              currentQuestion.end_time,
-            ),
-          );
-          resolve(currentQuestion);
-        }
-      });
+// export function getQuizQuestionsStud(
+//   classCode: string,
+//   setTimeLeft: Dispatch<SetStateAction<number>>,
+// ): Promise<TempQuizQuestionPayload | null> {
+//   return new Promise((resolve) => {
+//     // First, attempt to fetch the current question
+//     supabase
+//       .from("temp_room_questions")
+//       .select("*")
+//       .eq("class_code", classCode)
+//       .order("start_time", { ascending: false })
+//       .limit(1)
+//       .single()
+//       .then(({ data, error }) => {
+//         if (error) {
+//           if (error.code === "PGRST116") {
+//             console.log(
+//               "No current question found. Waiting for first question.",
+//             );
+//             resolve(null);
+//           } else {
+//             console.error("Error fetching current question:", error);
+//             resolve(null);
+//           }
+//         } else if (data) {
+//           const currentQuestion: TempQuizQuestionPayload = {
+//             quiz_question_id: data.quiz_question_id,
+//             class_code: classCode,
+//             question: data.question,
+//             distractor: data.distractor,
+//             time: data.time,
+//             image_url: data.image_url,
+//             points: data.points,
+//             question_type: data.question_type,
+//             order: data.order,
+//             start_time: data.start_time,
+//             end_time: data.end_time,
+//           };
+//           console.log("Current question fetched: ", currentQuestion);
+//           setTimeLeft(
+//             getRemainingTime(
+//               currentQuestion.start_time,
+//               currentQuestion.end_time,
+//             ),
+//           );
+//           resolve(currentQuestion);
+//         }
+//       });
 
-    // Set up subscription for future updates
-    const channel = supabase
-      .channel(`room-questions-${classCode}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "temp_room_questions",
-          filter: `class_code=eq.${classCode}`,
-        },
-        (payload: { new: Partial<TempQuizQuestionPayload> }) => {
-          try {
-            const newQuestion: TempQuizQuestionPayload = {
-              quiz_question_id: payload.new.quiz_question_id!,
-              class_code: classCode,
-              question: payload.new.question!,
-              distractor: payload.new.distractor!,
-              time: payload.new.time!,
-              image_url: payload.new.image_url!,
-              points: payload.new.points!,
-              question_type: payload.new.question_type!,
-              order: payload.new.order!,
-              start_time: payload.new.start_time!,
-              end_time: payload.new.end_time!,
-            };
-            console.log("New question received: ", newQuestion);
-            setTimeLeft(
-              getRemainingTime(newQuestion.start_time, newQuestion.end_time),
-            );
-            resolve(newQuestion);
-          } catch (error) {
-            console.error("Error processing payload:", error);
-            resolve(null);
-          }
-        },
-      )
-      .subscribe();
+//     // Set up subscription for future updates
+//     const channel = supabase
+//       .channel(`room-questions-${classCode}`)
+//       .on(
+//         "postgres_changes",
+//         {
+//           event: "INSERT",
+//           schema: "public",
+//           table: "temp_room_questions",
+//           filter: `class_code=eq.${classCode}`,
+//         },
+//         (payload: { new: Partial<TempQuizQuestionPayload> }) => {
+//           try {
+//             const newQuestion: TempQuizQuestionPayload = {
+//               quiz_question_id: payload.new.quiz_question_id!,
+//               class_code: classCode,
+//               question: payload.new.question!,
+//               distractor: payload.new.distractor!,
+//               time: payload.new.time!,
+//               image_url: payload.new.image_url!,
+//               points: payload.new.points!,
+//               question_type: payload.new.question_type!,
+//               order: payload.new.order!,
+//               start_time: payload.new.start_time!,
+//               end_time: payload.new.end_time!,
+//             };
+//             console.log("New question received: ", newQuestion);
+//             setTimeLeft(
+//               getRemainingTime(newQuestion.start_time, newQuestion.end_time),
+//             );
+//             resolve(newQuestion);
+//           } catch (error) {
+//             console.error("Error processing payload:", error);
+//             resolve(null);
+//           }
+//         },
+//       )
+//       .subscribe();
 
-    // Return a cleanup function to unsubscribe when component unmounts
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  });
-}
+//     // Return a cleanup function to unsubscribe when component unmounts
+//     return () => {
+//       supabase.removeChannel(channel);
+//     };
+//   });
+// }
 
 // Answer checking function
 async function checkAnswer(

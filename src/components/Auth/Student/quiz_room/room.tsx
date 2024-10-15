@@ -23,6 +23,8 @@ import {
   updateLeaderBoard,
   submitAnswer,
   joinRoom,
+  getEndGame,
+  getExitLeaderboard,
 } from "@/services/api/apiRoom";
 import { QuizQuestions as Question } from "@/lib/types";
 import toast from "react-hot-toast";
@@ -55,12 +57,16 @@ const SGameLobby: React.FC = () => {
   const [score, setScore] = useState(0);
   const [rightAns, setRightAns] = useState(0);
   const [wrongAns, setWrongAns] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  
   const [timeLeft, setTimeLeft] = useState(0);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(
     localStorage.getItem("displayName"),
   );
+  const currentQuestion = questions[currentQuestionIndex];
+
   const [displayNameRequired, setDisplayNameRequired] = useState(!displayName);
   const [kickedDialogOpen, setKickedDialogOpen] = useState(false);
 
@@ -106,19 +112,38 @@ const SGameLobby: React.FC = () => {
     }
   }, [classId, joined]);
 
-  useEffect(() => {
-    const getQuestion = async () => {
-      if (gameStart && classId) {
-        const question = (await getQuizQuestionsStud(
-          classId,
-          setTimeLeft,
-        )) as unknown as Question;
-        setCurrentQuestion(question);
-        setShowLeaderboard(false);
-      }
-    };
+  const getQuestion = async () => {
+    if (classId) {
+      const fetchedQuestions = (await getQuizQuestionsStud(classId)).map(
+        (question: any) => ({
+          ...question,
+          quiz_id: question.quiz_id || "",
+        }),
+      );
+      setQuestions(fetchedQuestions);
+      setTimeLeft(fetchedQuestions[0]?.time || 30);
+    }
+  };
+  const handleNextQuestion = async () => {
+    if (currentQuestionIndex < questions.length - 1 && classId) {
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
+      
+    } else if (classId) {
+      setShowLeaderboard(true);  
+      setGameStart(false)
+    }
+  };
+  useEffect(() => {    
     getQuestion();
   }, [gameStart, classId]);
+  useEffect(() => {
+    if (!showLeaderboard && gameStart) {
+      const nextQuestion = questions[currentQuestionIndex];      
+      setTimeLeft(nextQuestion.time);
+    }    
+    
+  }, [showLeaderboard, gameStart]);
 
   useEffect(() => {
     if (gameStart && timeLeft >= 0) {
@@ -139,29 +164,14 @@ const SGameLobby: React.FC = () => {
         );
 
         setTimeout(() => {
-          getQuestion();
+          handleNextQuestion()
+          getExitLeaderboard(setShowLeaderboard)
         }, 10000);
       }
 
       return () => clearInterval(interval);
     }
   }, [timeLeft, gameStart]);
-
-  const getQuestion = async () => {
-    if (classId) {
-      const question = (await getQuizQuestionsStud(
-        classId,
-        setTimeLeft,
-      )) as unknown as Question;
-      if (question) {
-        setCurrentQuestion(question);
-        setShowLeaderboard(false);
-      } else {
-        // If no more questions, end the game
-        setGameStart(false);
-      }
-    }
-  };
 
   useEffect(() => {
     if (classId && user?.id) {
