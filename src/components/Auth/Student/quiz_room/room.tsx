@@ -1,19 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
@@ -26,34 +13,24 @@ import {
   getExitLeaderboard,
 } from "@/services/api/apiRoom";
 import { QuizQuestions as Question, QuizQuestions } from "@/lib/types";
-import toast from "react-hot-toast";
 import supabase from "@/services/supabase";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 import soundOnMount from "/sounds/game-start.mp3";
 import soundOnLoop from "/sounds/lobby-sound.mp3";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { useMediaQuery } from "react-responsive";
 import ProgressBar from "@/components/Shared/progressbar";
-
-const formSchema = z.object({
-  username: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-});
+import GameForm from "./game-form";
+import KickedDialog from "./kicked-dialog";
+import Lobby from "./lobby";
+import Leaderboard from "./leaderboard";
+import LoadingSpinner from "./loader";
 
 const SGameLobby: React.FC = () => {
   const { user } = useAuth();
   const { classId } = useParams<{ classId: string }>();
   const navigate = useNavigate();
 
-  // const [students, setStudents] = useState<Student[]>([]);
   const [gameStart, setGameStart] = useState(false);
   const [joined, setJoined] = useState(false);
   const [score, setScore] = useState(0);
@@ -76,17 +53,10 @@ const SGameLobby: React.FC = () => {
   const { theme } = useTheme();
   const isTabletorMobile = useMediaQuery({ query: "(max-width: 1024px)" });
 
-  const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF8C33"];
-  const lightColors = ["#FF8C66", "#37a753", "#668CFF", "#FF66C2", "#FFB366"];
+  const colors = ["#D2691E", "#FF7F50", "#FFD700", "#32CD32", "#4682B4"];
+  const lightColors = ["#CD853F", "#FF6347", "#FFA500", "#9ACD32", "#5F9EA0"];
 
   const currentQuestion = questions[currentQuestionIndex];
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: "",
-    },
-  });
 
   useEffect(() => {
     const autoJoin = async () => {
@@ -135,6 +105,7 @@ const SGameLobby: React.FC = () => {
       setTimeLeft(fetchedQuestions[0]?.time || 30);
     }
   };
+
   const handleNextQuestion = async () => {
     if (currentQuestionIndex < questions.length - 1 && classId) {
       const nextIndex = currentQuestionIndex + 1;
@@ -144,9 +115,11 @@ const SGameLobby: React.FC = () => {
       setGameStart(false);
     }
   };
+
   useEffect(() => {
     getQuestion();
   }, [gameStart, classId]);
+
   useEffect(() => {
     if (!showLeaderboard && gameStart) {
       const nextQuestion = questions[currentQuestionIndex];
@@ -162,25 +135,39 @@ const SGameLobby: React.FC = () => {
 
       if (timeLeft === 0) {
         clearInterval(interval);
-        setShowLeaderboard(true);
-        updateLeaderBoard(
-          classId!,
-          user!.id,
-          user!.name || "",
-          score,
-          rightAns,
-          wrongAns,
-        );
-
-        setTimeout(() => {
-          handleNextQuestion();
-          getExitLeaderboard(setShowLeaderboard);
-        }, 5000);
+        handleTimeUp();
       }
 
       return () => clearInterval(interval);
     }
   }, [timeLeft, gameStart]);
+
+  const handleTimeUp = async () => {
+    if (!hasAnswered && currentQuestion) {
+      // Consider the question wrong if no answer was submitted
+      setWrongAns((prev) => prev + 1);
+      if (user) {
+        await submitAnswer(currentQuestion.quiz_question_id, user.id, "");
+      }
+    }
+
+    setShowLeaderboard(true);
+    if (classId && user) {
+      await updateLeaderBoard(
+        classId,
+        user.id,
+        user.name || "",
+        score,
+        rightAns,
+        wrongAns + (hasAnswered ? 0 : 1), // Increment wrong answers if no answer was given
+      );
+    }
+
+    setTimeout(() => {
+      handleNextQuestion();
+      getExitLeaderboard(setShowLeaderboard);
+    }, 5000);
+  };
 
   useEffect(() => {
     if (classId && user?.id) {
@@ -209,11 +196,6 @@ const SGameLobby: React.FC = () => {
     }
   }, [showLeaderboard, gameStart, currentQuestionIndex, questions]);
 
-  const handleKickedDialogClose = () => {
-    setKickedDialogOpen(false);
-    navigate("/student/dashboard");
-  };
-
   const leaveHandler = () => {
     if (classId && user?.id) {
       const response = leaveRoom(classId, user.id);
@@ -237,25 +219,6 @@ const SGameLobby: React.FC = () => {
     } else {
       setScore((prev) => prev + (currentQuestion.points || 0));
       setRightAns((prev) => prev + 1);
-    }
-  };
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (classId && user) {
-      const success = await joinRoom(
-        classId,
-        user.id ?? "",
-        user,
-        values.username,
-      );
-      if (success) {
-        setJoined(true);
-        setDisplayNameRequired(false);
-        setDisplayName(values.username);
-        localStorage.setItem("displayName", values.username);
-      } else {
-        toast.error("Failed to join the room");
-      }
     }
   };
 
@@ -368,13 +331,8 @@ const SGameLobby: React.FC = () => {
           return (
             <Button
               key={option}
-              className={`rounded-lg bg-purple-800 bg-opacity-20 p-4 text-left transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56 ${isDisabled && !isSelected ? "opacity-50" : ""}`}
+              className={`rounded-lg bg-opacity-20 p-4 text-left transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56 ${isDisabled && !isSelected ? "opacity-50" : ""}`}
               style={{
-                backgroundColor: isSelected
-                  ? "purple"
-                  : isDisabled
-                    ? "gray"
-                    : "purple",
                 opacity: isDisabled && !isSelected ? 0.5 : 1,
               }}
               onClick={() => handleAnswer(option)}
@@ -441,95 +399,34 @@ const SGameLobby: React.FC = () => {
 
   if (displayNameRequired) {
     return (
-      <div className="flex h-[calc(100%-5rem)] items-center justify-center">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 rounded-lg bg-zinc-200 p-4 dark:bg-zinc-800 md:p-6"
-          >
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Display Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter your display name"
-                      className="dark:border-zinc-950"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This name will be visible to your teachers and classmates
-                    and will be used for recording your quiz scores.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="submit"
-              className="w-full rounded-md shadow-[0px_4px_0px_#3b1b55] transition-all duration-300 hover:translate-y-1 hover:shadow-none dark:shadow-[0px_4px_0px_#aaa4b1] dark:hover:shadow-none"
-            >
-              Join Game
-            </Button>
-          </form>
-        </Form>
-      </div>
+      <GameForm
+        classId={classId!}
+        user={user ? { ...user, role: user.role || "" } : null}
+        setJoined={setJoined}
+        setDisplayNameRequired={setDisplayNameRequired}
+        setDisplayName={setDisplayName}
+      />
     );
   }
 
   if (kickedDialogOpen)
     return (
-      <Dialog open={kickedDialogOpen} onOpenChange={handleKickedDialogClose}>
-        <DialogContent className="dark:text-white">
-          <DialogHeader>
-            <DialogTitle>You have been removed from the game</DialogTitle>
-            <DialogDescription>
-              The game owner has removed you from this game session. You will be
-              redirected to your dashboard.
-            </DialogDescription>
-          </DialogHeader>
-          <Button onClick={handleKickedDialogClose}>OK</Button>
-        </DialogContent>
-      </Dialog>
+      <KickedDialog
+        isOpen={kickedDialogOpen}
+        onClose={() => setKickedDialogOpen(false)}
+      />
     );
 
   if (!joined) {
-    return (
-      <div className="flex h-[calc(100%-5rem)] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Joining the game...</span>
-      </div>
-    );
+    return <LoadingSpinner message="Joining the game.." />;
   }
 
   if (!gameStart) {
-    return (
-      <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center">
-        <h1 className="mb-5 text-7xl font-bold uppercase text-purple-800 md:text-9xl">
-          Game Lobby
-        </h1>
-        <div className="w-full max-w-md space-y-4">
-          <div className="text-center text-gray-500">
-            Waiting for the game to start...
-          </div>
-        </div>
-        <Button className="mt-8" onClick={leaveHandler} variant="destructive">
-          Leave Game
-        </Button>
-      </div>
-    );
+    return <Lobby onLeave={leaveHandler} />;
   }
 
   if (showLeaderboard) {
-    return (
-      <div className="flex h-[calc(100%-5rem)] items-center justify-center">
-        <h1 className="text-3xl font-bold">Leaderboard</h1>
-        {/* Add leaderboard content here */}
-      </div>
-    );
+    return <Leaderboard />;
   }
 
   return currentQuestion ? (
