@@ -22,6 +22,7 @@ import { formatQuestionType, questionTypeIcon } from "@/lib/helpers";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { useMediaQuery } from "react-responsive";
 import Loader from "@/components/Shared/Loader";
+import { GAME_COLORS } from "@/lib/constants";
 
 interface QuizPreviewDialogProps {
   open: boolean;
@@ -51,9 +52,6 @@ const QuizPreviewDialog = ({ open, onOpenChange }: QuizPreviewDialogProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const { theme } = useTheme();
   const isTabletorMobile = useMediaQuery({ query: "(max-width: 1024px)" });
-
-  const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF8C33"];
-  const lightColors = ["#FF8C66", "#37a753", "#668CFF", "#FF66C2", "#FFB366"];
 
   const isQuestionIncomplete = (question: QuizQuestions) => {
     return (
@@ -104,8 +102,8 @@ const QuizPreviewDialog = ({ open, onOpenChange }: QuizPreviewDialogProps) => {
         {currentQuestion.distractor?.map((answer, index) => {
           const bgColor =
             theme === "dark"
-              ? lightColors[index % lightColors.length]
-              : colors[index % colors.length];
+              ? GAME_COLORS.dark[index % GAME_COLORS.dark.length]
+              : GAME_COLORS.light[index % GAME_COLORS.light.length];
           const isCorrect = answer === currentQuestion.right_answer;
 
           return (
