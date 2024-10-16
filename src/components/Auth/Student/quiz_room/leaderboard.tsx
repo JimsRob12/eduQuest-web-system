@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Check, Triangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import LoadingSpinner from "./loader";
 
 type LeaderboardEntry = {
   id: string;
@@ -105,13 +106,12 @@ export default function Leaderboard({ leaderboardData }: LeaderboardProps) {
   if (sortedData.length === 0) {
     return (
       <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center p-8">
-        <motion.h1
-          className="text-3xl font-bold"
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          No players yet
-        </motion.h1>
+          <LoadingSpinner message="Fetching leaderboards.." />
+        </motion.div>
       </div>
     );
   }

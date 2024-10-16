@@ -57,7 +57,7 @@ function AppLayout() {
       <div className="relative z-10 flex h-full flex-col px-6 md:px-12 lg:px-16">
         {renderNavbar()}
         <main
-          className={`flex-1 overflow-y-auto ${
+          className={`flex-1 overflow-y-auto overflow-x-hidden ${
             (isProfessorQuizRoute || isQuizEditQuestionRoute) &&
             "-mx-6 w-screen bg-zinc-200/95 px-6 dark:bg-zinc-800/95 md:-mx-12 md:px-12 lg:-mx-16 lg:px-16"
           }`}
