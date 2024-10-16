@@ -15,8 +15,11 @@ import {
 import { QuizQuestions as Question, QuizQuestions } from "@/lib/types";
 import supabase from "@/services/supabase";
 
-import soundOnMount from "/sounds/game-start.mp3";
-import soundOnLoop from "/sounds/lobby-sound.mp3";
+import soundOnLobby from "/sounds/lobby-sound.mp3";
+import soundCorrect from "/sounds/correct-answer.mp3";
+import soundWrong from "/sounds/wrong-answer.mp3";
+import soundNoAnswer from "/sounds/wrong-answer.mp3";
+
 import { useTheme } from "@/contexts/ThemeProvider";
 import { useMediaQuery } from "react-responsive";
 import ProgressBar from "@/components/Shared/progressbar";
@@ -48,7 +51,15 @@ const SGameLobby: React.FC = () => {
   );
   const [displayNameRequired, setDisplayNameRequired] = useState(!displayName);
   const [kickedDialogOpen, setKickedDialogOpen] = useState(false);
+  const [effect, setEffect] = useState<"correct" | "wrong" | "noAnswer" | null>(
+    null,
+  );
+
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const lobbyMusic = useRef(new Audio(soundOnLobby));
+  const correctSound = useRef(new Audio(soundCorrect));
+  const wrongSound = useRef(new Audio(soundWrong));
+  const noAnswerSound = useRef(new Audio(soundNoAnswer));
 
   const { theme } = useTheme();
   const isTabletorMobile = useMediaQuery({ query: "(max-width: 1024px)" });
@@ -144,11 +155,12 @@ const SGameLobby: React.FC = () => {
 
   const handleTimeUp = async () => {
     if (!hasAnswered && currentQuestion) {
-      // Consider the question wrong if no answer was submitted
       setWrongAns((prev) => prev + 1);
       if (user) {
         await submitAnswer(currentQuestion.quiz_question_id, user.id, "");
       }
+      setEffect("noAnswer");
+      noAnswerSound.current.play();
     }
 
     setShowLeaderboard(true);
@@ -159,13 +171,14 @@ const SGameLobby: React.FC = () => {
         user.name || "",
         score,
         rightAns,
-        wrongAns + (hasAnswered ? 0 : 1), // Increment wrong answers if no answer was given
+        wrongAns + (hasAnswered ? 0 : 1),
       );
     }
 
     setTimeout(() => {
       handleNextQuestion();
       getExitLeaderboard(setShowLeaderboard);
+      setEffect(null);
     }, 5000);
   };
 
@@ -216,61 +229,43 @@ const SGameLobby: React.FC = () => {
     );
     if (!response) {
       setWrongAns((prev) => prev + 1);
+      setEffect("wrong");
+      wrongSound.current.play();
     } else {
       setScore((prev) => prev + (currentQuestion.points || 0));
       setRightAns((prev) => prev + 1);
+      setEffect("correct");
+      correctSound.current.play();
     }
   };
 
   useEffect(() => {
-    let soundMount: HTMLAudioElement | null = null;
-    let soundLoop: HTMLAudioElement | null = null;
+    let currentMusic = lobbyMusic.current;
 
-    // Preload the audio files
-    const preloadSounds = () => {
-      soundMount = new Audio(soundOnMount);
-      soundMount.preload = "auto"; // Preload the mount sound
-      soundLoop = new Audio(soundOnLoop);
-      soundLoop.preload = "auto"; // Preload the loop sound
-    };
+    const setupMusic = () => {
+      lobbyMusic.current.loop = true;
+      // gameMusic.current.loop = true;
 
-    const playSounds = () => {
-      if (soundMount) {
-        // Attempt to play the mount sound
-        soundMount.play().catch((error) => {
-          console.error("Mount sound blocked by autoplay policies:", error);
-        });
-
-        soundMount.onended = () => {
-          if (soundLoop) {
-            soundLoop.loop = true;
-            // Attempt to play the loop sound
-            soundLoop.play().catch((error) => {
-              console.error("Loop sound blocked by autoplay policies:", error);
-            });
-          }
-        };
+      if (gameStart) {
+        lobbyMusic.current.pause();
+      } else {
+        lobbyMusic.current.play().catch(console.error);
+        currentMusic = lobbyMusic.current;
       }
     };
 
-    // Preload sounds initially
-    preloadSounds();
-
-    // Trigger sound play after the first user interaction (click/tap)
     const handleUserInteraction = () => {
-      document.removeEventListener("click", handleUserInteraction); // Remove listener after interaction
-      playSounds(); // Play sound instantly after interaction
+      document.removeEventListener("click", handleUserInteraction);
+      setupMusic();
     };
 
     document.addEventListener("click", handleUserInteraction);
 
-    // Cleanup event listeners and sounds on unmount
     return () => {
-      if (soundMount) soundMount.pause();
-      if (soundLoop) soundLoop.pause();
+      lobbyMusic.current.pause();
       document.removeEventListener("click", handleUserInteraction);
     };
-  }, []);
+  }, [gameStart]);
 
   const renderMultipleChoice = () => {
     if (!currentQuestion) return null;
@@ -290,24 +285,25 @@ const SGameLobby: React.FC = () => {
               ? lightColors[index % lightColors.length]
               : colors[index % colors.length];
           const isSelected = selectedAnswer === answer;
-          const isDisabled = hasAnswered;
 
           return (
             <Button
               key={index}
-              className={`h-full rounded-lg p-1 transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56 ${
-                isDisabled && !isSelected ? "opacity-50" : ""
+              className={`relative h-full rounded-lg p-1 transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56 ${
+                isSelected && effect === "correct"
+                  ? "animate-pulse-green !bg-green-600"
+                  : isSelected && effect === "wrong"
+                    ? "animate-shake !bg-red-600"
+                    : !isSelected && hasAnswered
+                      ? "!bg-slate-500 !text-zinc-900"
+                      : ""
               }`}
               style={{
-                backgroundColor: isSelected
-                  ? bgColor
-                  : isDisabled
-                    ? "gray"
-                    : bgColor,
+                backgroundColor: hasAnswered ? undefined : bgColor,
                 color: "#fff",
               }}
               onClick={() => handleAnswer(answer)}
-              disabled={isDisabled}
+              disabled={hasAnswered && !isSelected}
             >
               <div className="mt-2 flex h-full items-center justify-center rounded-lg border-none p-2 text-lg">
                 {answer.charAt(0).toUpperCase() + answer.slice(1)}
@@ -326,17 +322,13 @@ const SGameLobby: React.FC = () => {
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {["True", "False"].map((option) => {
           const isSelected = selectedAnswer === option;
-          const isDisabled = hasAnswered;
 
           return (
             <Button
               key={option}
-              className={`rounded-lg bg-opacity-20 p-4 text-left transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56 ${isDisabled && !isSelected ? "opacity-50" : ""}`}
-              style={{
-                opacity: isDisabled && !isSelected ? 0.5 : 1,
-              }}
+              className={`rounded-lg ${!isSelected && "bg-purple-800 bg-opacity-20"} p-4 text-left transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56 ${isSelected && effect === "correct" && "animate-pulse-green !bg-green-600 bg-opacity-100"} ${isSelected && effect === "wrong" && "animate-shake !bg-red-600 bg-opacity-100 !text-white"} `}
               onClick={() => handleAnswer(option)}
-              disabled={isDisabled}
+              disabled={hasAnswered && !isSelected}
             >
               {option}
             </Button>
@@ -373,19 +365,16 @@ const SGameLobby: React.FC = () => {
           Type your answer in the boxes
         </h1>
         <div
-          className="grid gap-1"
+          className={`grid gap-1 ${effect === "wrong" ? "animate-shake" : ""}`}
           style={{
-            gridTemplateColumns: `repeat(${Math.min(
-              currentQuestion.right_answer.length,
-              isTabletorMobile ? 5 : 10,
-            )}, 1fr)`,
+            gridTemplateColumns: `repeat(${Math.min(currentQuestion.right_answer.length, isTabletorMobile ? 5 : 10)}, 1fr)`,
           }}
         >
           {currentQuestion.right_answer.split("").map((_, index) => (
             <Input
               key={index}
               ref={(el) => (inputRefs.current[index] = el)}
-              className="flex size-12 items-center justify-center rounded-lg bg-zinc-700 text-center text-white"
+              className={`flex size-12 items-center justify-center rounded-lg bg-zinc-700 text-center text-white ${effect === "correct" && "animate-pulse-green"} ${effect === "wrong" && "!bg-red-600"} `}
               maxLength={1}
               value={answerInput[index] || ""}
               onChange={(e) => handleInputChange(index, e.target.value)}
@@ -457,8 +446,24 @@ const SGameLobby: React.FC = () => {
           renderFillInTheBlank()}
       </div>
       {hasAnswered ? (
-        <div className="mt-4 text-lg font-bold">
-          Answer submitted! Waiting for other player's answer...
+        <div
+          className={`mt-4 text-lg font-bold ${
+            effect === "correct"
+              ? "text-green-500"
+              : effect === "wrong"
+                ? "text-red-500"
+                : "text-yellow-500"
+          }`}
+        >
+          {effect === "correct"
+            ? "Correct!"
+            : effect === "wrong"
+              ? "Wrong!"
+              : "Time's up!"}
+          <br />
+          <span className="text-zinc-900 dark:text-white">
+            Answer submitted! Waiting for other player's answer...
+          </span>
         </div>
       ) : (
         <div className="text-lg font-bold">Time Left: {timeLeft} seconds</div>
