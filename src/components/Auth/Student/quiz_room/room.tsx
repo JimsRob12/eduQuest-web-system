@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { useMediaQuery } from "react-responsive";
-import { QuizQuestions } from "@/lib/types";
+import { LeaderboardEntry, QuizQuestions } from "@/lib/types";
 import supabase from "@/services/supabase";
 import {
   leaveRoom,
@@ -53,6 +53,9 @@ const SGameLobby: React.FC = () => {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [effect, setEffect] = useState<EffectType>(null);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>(
+    [],
+  );
 
   // Answer State
   const [answerInput, setAnswerInput] = useState<string[]>([]);
@@ -202,14 +205,17 @@ const SGameLobby: React.FC = () => {
     setShowLeaderboard(true);
 
     if (classId && user) {
-      await updateLeaderBoard(
+      const leaderboardResponse = await updateLeaderBoard(
         classId,
         user.id,
-        user.name || "",
+        user.name || displayName || "",
+        user.avatar,
+        user.email,
         score,
         rightAns,
         wrongAns + (hasAnswered ? 0 : 1),
       );
+      setLeaderboardData(leaderboardResponse || []);
     }
 
     setTimeout(() => {
@@ -294,7 +300,7 @@ const SGameLobby: React.FC = () => {
   }
 
   if (showLeaderboard) {
-    return <Leaderboard />;
+    return <Leaderboard leaderboardData={leaderboardData} />;
   }
 
   if (!currentQuestion) {

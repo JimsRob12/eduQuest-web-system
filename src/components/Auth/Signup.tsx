@@ -210,7 +210,7 @@ const Signup: React.FC = () => {
                 <img
                   width="24"
                   height="24"
-                  src="https://img.icons8.com/fluency/24/google-logo.png"
+                  src="https://cdn-icons-png.flaticon.com/512/300/300221.png"
                   alt="google-logo"
                 />
                 {isSigningUp ? "Signing up..." : "Sign up with Google"}

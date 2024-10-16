@@ -1,4 +1,57 @@
-import { SubjectData } from "./types";
+import { LeaderboardEntry, SubjectData } from "./types";
+
+export const tempLeaderboardData: LeaderboardEntry[] = [
+  {
+    quiz_student_id: "1",
+    score: 95,
+    id: "a1",
+    right_answer: 10,
+    wrong_answer: 2,
+    student_name: "Alice Johnson",
+    student_avatar: "https://placehold.co/400",
+    student_email: "alice.johnson@example.com",
+  },
+  {
+    quiz_student_id: "2",
+    score: 88,
+    id: "b2",
+    right_answer: 9,
+    wrong_answer: 3,
+    student_name: "Bob Smith",
+    student_avatar: "https://placehold.co/400",
+    student_email: "bob.smith@example.com",
+  },
+  {
+    quiz_student_id: "3",
+    score: 76,
+    id: "c3",
+    right_answer: 8,
+    wrong_answer: 4,
+    student_name: "Charlie Brown",
+    student_avatar: "https://placehold.co/400",
+    student_email: "charlie.brown@example.com",
+  },
+  {
+    quiz_student_id: "4",
+    score: 65,
+    id: "d4",
+    right_answer: 7,
+    wrong_answer: 5,
+    student_name: "Diana Prince",
+    student_avatar: "https://placehold.co/400",
+    student_email: "diana.prince@example.com",
+  },
+  {
+    quiz_student_id: "5",
+    score: 54,
+    id: "e5",
+    right_answer: 6,
+    wrong_answer: 6,
+    student_name: "Evan Wright",
+    student_avatar: "https://placehold.co/400",
+    student_email: "evan.wright@example.com",
+  },
+];
 
 export const subjectData: SubjectData = {
   Math: "Math",

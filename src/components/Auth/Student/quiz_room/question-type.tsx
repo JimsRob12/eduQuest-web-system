@@ -37,7 +37,7 @@ const MultipleChoice: React.FC<{
         const isSelected = selectedAnswer === answer;
 
         const buttonClasses = [
-          "relative h-full rounded-lg p-1 transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56",
+          "relative rounded-lg p-1 transition-transform duration-200 ease-in-out hover:translate-y-1 !h-fit md:h-56",
           isSelected &&
             effect === "correct" &&
             "animate-pulse-green !bg-green-600",
@@ -58,7 +58,7 @@ const MultipleChoice: React.FC<{
             onClick={() => handleAnswer(answer)}
             disabled={hasAnswered && !isSelected}
           >
-            <div className="mt-2 flex h-full items-center justify-center rounded-lg border-none p-2 text-lg">
+            <div className="mt-2 flex h-fit items-center justify-center rounded-lg border-none p-2 text-lg">
               {answer.charAt(0).toUpperCase() + answer.slice(1)}
             </div>
           </Button>
@@ -83,7 +83,7 @@ const TrueFalse: React.FC<{
         const isSelected = selectedAnswer === option;
 
         const buttonClasses = [
-          "rounded-lg p-4 text-left transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56",
+          "rounded-lg p-4 text-left transition-transform duration-200 ease-in-out hover:translate-y-1 h-fit md:h-56",
           !isSelected && "bg-purple-800 bg-opacity-20",
           isSelected &&
             effect === "correct" &&

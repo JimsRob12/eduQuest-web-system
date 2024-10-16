@@ -623,6 +623,8 @@ export async function updateLeaderBoard(
   classCode: string,
   studentId: string,
   studentName: string,
+  studentAvatar: string,
+  studentEmail: string,
   score: number,
   rightAns: number,
   wrongAns: number,
@@ -642,6 +644,8 @@ export async function updateLeaderBoard(
         {
           quiz_student_id: studentId,
           student_name: studentName,
+          student_avatar: studentAvatar,
+          student_email: studentEmail,
           score: score,
           class_code: classCode,
         },
@@ -665,7 +669,7 @@ export async function updateLeaderBoard(
     const { data: allStudents } = await supabase
       .from("quiz_students")
       .select(
-        "quiz_student_id, score, id, right_answer, wrong_answer, student_name",
+        "quiz_student_id, score, id, right_answer, wrong_answer, student_name, student_avatar, student_email",
       )
       .eq("class_code", classCode)
       .order("score", { ascending: false });

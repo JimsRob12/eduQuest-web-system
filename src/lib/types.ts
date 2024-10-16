@@ -48,6 +48,17 @@ export interface QuizQuestions {
   order: number;
 }
 
+export interface LeaderboardEntry {
+  quiz_student_id: string;
+  score: number;
+  id: string;
+  right_answer: number;
+  wrong_answer: number;
+  student_name: string;
+  student_avatar: string;
+  student_email: string;
+}
+
 export interface TempQuizQuestionPayload {
   quiz_question_id: string;
   class_code: string;
