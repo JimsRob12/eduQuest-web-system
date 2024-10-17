@@ -2,25 +2,18 @@ import { useState, useEffect } from "react";
 import { Check, Triangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LoadingSpinner from "./loader";
-
-type LeaderboardEntry = {
-  id: string;
-  student_name: string;
-  student_email: string;
-  student_avatar: string;
-  score: number;
-  right_answer: number;
-  wrong_answer: number;
-};
+import { LeaderboardEntry } from "@/lib/types";
 
 type LeaderboardProps = {
   leaderboardData: LeaderboardEntry[];
+  currentUserId: string;
 };
 
 type PodiumCardProps = {
   entry: LeaderboardEntry;
   rank: number;
   size: "sm" | "md" | "lg";
+  isCurrentUser: boolean;
 };
 
 const sizeClasses = {
@@ -29,7 +22,7 @@ const sizeClasses = {
   lg: "size-36",
 };
 
-const PodiumCard = ({ entry, rank, size }: PodiumCardProps) => {
+const PodiumCard = ({ entry, rank, size, isCurrentUser }: PodiumCardProps) => {
   return (
     <motion.div
       layout
@@ -57,11 +50,15 @@ const PodiumCard = ({ entry, rank, size }: PodiumCardProps) => {
       <img
         src={entry.student_avatar || "/api/placeholder/100/100"}
         className={`rounded-full object-cover ${sizeClasses[size]}`}
-        alt={entry.student_name || "Anonymous"}
+        alt={isCurrentUser ? "You" : entry.student_name || "Anonymous"}
       />
       <div className="text-center">
-        <p className={`font-bold ${size === "lg" ? "text-xl" : "text-sm"}`}>
-          {entry.student_name || "Anonymous"}
+        <p
+          className={`font-bold ${size === "lg" ? "text-xl" : "text-sm"} ${
+            isCurrentUser ? "text-green-400" : ""
+          }`}
+        >
+          {isCurrentUser ? "You" : entry.student_name || "Anonymous"}
         </p>
         <p className="font-default text-xs">{entry.student_email}</p>
       </div>
@@ -87,12 +84,14 @@ const ScoreDisplay = ({ entry }: { entry: LeaderboardEntry }) => (
   </div>
 );
 
-export default function Leaderboard({ leaderboardData }: LeaderboardProps) {
+export default function Leaderboard({
+  leaderboardData,
+  currentUserId,
+}: LeaderboardProps) {
   const [prevData, setPrevData] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
     if (JSON.stringify(prevData) !== JSON.stringify(leaderboardData)) {
-      // Use setTimeout to delay the update of prevData
       setTimeout(() => {
         setPrevData(leaderboardData);
       }, 600);
@@ -140,6 +139,9 @@ export default function Leaderboard({ leaderboardData }: LeaderboardProps) {
                     entry={topThree[index]}
                     rank={index + 1}
                     size={index === 0 ? "lg" : index === 1 ? "md" : "sm"}
+                    isCurrentUser={
+                      topThree[index].quiz_student_id === currentUserId
+                    }
                   />
                 )}
               </motion.div>
@@ -159,6 +161,7 @@ export default function Leaderboard({ leaderboardData }: LeaderboardProps) {
             <AnimatePresence mode="popLayout">
               {rest.map((entry, index) => {
                 const currentPosition = index + 4;
+                const isCurrentUser = entry.quiz_student_id === currentUserId;
 
                 return (
                   <motion.div
@@ -171,7 +174,13 @@ export default function Leaderboard({ leaderboardData }: LeaderboardProps) {
                     className="mb-2 grid grid-cols-[0.2fr_1fr_0.5fr_1fr] gap-4 rounded-lg bg-gray-100 p-4 dark:bg-gray-800"
                   >
                     <motion.div>{currentPosition}</motion.div>
-                    <motion.div>{entry.student_name || "Anonymous"}</motion.div>
+                    <motion.div
+                      className={isCurrentUser ? "text-green-400" : ""}
+                    >
+                      {isCurrentUser
+                        ? "You"
+                        : entry.student_name || "Anonymous"}
+                    </motion.div>
                     <motion.div
                       className="text-center font-bold"
                       initial={{ scale: 1.2 }}

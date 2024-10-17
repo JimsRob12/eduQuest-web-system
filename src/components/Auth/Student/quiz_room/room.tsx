@@ -345,7 +345,9 @@ const SGameLobby: React.FC = () => {
   }
 
   if (showLeaderboard) {
-    return <Leaderboard leaderboardData={leaderboardData} />;
+    return user ? (
+      <Leaderboard leaderboardData={leaderboardData} currentUserId={user.id} />
+    ) : null;
   }
 
   if (!currentQuestion) {
