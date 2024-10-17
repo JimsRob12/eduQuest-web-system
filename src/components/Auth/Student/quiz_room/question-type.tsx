@@ -37,7 +37,7 @@ const MultipleChoice: React.FC<{
         const isSelected = selectedAnswer === answer;
 
         const buttonClasses = [
-          "relative rounded-lg p-1 transition-transform duration-200 ease-in-out hover:translate-y-1 h-fit md:h-56",
+          "relative rounded-lg p-1 transition-transform duration-200 ease-in-out hover:translate-y-1 h-fit lg:h-56",
           isSelected &&
             effect === "correct" &&
             "animate-pulse-green !bg-green-600",

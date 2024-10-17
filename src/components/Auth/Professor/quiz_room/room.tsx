@@ -104,7 +104,8 @@ const ProfessorGameLobby: React.FC = () => {
                 student.quiz_student_id !== payload.payload.student_id,
             ),
           );
-        });
+        })
+        .subscribe();
 
       return () => {
         supabase.removeChannel(channel);
