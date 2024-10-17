@@ -31,7 +31,7 @@ import MaxQuestionsSelector from "./components/Auth/Professor/Quiz/quiz-question
 import QuizEditQuestion from "./components/Auth/Professor/Quiz/question-edit";
 import EmailVerification from "./components/Auth/EmailVerification";
 
-import GameLobby from "./components/Auth/Professor/quiz_room/room";
+import ProfessorGameLobby from "./components/Auth/Professor/quiz_room/room";
 import SGameLobby from "./components/Auth/Student/quiz_room/room";
 
 // Define route configurations
@@ -69,7 +69,7 @@ const professorRoutes = [
   },
   {
     path: "/professor/dashboard/professor/class/:classId/gamelobby",
-    element: <GameLobby />,
+    element: <ProfessorGameLobby />,
   },
 ];
 

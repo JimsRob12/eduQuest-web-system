@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTheme } from "@/contexts/ThemeProvider";
@@ -81,6 +81,22 @@ const SGameLobby: React.FC = () => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
+  const initializeLeaderboard = useCallback(async () => {
+    if (classId && user) {
+      const initialLeaderboard = await updateLeaderBoard(
+        classId,
+        user.id,
+        user.name || displayName || "",
+        user.avatar,
+        user.email,
+        0, // Initial score
+        0, // Initial right answers
+        0, // Initial wrong answers
+      );
+      setLeaderboardData(initialLeaderboard || []);
+    }
+  }, [classId, user, displayName]);
+
   // Auto-join effect
   useEffect(() => {
     const autoJoin = async () => {
@@ -100,9 +116,16 @@ const SGameLobby: React.FC = () => {
   // Game status effect
   useEffect(() => {
     if (classId && joined) {
-      gameEventHandler(classId, setGameStart);
+      const setGameStartWrapper = (value: boolean) => {
+        setGameStart(value);
+        if (value) {
+          initializeLeaderboard();
+        }
+      };
+
+      return gameEventHandler(classId, setGameStartWrapper);
     }
-  }, [classId, joined]);
+  }, [classId, joined, initializeLeaderboard]);
 
   // Question fetching effect
   useEffect(() => {
@@ -204,20 +227,6 @@ const SGameLobby: React.FC = () => {
 
     setShowLeaderboard(true);
 
-    if (classId && user) {
-      const leaderboardResponse = await updateLeaderBoard(
-        classId,
-        user.id,
-        user.name || displayName || "",
-        user.avatar,
-        user.email,
-        score,
-        rightAns,
-        wrongAns + (hasAnswered ? 0 : 1),
-      );
-      setLeaderboardData(leaderboardResponse || []);
-    }
-
     setTimeout(() => {
       handleNextQuestion();
       getExitLeaderboard(setShowLeaderboard);
@@ -246,15 +255,37 @@ const SGameLobby: React.FC = () => {
       answer,
     );
 
+    let newScore = score;
+    let newRightAns = rightAns;
+    let newWrongAns = wrongAns;
+
     if (isCorrect) {
-      setScore((prev) => prev + (currentQuestion.points || 0));
-      setRightAns((prev) => prev + 1);
+      newScore += currentQuestion.points || 0;
+      newRightAns += 1;
+      setScore(newScore);
+      setRightAns(newRightAns);
       setEffect("correct");
       correctSound.current.play();
     } else {
-      setWrongAns((prev) => prev + 1);
+      newWrongAns += 1;
+      setWrongAns(newWrongAns);
       setEffect("wrong");
       wrongSound.current.play();
+    }
+
+    // Update leaderboard immediately after answering
+    if (classId && user) {
+      const leaderboardResponse = await updateLeaderBoard(
+        classId,
+        user.id,
+        user.name || displayName || "",
+        user.avatar,
+        user.email,
+        newScore,
+        newRightAns,
+        newWrongAns,
+      );
+      setLeaderboardData(leaderboardResponse || []);
     }
   };
 

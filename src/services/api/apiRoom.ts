@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { QuizQuestions, Student, User } from "@/lib/types";
+import { LeaderboardEntry, QuizQuestions, Student, User } from "@/lib/types";
 import { Dispatch, SetStateAction } from "react";
 import supabase from "../supabase";
 
@@ -251,7 +251,7 @@ export async function kickStudent(
 // Game event handling functions
 export function gameEventHandler(
   classCode: string,
-  setGameStart: Dispatch<SetStateAction<boolean>>,
+  setGameStart: (value: boolean) => void,
 ): () => void {
   const channel = supabase
     .channel(`room1`)
@@ -399,17 +399,35 @@ export function getTimer(
   return () => channel.unsubscribe();
 }
 
-export async function sendEndGame(classCode: string) {
+export async function sendEndGame(classCode: string): Promise<boolean> {
   const channel = supabase.channel("room1");
 
-  channel.send({
+  // Send the end game event to the channel
+  await channel.send({
     type: "broadcast",
     event: "quiz-game-ended",
     payload: { classCode },
   });
+
+  // Unsubscribe from the channel after sending
   channel.unsubscribe();
 
+  // End the game logic
   endGame(classCode);
+
+  // Remove students associated with the classCode from the quiz_students table
+  const { error } = await supabase
+    .from("quiz_students")
+    .delete()
+    .eq("class_code", classCode);
+
+  // Handle any errors during deletion
+  if (error) {
+    console.error("Error removing students from quiz_students table:", error);
+    return false;
+  }
+
+  return true;
 }
 
 export async function getEndGame(
@@ -619,6 +637,36 @@ async function checkAnswer(
 }
 
 // Leaderboard update function
+export async function getLeaderboard(classCode: string): Promise<any[]> {
+  try {
+    const { data: leaderboard, error } = await supabase
+      .from("quiz_students")
+      .select(
+        "quiz_student_id, score, id, right_answer, wrong_answer, student_name, student_avatar, student_email, placement",
+      )
+      .eq("class_code", classCode)
+      .order("score", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    if (leaderboard) {
+      console.log("Leaderboard retrieved successfully.");
+      leaderboard.forEach((student) => {
+        console.log(`Score: ${student.score}, Name: ${student.student_name}`);
+      });
+      return leaderboard;
+    } else {
+      console.log("No leaderboard data found.");
+      return [];
+    }
+  } catch (error) {
+    console.error("Error retrieving leaderboard:", error);
+    throw error;
+  }
+}
+
 export async function updateLeaderBoard(
   classCode: string,
   studentId: string,
@@ -628,9 +676,9 @@ export async function updateLeaderBoard(
   score: number,
   rightAns: number,
   wrongAns: number,
-): Promise<any[] | undefined> {
+): Promise<LeaderboardEntry[]> {
   try {
-    const { data: existingStudent } = await supabase
+    const { data: existingStudent, error: fetchError } = await supabase
       .from("quiz_students")
       .select("quiz_student_id, score")
       .match({
@@ -638,6 +686,10 @@ export async function updateLeaderBoard(
         class_code: classCode,
       })
       .single();
+
+    if (fetchError && fetchError.code !== "PGRST116") {
+      throw fetchError;
+    }
 
     if (!existingStudent) {
       await supabase.from("quiz_students").insert([
@@ -648,6 +700,8 @@ export async function updateLeaderBoard(
           student_email: studentEmail,
           score: score,
           class_code: classCode,
+          right_answer: rightAns,
+          wrong_answer: wrongAns,
         },
       ]);
       console.log("New student added:", studentId);
@@ -685,8 +739,11 @@ export async function updateLeaderBoard(
       console.log("Leaderboard updated successfully.");
       return allStudents;
     }
+
+    return [];
   } catch (error) {
     console.error("Error updating leaderboard:", error);
+    throw error;
   }
 }
 

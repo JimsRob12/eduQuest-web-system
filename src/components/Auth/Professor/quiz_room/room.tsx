@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
@@ -10,39 +11,32 @@ import {
   sendExitLeaderboard,
   kickStudent,
 } from "@/services/api/apiRoom";
-import { QuizQuestions as Questions, Student } from "@/lib/types";
+import { QuizQuestions, Student } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CircleX, Copy } from "lucide-react";
 import {
-  Tooltip,
+  Tooltip as UITooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import toast from "react-hot-toast";
-import { useTheme } from "@/contexts/ThemeProvider";
-import { useMediaQuery } from "react-responsive";
 import ProgressBar from "@/components/Shared/progressbar";
 import supabase from "@/services/supabase";
 import { useAuth } from "@/contexts/AuthProvider";
+import { useLeaderboard } from "./useLeaderboard";
 
-const GameLobby: React.FC = () => {
+const ProfessorGameLobby: React.FC = () => {
   const { user } = useAuth();
   const { classId } = useParams<{ classId: string }>();
+  const leaderboardData = useLeaderboard(classId!);
   const [students, setStudents] = useState<Student[]>([]);
   const [gameStart, setGameStart] = useState(false);
-  const [questions, setQuestions] = useState<Questions[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestions[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
-  const [leaderBoard, setLeaderBoard] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  const { theme } = useTheme();
-  const isTabletorMobile = useMediaQuery({ query: "(max-width: 1024px)" });
-
-  const colors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF8C33"];
-  const lightColors = ["#FF8C66", "#37a753", "#668CFF", "#FF66C2", "#FFB366"];
 
   const currentQuestion = questions[currentQuestionIndex];
   const shareableLink = `${window.location.origin}/student/join/${classId}/gamelobby`;
@@ -68,7 +62,7 @@ const GameLobby: React.FC = () => {
     const getQuestions = async () => {
       if (gameStart && classId) {
         const fetchedQuestions = (await getQuestionsProf(classId)).map(
-          (question: any) => ({
+          (question: QuizQuestions) => ({
             ...question,
             quiz_id: question.quiz_id || "",
           }),
@@ -90,13 +84,11 @@ const GameLobby: React.FC = () => {
     }
 
     if (gameStart && timeLeft === 0) {
-      setLeaderBoard(true);
       setTimeout(() => {
         handleNextQuestion();
         if (classId) {
           sendExitLeaderboard(classId);
         }
-        setLeaderBoard(false);
       }, 10000);
     }
   }, [timeLeft, gameStart, classId]);
@@ -112,8 +104,7 @@ const GameLobby: React.FC = () => {
                 student.quiz_student_id !== payload.payload.student_id,
             ),
           );
-        })
-        .subscribe();
+        });
 
       return () => {
         supabase.removeChannel(channel);
@@ -128,8 +119,16 @@ const GameLobby: React.FC = () => {
       const nextQuestion = questions[nextIndex];
       setTimeLeft(nextQuestion.time);
     } else if (classId) {
-      sendEndGame(classId);
-      setGameStart(false);
+      await endGame();
+    }
+  };
+
+  const endGame = async () => {
+    if (classId) {
+      const success = await sendEndGame(classId);
+      if (success) {
+        setGameStart(false);
+      }
     }
   };
 
@@ -138,7 +137,6 @@ const GameLobby: React.FC = () => {
       const success = await kickStudent(classId, studentId);
       if (success) {
         toast.success("Student kicked successfully");
-        // Update the students list
         setStudents(
           students.filter((student) => student.quiz_student_id !== studentId),
         );
@@ -162,92 +160,6 @@ const GameLobby: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const renderMultipleChoice = () => {
-    if (!currentQuestion) return null;
-
-    return (
-      <div
-        className="mt-4 grid gap-2 rounded-lg"
-        style={{
-          gridTemplateColumns: isTabletorMobile
-            ? `repeat(1, 1fr)`
-            : `repeat(${currentQuestion.distractor?.length || 0}, 1fr)`,
-        }}
-      >
-        {currentQuestion.distractor?.map((answer, index) => {
-          const bgColor =
-            theme === "dark"
-              ? lightColors[index % lightColors.length]
-              : colors[index % colors.length];
-
-          return (
-            <div
-              key={index}
-              className="rounded-lg p-1 transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56"
-              style={{
-                backgroundColor: bgColor,
-                color: "#fff",
-              }}
-            >
-              <div className="mt-2 flex h-full items-center justify-center rounded-lg border-none p-2 text-lg">
-                {answer}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const renderTrueFalse = () => {
-    if (!currentQuestion) return null;
-
-    return (
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
-        {["True", "False"].map((option) => (
-          <div
-            key={option}
-            className="rounded-lg bg-purple-800 bg-opacity-20 p-4 text-left transition-transform duration-200 ease-in-out hover:translate-y-1 md:h-56"
-          >
-            {option}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderFillInTheBlank = () => {
-    if (!currentQuestion) return null;
-
-    return (
-      <div className="mt-4 flex flex-col items-center justify-center rounded-lg bg-zinc-200 p-4 dark:bg-zinc-800">
-        <h1 className="mb-4 text-center font-bold opacity-70">
-          Type your answer in the boxes
-        </h1>
-        <div
-          className="grid gap-1"
-          style={{
-            gridTemplateColumns: `repeat(${Math.min(
-              currentQuestion.right_answer.length,
-              isTabletorMobile ? 5 : 10,
-            )}, 1fr)`,
-          }}
-        >
-          {currentQuestion.right_answer.split("").map((_, index) => (
-            <div
-              key={index}
-              className="flex size-12 items-center justify-center rounded-lg bg-zinc-700 text-center text-white"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  if (leaderBoard) {
-    return <h1 className="text-center text-2xl font-bold">LeaderBoard</h1>;
-  }
-
   if (!gameStart) {
     return (
       <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center text-center">
@@ -269,7 +181,7 @@ const GameLobby: React.FC = () => {
               const ghostNumber = (index % 4) + 1;
               return (
                 <TooltipProvider delayDuration={100} key={index}>
-                  <Tooltip>
+                  <UITooltip>
                     <TooltipTrigger asChild>
                       <div className="flex w-24 cursor-pointer flex-col items-center justify-between border-gray-200 pb-4">
                         <Button
@@ -297,7 +209,7 @@ const GameLobby: React.FC = () => {
                       </p>
                       <p>{student.student_email}</p>
                     </TooltipContent>
-                  </Tooltip>
+                  </UITooltip>
                 </TooltipProvider>
               );
             })
@@ -316,36 +228,45 @@ const GameLobby: React.FC = () => {
     );
   }
 
-  return currentQuestion ? (
+  return (
     <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center text-center">
       <div className="flex w-full items-center justify-between">
         <h1 className="mb-4 text-2xl font-bold">
-          Question {currentQuestionIndex + 1}
+          Question {currentQuestionIndex + 1} of {questions.length}
         </h1>
         <p className="text-xl font-bold">
-          {currentQuestion.points} point{currentQuestion.points! > 1 && "s"}
+          {currentQuestion?.points} point{currentQuestion?.points! > 1 && "s"}
         </p>
       </div>
       <div className="mb-4 w-full">
         <ProgressBar
-          progress={(timeLeft / currentQuestion.time) * 100}
+          progress={(timeLeft / (currentQuestion?.time || 30)) * 100}
           height={24}
         />
       </div>
-      <div className="mb-6 w-full">
-        <h2 className="mb-4 flex h-44 items-center justify-center rounded-lg bg-zinc-200 text-xl dark:bg-zinc-800">
-          {currentQuestion.question}
-        </h2>
-        {currentQuestion.question_type.toLowerCase() === "mcq" &&
-          renderMultipleChoice()}
-        {currentQuestion.question_type.toLowerCase() === "boolean" &&
-          renderTrueFalse()}
-        {currentQuestion.question_type.toLowerCase() === "short" &&
-          renderFillInTheBlank()}
+      <div className="w-full">
+        <h2 className="mb-4 text-2xl font-semibold">Leaderboard</h2>
+        <div className="max-h-96 overflow-y-auto">
+          {leaderboardData.map((entry, index) => (
+            <div
+              key={entry.quiz_student_id}
+              className="mb-2 grid grid-cols-[0.1fr_1fr_0.5fr_1fr] gap-2 rounded bg-gray-100 p-2 text-left dark:bg-gray-800"
+            >
+              <p>{index + 1}.</p>
+              <p>{entry.student_name}</p>
+              <p>{entry.score}</p>
+              <div>
+                {/* bar of check and wrong {entry.right_answer}/{entry.wrong_answer} */}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="text-lg font-bold">Time Left: {timeLeft} seconds</div>
+      <div className="mt-4 text-lg font-bold">
+        Time Left: {timeLeft} seconds
+      </div>
     </div>
-  ) : null;
+  );
 };
 
-export default GameLobby;
+export default ProfessorGameLobby;
