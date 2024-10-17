@@ -637,36 +637,6 @@ async function checkAnswer(
 }
 
 // Leaderboard update function
-export async function getLeaderboard(classCode: string): Promise<any[]> {
-  try {
-    const { data: leaderboard, error } = await supabase
-      .from("quiz_students")
-      .select(
-        "quiz_student_id, score, id, right_answer, wrong_answer, student_name, student_avatar, student_email, placement",
-      )
-      .eq("class_code", classCode)
-      .order("score", { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    if (leaderboard) {
-      console.log("Leaderboard retrieved successfully.");
-      leaderboard.forEach((student) => {
-        console.log(`Score: ${student.score}, Name: ${student.student_name}`);
-      });
-      return leaderboard;
-    } else {
-      console.log("No leaderboard data found.");
-      return [];
-    }
-  } catch (error) {
-    console.error("Error retrieving leaderboard:", error);
-    throw error;
-  }
-}
-
 export async function updateLeaderBoard(
   classCode: string,
   studentId: string,
@@ -700,8 +670,6 @@ export async function updateLeaderBoard(
           student_email: studentEmail,
           score: score,
           class_code: classCode,
-          right_answer: rightAns,
-          wrong_answer: wrongAns,
         },
       ]);
       console.log("New student added:", studentId);

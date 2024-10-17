@@ -227,6 +227,20 @@ const SGameLobby: React.FC = () => {
 
     setShowLeaderboard(true);
 
+    if (classId && user) {
+      const leaderboardResponse = await updateLeaderBoard(
+        classId,
+        user.id,
+        user.name || displayName || "",
+        user.avatar,
+        user.email,
+        score,
+        rightAns,
+        wrongAns,
+      );
+      setLeaderboardData(leaderboardResponse || []);
+    }
+
     setTimeout(() => {
       handleNextQuestion();
       getExitLeaderboard(setShowLeaderboard);
@@ -275,7 +289,7 @@ const SGameLobby: React.FC = () => {
 
     // Update leaderboard immediately after answering
     if (classId && user) {
-      const leaderboardResponse = await updateLeaderBoard(
+      await updateLeaderBoard(
         classId,
         user.id,
         user.name || displayName || "",
@@ -285,7 +299,6 @@ const SGameLobby: React.FC = () => {
         newRightAns,
         newWrongAns,
       );
-      setLeaderboardData(leaderboardResponse || []);
     }
   };
 
