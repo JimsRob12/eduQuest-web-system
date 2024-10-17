@@ -27,6 +27,9 @@ import supabase from "@/services/supabase";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useLeaderboard } from "./useLeaderboard";
 import Leaderboard from "./leaderboard";
+import LiveQuestionChart from "./live-question-chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LeaderboardTrendChart from "./leaderboard-trend-chart";
 
 const ProfessorGameLobby: React.FC = () => {
   const { user } = useAuth();
@@ -246,7 +249,25 @@ const ProfessorGameLobby: React.FC = () => {
           height={24}
         />
       </div>
-      <Leaderboard leaderboardData={leaderboardData} />
+      <Tabs defaultValue="leaderboards" className="w-full">
+        <TabsList>
+          <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
+          <TabsTrigger value="live-chart">Live Chart</TabsTrigger>
+        </TabsList>
+        <TabsContent value="leaderboards" className="w-full">
+          <Leaderboard leaderboardData={leaderboardData} />
+        </TabsContent>
+        <TabsContent value="live-chart">
+          <div className="grid w-full gap-4 md:grid-cols-2">
+            <LeaderboardTrendChart leaderboardData={leaderboardData} />
+            <LiveQuestionChart
+              currentQuestionIndex={currentQuestionIndex}
+              questions={questions}
+              leaderboardData={leaderboardData}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
       <div className="mt-4 text-lg font-bold">
         Time Left: {timeLeft} seconds
       </div>

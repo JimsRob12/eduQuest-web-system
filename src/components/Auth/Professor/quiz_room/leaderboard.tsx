@@ -38,10 +38,10 @@ const LeaderboardEntry = ({
         y: 0,
         backgroundColor: positionChanged
           ? "rgba(147, 51, 234, 0.1)"
-          : "transparent",
+          : "#6b21a8",
         transition: { duration: 0.6, ease: "easeInOut" },
       }}
-      className="mb-2 grid grid-cols-[0.1fr_1fr_0.5fr_1fr] gap-2 rounded p-2 text-left"
+      className="mb-2 grid grid-cols-[0.1fr_1fr_0.5fr_1fr] gap-2 rounded p-2 text-left text-white"
     >
       <motion.p
         animate={{
@@ -58,6 +58,7 @@ const LeaderboardEntry = ({
           color: scoreChanged ? ["inherit", "#22c55e", "inherit"] : "inherit",
         }}
         transition={{ duration: 0.3 }}
+        className="text-center"
       >
         {entry.score}
       </motion.p>
@@ -118,6 +119,12 @@ const Leaderboard = ({
     <div className="w-full">
       <h2 className="mb-4 text-2xl font-semibold">Leaderboard</h2>
       <div className="max-h-96 overflow-y-auto">
+        <div className="mb-2 grid grid-cols-[0.1fr_1fr_0.5fr_1fr] gap-2">
+          <h1>Rank</h1>
+          <h1 className="text-left">Name</h1>
+          <h1>Score</h1>
+          <h1></h1>
+        </div>
         <AnimatePresence>
           {leaderboardData.map((entry, index) => (
             <LeaderboardEntry
