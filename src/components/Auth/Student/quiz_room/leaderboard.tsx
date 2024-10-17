@@ -3,6 +3,8 @@ import { Check, Triangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LoadingSpinner from "./loader";
 import { LeaderboardEntry } from "@/lib/types";
+import CircleTimer from "@/components/Shared/circle-timer";
+import { calculateRanks } from "@/lib/helpers";
 
 type LeaderboardProps = {
   leaderboardData: LeaderboardEntry[];
@@ -14,66 +16,42 @@ type PodiumCardProps = {
   rank: number;
   size: "sm" | "md" | "lg";
   isCurrentUser: boolean;
+  showTie?: boolean;
+  tiedWithNext?: boolean;
+  tiedWithPrevious?: boolean;
 };
 
 const sizeClasses = {
   sm: "size-24",
   md: "size-28",
   lg: "size-36",
+  "sm-tied": "size-28",
+  "md-tied": "size-36",
+  "lg-tied": "size-36",
 };
 
-const CircleTimer = () => {
-  const [timeLeft, setTimeLeft] = useState(8);
-  const radius = 14;
-  const circumference = 2 * Math.PI * radius;
-
-  useEffect(() => {
-    if (timeLeft === 0) return;
-
-    const intervalId = setInterval(() => {
-      setTimeLeft((prevTime) => prevTime - 1);
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [timeLeft]);
-
-  const progress = (timeLeft / 8) * circumference;
-
-  return (
-    <svg width="40" height="40" className="absolute left-4 right-4">
-      <circle
-        stroke="gray"
-        fill="transparent"
-        strokeWidth="4"
-        r={radius}
-        cx="20"
-        cy="20"
-      />
-      <circle
-        stroke="green"
-        fill="transparent"
-        strokeWidth="4"
-        r={radius}
-        cx="20"
-        cy="20"
-        strokeDasharray={circumference}
-        strokeDashoffset={circumference - progress}
-        style={{ transition: "stroke-dashoffset 1s linear" }}
-      />
-      <text
-        x="20"
-        y="25"
-        textAnchor="middle"
-        fontSize="14"
-        className="fill-black dark:fill-white"
-      >
-        {timeLeft}
-      </text>
-    </svg>
-  );
+const textSizeClasses = {
+  sm: "text-sm",
+  md: "text-base",
+  lg: "text-xl",
+  "sm-tied": "text-base",
+  "md-tied": "text-xl",
+  "lg-tied": "text-xl",
 };
 
-const PodiumCard = ({ entry, rank, size, isCurrentUser }: PodiumCardProps) => {
+const PodiumCard = ({
+  entry,
+  rank,
+  size,
+  isCurrentUser,
+  showTie,
+  tiedWithNext,
+  tiedWithPrevious,
+}: PodiumCardProps) => {
+  const effectiveSize: keyof typeof sizeClasses = showTie
+    ? (`${size}-tied` as keyof typeof sizeClasses)
+    : size;
+
   return (
     <motion.div
       layout
@@ -81,18 +59,22 @@ const PodiumCard = ({ entry, rank, size, isCurrentUser }: PodiumCardProps) => {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="flex w-full flex-col items-center gap-2 rounded-lg p-4"
+      className={`flex w-full flex-col items-center gap-2 rounded-lg p-4 ${tiedWithNext || tiedWithPrevious ? "bg-gray-50 dark:bg-gray-800" : ""}`}
     >
-      <div className="text-xs">
-        {rank === 1 ? (
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/2545/2545603.png"
-            alt="Winner"
-            className="w-8"
-          />
-        ) : (
-          rank
-        )}
+      <div className="flex flex-col items-center gap-1">
+        <div className="text-xs">
+          {rank === 1 ? (
+            <div className="flex items-center justify-center">
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/2545/2545603.png"
+                alt="Winner"
+                className="w-8"
+              />
+            </div>
+          ) : (
+            rank
+          )}
+        </div>
       </div>
       <Triangle
         className="fill-zinc-900 text-transparent dark:fill-zinc-200"
@@ -100,12 +82,12 @@ const PodiumCard = ({ entry, rank, size, isCurrentUser }: PodiumCardProps) => {
       />
       <img
         src={entry.student_avatar || "/api/placeholder/100/100"}
-        className={`rounded-full object-cover ${sizeClasses[size]}`}
+        className={`rounded-full object-cover ${sizeClasses[effectiveSize]}`}
         alt={isCurrentUser ? "You" : entry.student_name || "Anonymous"}
       />
       <div className="text-center">
         <p
-          className={`font-bold ${size === "lg" ? "text-xl" : "text-sm"} ${
+          className={`font-bold ${textSizeClasses[effectiveSize]} ${
             isCurrentUser ? "text-green-400" : ""
           }`}
         >
@@ -150,8 +132,14 @@ export default function Leaderboard({
   }, [leaderboardData, prevData]);
 
   const sortedData = [...leaderboardData].sort((a, b) => b.score - a.score);
+  const ranks = calculateRanks(sortedData);
   const topThree = sortedData.slice(0, 3);
   const rest = sortedData.slice(3);
+
+  // Determine if there are ties in the top 3
+  const hasTies = topThree.some(
+    (entry, index) => index > 0 && entry.score === topThree[index - 1].score,
+  );
 
   if (sortedData.length === 0) {
     return (
@@ -168,7 +156,7 @@ export default function Leaderboard({
 
   return (
     <div className="relative flex h-[calc(100%-5rem)] flex-col items-center p-8">
-      <CircleTimer />
+      <CircleTimer initialTime={8} />
 
       <motion.h1
         className="mb-8 text-3xl font-bold"
@@ -190,10 +178,15 @@ export default function Leaderboard({
                 {topThree[index] && (
                   <PodiumCard
                     entry={topThree[index]}
-                    rank={index + 1}
+                    rank={ranks.get(topThree[index].id) || index + 1}
                     size={index === 0 ? "lg" : index === 1 ? "md" : "sm"}
                     isCurrentUser={
                       topThree[index].quiz_student_id === currentUserId
+                    }
+                    showTie={
+                      hasTies &&
+                      index > 0 &&
+                      topThree[index].score === topThree[index - 1].score
                     }
                   />
                 )}
@@ -213,7 +206,7 @@ export default function Leaderboard({
 
             <AnimatePresence mode="popLayout">
               {rest.map((entry, index) => {
-                const currentPosition = index + 4;
+                const actualRank = ranks.get(entry.id) || index + 4;
                 const isCurrentUser = entry.quiz_student_id === currentUserId;
 
                 return (
@@ -226,7 +219,12 @@ export default function Leaderboard({
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     className="mb-2 grid grid-cols-[0.2fr_1fr_0.5fr_1fr] gap-4 rounded-lg bg-gray-100 p-4 dark:bg-gray-800"
                   >
-                    <motion.div>{currentPosition}</motion.div>
+                    <motion.div className="flex items-center gap-2">
+                      {actualRank}
+                      {/* {hasTieWithPrevious && (
+                        <span className="text-xs text-gray-500">(Tied)</span>
+                      )} */}
+                    </motion.div>
                     <motion.div
                       className={isCurrentUser ? "text-green-400" : ""}
                     >

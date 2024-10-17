@@ -1,4 +1,4 @@
-import { SubjectData } from "./types";
+import { LeaderboardEntry, SubjectData } from "./types";
 
 export function transformSubjectData(subjectData: SubjectData) {
   return Object.entries(subjectData).map(([value, label]) => ({
@@ -136,4 +136,18 @@ export function getDarkerShade(color: string, percent: number) {
   )
     .toString(16)
     .slice(1)}`;
+}
+
+export function calculateRanks(data: LeaderboardEntry[]): Map<string, number> {
+  const ranks = new Map<string, number>();
+  let currentRank = 1;
+
+  for (let i = 0; i < data.length; i++) {
+    if (i > 0 && data[i].score < data[i - 1].score) {
+      currentRank = i + 1;
+    }
+    ranks.set(data[i].id, currentRank);
+  }
+
+  return ranks;
 }
