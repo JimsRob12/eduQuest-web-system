@@ -16,7 +16,7 @@ const ClassAccuracy: React.FC<ClassAccuracyProps> = ({ accuracy }) => {
 
   return (
     <div className="mb-4 flex w-full flex-col items-center justify-center">
-      <div className="mb-2 text-xl font-bold text-white">Class Accuracy</div>
+      <div className="mb-2 text-xl font-bold">Class Accuracy</div>
       <div className="relative h-12 w-full">
         {/* Background bar */}
         <div className="absolute h-full w-full rounded bg-gray-700"></div>
