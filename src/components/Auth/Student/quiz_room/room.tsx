@@ -228,6 +228,7 @@ const SGameLobby: React.FC = () => {
     setShowLeaderboard(true);
 
     if (classId && user) {
+      const updatedWrongAns = wrongAns + (hasAnswered ? 0 : 1);
       const leaderboardResponse = await updateLeaderBoard(
         classId,
         user.id,
@@ -236,7 +237,7 @@ const SGameLobby: React.FC = () => {
         user.email,
         score,
         rightAns,
-        wrongAns,
+        updatedWrongAns,
       );
       setLeaderboardData(leaderboardResponse || []);
     }
