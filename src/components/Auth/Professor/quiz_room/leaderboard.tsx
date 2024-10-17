@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LeaderboardEntry as LeaderboardType } from "@/lib/types";
+import { UsersRound } from "lucide-react";
 
 interface LeaderboardEntryProps {
   entry: LeaderboardType;
@@ -117,8 +118,15 @@ const Leaderboard = ({
 
   return (
     <div className="w-full">
-      <h2 className="mb-4 text-2xl font-semibold">Leaderboard</h2>
-      <div className="max-h-96 overflow-y-auto">
+      <div className="mb-4">
+        <h2 className="text-2xl font-semibold">Leaderboard</h2>
+        <h3 className="flex items-center gap-3 text-left">
+          <UsersRound size={24} />
+          {leaderboardData.length} Participant
+          {leaderboardData.length > 1 && "s"}
+        </h3>
+      </div>
+      <div className="max-h-96 overflow-y-auto rounded-sm bg-zinc-500 bg-opacity-20 px-4 py-3">
         <div className="mb-2 grid grid-cols-[0.1fr_1fr_0.5fr_1fr] gap-2">
           <h1>Rank</h1>
           <h1 className="text-left">Name</h1>

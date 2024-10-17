@@ -11,7 +11,7 @@ import {
   sendExitLeaderboard,
   kickStudent,
 } from "@/services/api/apiRoom";
-import { QuizQuestions, Student } from "@/lib/types";
+import { LeaderboardEntry, QuizQuestions, Student } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CircleX, Copy } from "lucide-react";
@@ -30,6 +30,7 @@ import Leaderboard from "./leaderboard";
 import LiveQuestionChart from "./live-question-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LeaderboardTrendChart from "./leaderboard-trend-chart";
+import ClassAccuracy from "./class-accuracy";
 
 const ProfessorGameLobby: React.FC = () => {
   const { user } = useAuth();
@@ -44,6 +45,21 @@ const ProfessorGameLobby: React.FC = () => {
 
   const currentQuestion = questions[currentQuestionIndex];
   const shareableLink = `${window.location.origin}/student/join/${classId}/gamelobby`;
+
+  const calculateClassAccuracy = (leaderboardData: LeaderboardEntry[]) => {
+    if (leaderboardData.length === 0) return 0;
+    const totalRight = leaderboardData.reduce(
+      (sum, entry) => sum + entry.right_answer,
+      0,
+    );
+    const totalQuestions = leaderboardData.reduce(
+      (sum, entry) => sum + entry.right_answer + entry.wrong_answer,
+      0,
+    );
+    return totalQuestions > 0 ? (totalRight / totalQuestions) * 100 : 0;
+  };
+
+  const classAccuracy = calculateClassAccuracy(leaderboardData);
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -234,42 +250,47 @@ const ProfessorGameLobby: React.FC = () => {
   }
 
   return (
-    <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center text-center">
-      <div className="flex w-full items-center justify-between">
-        <h1 className="mb-4 text-2xl font-bold">
-          Question {currentQuestionIndex + 1} of {questions.length}
-        </h1>
-        <p className="text-xl font-bold">
-          {currentQuestion?.points} point{currentQuestion?.points! > 1 && "s"}
-        </p>
+    <div className="flex h-full flex-col items-center justify-center gap-8 text-center">
+      <ClassAccuracy accuracy={classAccuracy} />
+      <div className="w-full">
+        <div className="flex w-full items-center justify-between">
+          <h1 className="mb-4 text-2xl font-bold">
+            Question {currentQuestionIndex + 1} of {questions.length}
+          </h1>
+          <p className="text-xl font-bold">
+            {currentQuestion?.points} point{currentQuestion?.points! > 1 && "s"}
+          </p>
+        </div>
+        <div className="mb-4 w-full">
+          <ProgressBar
+            progress={(timeLeft / (currentQuestion?.time || 30)) * 100}
+            height={24}
+          />
+        </div>
       </div>
-      <div className="mb-4 w-full">
-        <ProgressBar
-          progress={(timeLeft / (currentQuestion?.time || 30)) * 100}
-          height={24}
-        />
-      </div>
-      <Tabs defaultValue="leaderboards" className="w-full">
-        <TabsList>
-          <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
-          <TabsTrigger value="live-chart">Live Chart</TabsTrigger>
-        </TabsList>
-        <TabsContent value="leaderboards" className="w-full">
-          <Leaderboard leaderboardData={leaderboardData} />
-        </TabsContent>
-        <TabsContent value="live-chart">
-          <div className="grid w-full gap-4 md:grid-cols-2">
-            <LeaderboardTrendChart leaderboardData={leaderboardData} />
-            <LiveQuestionChart
-              currentQuestionIndex={currentQuestionIndex}
-              questions={questions}
-              leaderboardData={leaderboardData}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
-      <div className="mt-4 text-lg font-bold">
-        Time Left: {timeLeft} seconds
+      <div className="w-full">
+        <Tabs defaultValue="leaderboards" className="w-full">
+          <TabsList>
+            <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
+            <TabsTrigger value="live-chart">Live Chart</TabsTrigger>
+          </TabsList>
+          <TabsContent value="leaderboards" className="w-full">
+            <Leaderboard leaderboardData={leaderboardData} />
+          </TabsContent>
+          <TabsContent value="live-chart">
+            <div className="grid w-full gap-4 md:grid-cols-2">
+              <LeaderboardTrendChart leaderboardData={leaderboardData} />
+              <LiveQuestionChart
+                currentQuestionIndex={currentQuestionIndex}
+                questions={questions}
+                leaderboardData={leaderboardData}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+        <div className="mt-4 text-lg font-bold">
+          Time Left: {timeLeft} seconds
+        </div>
       </div>
     </div>
   );

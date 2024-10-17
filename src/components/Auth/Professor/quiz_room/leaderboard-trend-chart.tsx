@@ -61,7 +61,7 @@ const LeaderboardChart: React.FC<LeaderboardChartProps> = ({
   } satisfies ChartConfig;
 
   return (
-    <Card className="dark:bg-zinc-800">
+    <Card className="h-fit dark:bg-zinc-800">
       <CardHeader>
         <CardTitle>Leaderboard Chart</CardTitle>
         <CardDescription>Top 10 Students' Scores</CardDescription>

@@ -67,7 +67,7 @@ const LiveQuestionChart: React.FC<LiveQuestionChartProps> = ({
   }, [leaderboardData, totalAnswers]);
 
   return (
-    <Card className="mb-4 w-full max-w-4xl dark:bg-zinc-800">
+    <Card className="mb-4 h-fit w-full max-w-4xl dark:bg-zinc-800">
       <CardHeader>
         <CardTitle>Question {currentQuestionIndex + 1} Results</CardTitle>
         <CardDescription>
