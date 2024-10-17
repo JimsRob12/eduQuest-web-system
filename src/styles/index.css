@@ -3,6 +3,103 @@
 @tailwind utilities;
 @layer base {
   :root {
-    --radius: 0.5rem
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
+ 
+  .dark {
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+:root {
+  --shadow-color: #3b1b55;
+  --dark-shadow-color: #aaa4b1;
+}
+
+.button-default {
+  --shadow-color: #3b1b55;
+  --dark-shadow-color: #aaa4b1;
+}
+
+.button-destructive {
+  --shadow-color: #b91c1c;
+  --dark-shadow-color: #7f1d1d;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+@keyframes bounce-horizontal {
+  0%,
+  100% {
+    transform: translateY(-25%);
+  }
+  50% {
+    transform: translateY(25%);
+  }
+}
+
+.pixelated-arrow {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #8b40ec; /* purple-600 */
+  image-rendering: pixelated;
+  animation: bounce-horizontal 0.5s infinite;
+}
+
+@keyframes pulse-green {
+  0%,
+  100% {
+    background-color: initial;
+  }
+  50% {
+    background-color: rgba(0, 255, 0, 0.5);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-pulse-green {
+  animation: pulse-green 1s ease-in-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
 }

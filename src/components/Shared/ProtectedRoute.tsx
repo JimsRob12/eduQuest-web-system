@@ -1,25 +1,41 @@
-import { useContext } from "react";
-import { Navigate, Outlet } from "react-router-dom";
-import { AuthContext } from "@/contexts/AuthProvider";
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthProvider";
+import Loader from "./Loader";
 
-const ProtectedRoute = ({ allowedRoles }: { allowedRoles: string[] }) => {
-  const authContext = useContext(AuthContext);
+interface ProtectedRouteProps {
+  allowedRoles?: string[];
+  children: React.ReactNode;
+}
 
-  if (!authContext || !authContext.user) {
-    return <Navigate to="/login" />;
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  allowedRoles,
+  children,
+}) => {
+  const { user, loading, initialized } = useAuth();
+  const location = useLocation();
+
+  if (!initialized || loading) {
+    return <Loader />;
   }
-
-  const { user } = authContext;
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/" />;
+  if (!user.role && location.pathname !== "/role-assignment") {
+    return <Navigate to="/role-assignment" replace />;
   }
 
-  return <Outlet />;
+  if (user.role && location.pathname === "/role-assignment") {
+    return <Navigate to="/" replace />;
+  }
+
+  if (allowedRoles && user.role && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
