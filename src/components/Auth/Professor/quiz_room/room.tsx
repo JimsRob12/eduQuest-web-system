@@ -26,6 +26,7 @@ import ProgressBar from "@/components/Shared/progressbar";
 import supabase from "@/services/supabase";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useLeaderboard } from "./useLeaderboard";
+import Leaderboard from "./leaderboard";
 
 const ProfessorGameLobby: React.FC = () => {
   const { user } = useAuth();
@@ -245,24 +246,7 @@ const ProfessorGameLobby: React.FC = () => {
           height={24}
         />
       </div>
-      <div className="w-full">
-        <h2 className="mb-4 text-2xl font-semibold">Leaderboard</h2>
-        <div className="max-h-96 overflow-y-auto">
-          {leaderboardData.map((entry, index) => (
-            <div
-              key={entry.quiz_student_id}
-              className="mb-2 grid grid-cols-[0.1fr_1fr_0.5fr_1fr] gap-2 rounded bg-gray-100 p-2 text-left dark:bg-gray-800"
-            >
-              <p>{index + 1}.</p>
-              <p>{entry.student_name}</p>
-              <p>{entry.score}</p>
-              <div>
-                {/* bar of check and wrong {entry.right_answer}/{entry.wrong_answer} */}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Leaderboard leaderboardData={leaderboardData} />
       <div className="mt-4 text-lg font-bold">
         Time Left: {timeLeft} seconds
       </div>
