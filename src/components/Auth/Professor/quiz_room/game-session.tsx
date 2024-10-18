@@ -63,10 +63,10 @@ const GameSession: React.FC<GameSessionProps> = ({
   };
 
   const endGame = async () => {
-    const success = await sendEndGame(classId);
-    if (success) {
-      setGameStart(false);
-    }
+    await sendEndGame(classId);
+    // if (success) {
+    //   setGameStart(false);
+    // }
   };
 
   return (
