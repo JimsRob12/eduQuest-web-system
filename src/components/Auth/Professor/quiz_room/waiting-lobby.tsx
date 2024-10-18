@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Student } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CircleX, Copy } from "lucide-react";
+import { CircleX, Copy, Loader2 } from "lucide-react";
 import {
   Tooltip as UITooltip,
   TooltipContent,
@@ -11,12 +11,15 @@ import {
 } from "@/components/ui/tooltip";
 import { kickStudent } from "@/services/api/apiRoom";
 import toast from "react-hot-toast";
+import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthProvider";
 
 interface WaitingLobbyProps {
   students: Student[];
   setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
   classId: string;
-  onStartGame: () => void;
+  onStartGame: (classId: string, studentId: string) => Promise<void>;
+  isGameStarting?: boolean;
 }
 
 const WaitingLobby: React.FC<WaitingLobbyProps> = ({
@@ -24,26 +27,38 @@ const WaitingLobby: React.FC<WaitingLobbyProps> = ({
   setStudents,
   classId,
   onStartGame,
+  isGameStarting,
 }) => {
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const shareableLink = `${window.location.origin}/student/join/${classId}/gamelobby`;
+
+  const { mutate: mutateKickStudent, isPending: isKickingStudent } =
+    useMutation({
+      mutationFn: ({
+        classId,
+        studentId,
+      }: {
+        classId: string;
+        studentId: string;
+      }) => kickStudent(classId, studentId),
+      onSuccess: (_, variables) => {
+        toast.success("Student kicked successfully");
+        setStudents(
+          students.filter(
+            (student) => student.quiz_student_id !== variables.studentId,
+          ),
+        );
+      },
+      onError: () => {
+        toast.error("Failed to kick student");
+      },
+    });
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareableLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleKickStudent = async (studentId: string) => {
-    const success = await kickStudent(classId, studentId);
-    if (success) {
-      toast.success("Student kicked successfully");
-      setStudents(
-        students.filter((student) => student.quiz_student_id !== studentId),
-      );
-    } else {
-      toast.error("Failed to kick student");
-    }
   };
 
   return (
@@ -73,10 +88,18 @@ const WaitingLobby: React.FC<WaitingLobbyProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={() =>
-                          handleKickStudent(student.quiz_student_id)
+                          mutateKickStudent({
+                            classId,
+                            studentId: student.quiz_student_id,
+                          })
                         }
+                        disabled={isKickingStudent}
                       >
-                        <CircleX className="h-4 w-4" />
+                        {isKickingStudent ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <CircleX className="size-4" />
+                        )}
                       </Button>
                       <img
                         src={`/ghost-${ghostNumber}.png`}
@@ -102,10 +125,17 @@ const WaitingLobby: React.FC<WaitingLobbyProps> = ({
       </div>
       <Button
         className="mt-8 rounded-md shadow-[0px_4px_0px_#3b1b55] transition-all duration-300 hover:translate-y-1 hover:shadow-none dark:shadow-[0px_4px_0px_#aaa4b1] dark:hover:shadow-none"
-        onClick={onStartGame}
-        disabled={!(students.length > 0)}
+        onClick={() => onStartGame(classId, user!.id)}
+        disabled={!(students.length > 0) || isKickingStudent || isGameStarting}
       >
-        Start Game
+        {isGameStarting ? (
+          <>
+            <Loader2 className="mr-2 size-4 animate-spin" />
+            Starting..
+          </>
+        ) : (
+          "Start Game"
+        )}
       </Button>
     </div>
   );

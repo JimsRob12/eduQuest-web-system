@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthProvider";
 import { LeaderboardEntry, QuizQuestions, Student } from "@/lib/types";
 import supabase from "@/services/supabase";
 import { useLeaderboard } from "./useLeaderboard";
@@ -14,9 +13,10 @@ import {
   gameEventHandler,
   getQuestionsProf,
 } from "@/services/api/apiRoom";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const ProfessorGameLobby: React.FC = () => {
-  const { user } = useAuth();
   const { classId } = useParams<{ classId: string }>();
   const leaderboardData = useLeaderboard(classId!);
   const [students, setStudents] = useState<Student[]>([]);
@@ -26,6 +26,19 @@ const ProfessorGameLobby: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(30);
 
   const currentQuestion = questions[currentQuestionIndex];
+
+  const { mutate: handleStartGame, isPending: isGameStarting } = useMutation({
+    mutationFn: ({
+      classId,
+      studentId,
+    }: {
+      classId: string;
+      studentId: string;
+    }) => startGame(classId, studentId),
+    onError: () => {
+      toast.error("Unable to start the game!");
+    },
+  });
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -80,12 +93,6 @@ const ProfessorGameLobby: React.FC = () => {
     }
   }, [classId]);
 
-  const handleStartGame = () => {
-    if (students.length && classId) {
-      startGame(classId, user!.id);
-    }
-  };
-
   const calculateClassAccuracy = (leaderboardData: LeaderboardEntry[]) => {
     if (leaderboardData.length === 0) return 0;
     const totalRight = leaderboardData.reduce(
@@ -105,7 +112,10 @@ const ProfessorGameLobby: React.FC = () => {
         students={students}
         setStudents={setStudents}
         classId={classId!}
-        onStartGame={handleStartGame}
+        onStartGame={async (classId: string, studentId: string) =>
+          handleStartGame({ classId, studentId })
+        }
+        isGameStarting={isGameStarting}
       />
     );
   }
