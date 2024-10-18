@@ -88,7 +88,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
             </p>
           </div>
         </div>
-        <p className="text-xs opacity-50">
+        <p className="mt-1 text-xs opacity-50 sm:mt-0">
           <span className="font-semibold">{user?.name}</span> •{" "}
           {formatTimeAgo(new Date(quiz.created_at))}
         </p>
@@ -109,27 +109,31 @@ const QuizCard: React.FC<QuizCardProps> = ({
             </Button>
           </PopoverContent>
         </Popover>
-        {quiz.status.toLowerCase() === "active" && (
-          <Button
-            className="h-fit gap-1 text-xs md:h-full md:text-sm"
-            onClick={handleStartGame}
-          >
-            <Play size={14} />
-            Start Game
-          </Button>
-        )}
-        {quiz.status.toLowerCase() === "draft" ? (
-          <Button onClick={() => onEdit(quiz.quiz_id)}>Continue editing</Button>
-        ) : (
-          <Button
-            variant="secondary"
-            className="h-fit gap-1 text-xs md:h-full md:text-sm"
-            onClick={handleCopyCode}
-          >
-            <Copy size={14} />
-            Copy Quiz Code
-          </Button>
-        )}
+        <div className="flex flex-col items-end gap-1">
+          {quiz.status.toLowerCase() === "active" && (
+            <Button
+              className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+              onClick={handleStartGame}
+            >
+              <Play size={14} />
+              Start Game
+            </Button>
+          )}
+          {quiz.status.toLowerCase() === "draft" ? (
+            <Button className="w-fit" onClick={() => onEdit(quiz.quiz_id)}>
+              Continue editing
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              className="h-fit gap-1 text-xs md:h-full md:text-sm"
+              onClick={handleCopyCode}
+            >
+              <Copy size={14} />
+              Copy Quiz Code
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

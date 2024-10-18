@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { LeaderboardEntry, QuizQuestions } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProgressBar from "@/components/Shared/progressbar";
@@ -19,7 +19,7 @@ interface GameSessionProps {
   leaderboardData: LeaderboardEntry[];
   classAccuracy: number;
   classId: string;
-  setGameStart: React.Dispatch<React.SetStateAction<boolean>>; // Added this prop
+  setGameStart: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const GameSession: React.FC<GameSessionProps> = ({
@@ -32,17 +32,17 @@ const GameSession: React.FC<GameSessionProps> = ({
   leaderboardData,
   classAccuracy,
   classId,
-  setGameStart, // Added this prop
+  setGameStart,
 }) => {
+  const [activeTab, setActiveTab] = useState("leaderboards");
+
   useEffect(() => {
     if (timeLeft > 0) {
       const interval = setInterval(() => {
         setTimeLeft((prevTime) => Math.max(prevTime - 1, 0));
       }, 1000);
-
       return () => clearInterval(interval);
     }
-
     if (timeLeft === 0) {
       setTimeout(() => {
         handleNextQuestion();
@@ -70,7 +70,13 @@ const GameSession: React.FC<GameSessionProps> = ({
   };
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-8 text-center">
+    <div
+      className={`flex flex-col items-center justify-center gap-8 text-center ${
+        activeTab === "live-chart"
+          ? "h-[calc(100vh+20rem)] sm:h-full"
+          : "h-full"
+      }`}
+    >
       <ClassAccuracy accuracy={classAccuracy} />
       <div className="w-full">
         <div className="flex w-full items-center justify-between">
@@ -89,7 +95,11 @@ const GameSession: React.FC<GameSessionProps> = ({
         </div>
       </div>
       <div className="w-full">
-        <Tabs defaultValue="leaderboards" className="w-full">
+        <Tabs
+          defaultValue="leaderboards"
+          className="w-full"
+          onValueChange={(value) => setActiveTab(value)}
+        >
           <TabsList>
             <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
             <TabsTrigger value="live-chart">Live Chart</TabsTrigger>
@@ -98,7 +108,7 @@ const GameSession: React.FC<GameSessionProps> = ({
             <Leaderboard leaderboardData={leaderboardData} />
           </TabsContent>
           <TabsContent value="live-chart">
-            <div className="grid w-full gap-4 md:grid-cols-2">
+            <div className="grid w-full gap-4 sm:grid-cols-2">
               <LeaderboardTrendChart leaderboardData={leaderboardData} />
               <LiveQuestionChart
                 currentQuestionIndex={currentQuestionIndex}
