@@ -33,6 +33,7 @@ import QuestionContent from "./question-content";
 import AnswerStatus from "./answer-status";
 import Summary from "./summary";
 import { useGame } from "@/contexts/GameProvider";
+import FullScreenButton from "./full-screen";
 
 // Types
 type EffectType = "correct" | "wrong" | "noAnswer" | null;
@@ -374,32 +375,45 @@ const SGameLobby: React.FC = () => {
   }
 
   if (!joined) {
-    return <LoadingSpinner message="Joining the game.." />;
+    return (
+      <>
+        <FullScreenButton />
+        <LoadingSpinner message="Joining the game.." />
+      </>
+    );
   }
 
   if (showLeaderboard) {
     return user ? (
-      <Leaderboard leaderboardData={leaderboardData} currentUserId={user.id} />
+      <>
+        <FullScreenButton />
+        <Leaderboard
+          leaderboardData={leaderboardData}
+          currentUserId={user.id}
+        />
+      </>
     ) : null;
   }
 
   if (showSummary) {
     return (
-      <Summary
-        score={score}
-        rightAns={rightAns}
-        wrongAns={wrongAns}
-        totalQuestions={questions.length}
-        totalParticipants={leaderboardData.length}
-        accuracy={userAccuracy}
-        rank={userRank}
-        questions={answeredQuestions}
-        onFinish={() => {
-          setShowSummary(false);
-          setGameStarted(false);
-          navigate("/student/dashboard");
-        }}
-      />
+      <>
+        <FullScreenButton />
+        <Summary
+          score={score}
+          rightAns={rightAns}
+          wrongAns={wrongAns}
+          totalQuestions={questions.length}
+          totalParticipants={leaderboardData.length}
+          accuracy={userAccuracy}
+          rank={userRank}
+          questions={answeredQuestions}
+          onFinish={() => {
+            setShowSummary(false);
+            navigate("/student/dashboard");
+          }}
+        />
+      </>
     );
   }
 
@@ -408,45 +422,48 @@ const SGameLobby: React.FC = () => {
   }
 
   if (!currentQuestion) {
-    return null;
+    return <FullScreenButton />;
   }
 
   return (
-    <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center text-center">
-      <QuestionHeader
-        questionNumber={currentQuestionIndex + 1}
-        points={currentQuestion.points!}
-      />
+    <>
+      <FullScreenButton />
+      <div className="flex h-[calc(100%-5rem)] flex-col items-center justify-center text-center">
+        <QuestionHeader
+          questionNumber={currentQuestionIndex + 1}
+          points={currentQuestion.points!}
+        />
 
-      <div className="mb-4 w-full">
-        <ProgressBar
-          progress={(timeLeft / currentQuestion.time) * 100}
-          height={24}
+        <div className="mb-4 w-full">
+          <ProgressBar
+            progress={(timeLeft / currentQuestion.time) * 100}
+            height={24}
+          />
+        </div>
+
+        <QuestionContent
+          question={currentQuestion.question}
+          questionType={currentQuestion.question_type}
+          distractor={currentQuestion.distractor}
+          rightAnswer={currentQuestion.right_answer}
+          isTabletOrMobile={isTabletOrMobile}
+          theme={theme}
+          hasAnswered={hasAnswered}
+          selectedAnswer={selectedAnswer}
+          effect={effect}
+          handleAnswer={handleAnswer}
+          answerInput={answerInput}
+          setAnswerInput={setAnswerInput}
+          inputRefs={inputRefs}
+        />
+
+        <AnswerStatus
+          hasAnswered={hasAnswered}
+          effect={effect}
+          timeLeft={timeLeft}
         />
       </div>
-
-      <QuestionContent
-        question={currentQuestion.question}
-        questionType={currentQuestion.question_type}
-        distractor={currentQuestion.distractor}
-        rightAnswer={currentQuestion.right_answer}
-        isTabletOrMobile={isTabletOrMobile}
-        theme={theme}
-        hasAnswered={hasAnswered}
-        selectedAnswer={selectedAnswer}
-        effect={effect}
-        handleAnswer={handleAnswer}
-        answerInput={answerInput}
-        setAnswerInput={setAnswerInput}
-        inputRefs={inputRefs}
-      />
-
-      <AnswerStatus
-        hasAnswered={hasAnswered}
-        effect={effect}
-        timeLeft={timeLeft}
-      />
-    </div>
+    </>
   );
 };
 
