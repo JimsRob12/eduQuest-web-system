@@ -393,6 +393,7 @@ const SGameLobby: React.FC = () => {
         questions={answeredQuestions}
         onFinish={() => {
           setShowSummary(false);
+          navigate("/student/dashboard");
         }}
       />
     );
