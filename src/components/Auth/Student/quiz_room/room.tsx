@@ -32,6 +32,7 @@ import QuestionHeader from "./question-header";
 import QuestionContent from "./question-content";
 import AnswerStatus from "./answer-status";
 import Summary from "./summary";
+import { useGame } from "@/contexts/GameProvider";
 
 // Types
 type EffectType = "correct" | "wrong" | "noAnswer" | null;
@@ -39,6 +40,7 @@ type EffectType = "correct" | "wrong" | "noAnswer" | null;
 const SGameLobby: React.FC = () => {
   // Routing and Auth
   const { user } = useAuth();
+  const { setGameStarted } = useGame();
   const { classId } = useParams<{ classId: string }>();
   const navigate = useNavigate();
 
@@ -129,6 +131,7 @@ const SGameLobby: React.FC = () => {
     if (classId && joined) {
       const setGameStartWrapper = (value: boolean) => {
         setGameStart(value);
+        setGameStarted(value);
         if (value) {
           initializeLeaderboard();
         }
@@ -393,6 +396,7 @@ const SGameLobby: React.FC = () => {
         questions={answeredQuestions}
         onFinish={() => {
           setShowSummary(false);
+          setGameStarted(false);
           navigate("/student/dashboard");
         }}
       />

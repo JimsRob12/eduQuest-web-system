@@ -8,6 +8,8 @@ import LeaderboardTrendChart from "./leaderboard-trend-chart";
 import LiveQuestionChart from "./live-question-chart";
 import ClassAccuracy from "./class-accuracy";
 import { sendEndGame, sendExitLeaderboard } from "@/services/api/apiRoom";
+import { X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface GameSessionProps {
   currentQuestion: QuizQuestions;
@@ -34,7 +36,9 @@ const GameSession: React.FC<GameSessionProps> = ({
   classId,
   setGameStart,
 }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("leaderboards");
+  const [isGameEnded, setIsGameEnded] = useState(false);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -58,42 +62,54 @@ const GameSession: React.FC<GameSessionProps> = ({
       const nextQuestion = questions[nextIndex];
       setTimeLeft(nextQuestion.time);
     } else {
-      await endGame();
+      setIsGameEnded(true);
     }
   };
 
   const endGame = async () => {
-    await sendEndGame(classId);
-    // if (success) {
-    //   setGameStart(false);
-    // }
+    const success = await sendEndGame(classId);
+    if (success) {
+      setGameStart(false);
+      navigate("/professor/dashboard");
+    }
   };
 
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-8 text-center ${
+      className={`relative flex flex-col items-center justify-center gap-8 text-center ${
         activeTab === "live-chart"
           ? "h-[calc(100vh+20rem)] sm:h-full"
           : "h-full"
       }`}
     >
+      {isGameEnded && (
+        <button
+          className="fixed left-6 top-24 z-10 rounded-md bg-slate-500 bg-opacity-10 p-1.5 hover:bg-opacity-20 md:left-12 lg:left-16"
+          onClick={() => endGame()}
+        >
+          <X />
+        </button>
+      )}
       <ClassAccuracy accuracy={classAccuracy} />
-      <div className="w-full">
-        <div className="flex w-full items-center justify-between">
-          <h1 className="mb-4 text-2xl font-bold">
-            Question {currentQuestionIndex + 1} of {questions.length}
-          </h1>
-          <p className="text-xl font-bold">
-            {currentQuestion?.points} point{currentQuestion?.points! > 1 && "s"}
-          </p>
+      {!isGameEnded && (
+        <div className="w-full">
+          <div className="flex w-full items-center justify-between">
+            <h1 className="mb-4 text-2xl font-bold">
+              Question {currentQuestionIndex + 1} of {questions.length}
+            </h1>
+            <p className="text-xl font-bold">
+              {currentQuestion?.points} point
+              {currentQuestion?.points! > 1 && "s"}
+            </p>
+          </div>
+          <div className="mb-4 w-full">
+            <ProgressBar
+              progress={(timeLeft / (currentQuestion?.time || 30)) * 100}
+              height={24}
+            />
+          </div>
         </div>
-        <div className="mb-4 w-full">
-          <ProgressBar
-            progress={(timeLeft / (currentQuestion?.time || 30)) * 100}
-            height={24}
-          />
-        </div>
-      </div>
+      )}
       <div className="w-full">
         <Tabs
           defaultValue="leaderboards"
@@ -118,9 +134,11 @@ const GameSession: React.FC<GameSessionProps> = ({
             </div>
           </TabsContent>
         </Tabs>
-        <div className="mt-4 text-lg font-bold">
-          Time Left: {timeLeft} seconds
-        </div>
+        {!isGameEnded && (
+          <div className="mt-4 text-lg font-bold">
+            Time Left: {timeLeft} seconds
+          </div>
+        )}
       </div>
     </div>
   );

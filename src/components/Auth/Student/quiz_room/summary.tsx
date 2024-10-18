@@ -92,7 +92,7 @@ const Summary: React.FC<SummaryProps> = ({
       className="relative my-16 flex w-full items-center justify-center"
     >
       <motion.button
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.2 }}
         whileTap={{ scale: 0.9 }}
         className="fixed -top-14 left-0 z-10 rounded-md bg-slate-500 bg-opacity-10 p-1.5 hover:bg-opacity-20"
         onClick={onFinish}
