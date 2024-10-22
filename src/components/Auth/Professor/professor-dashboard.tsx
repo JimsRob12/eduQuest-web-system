@@ -150,6 +150,9 @@ export default function ProfessorDashboard() {
   const activeQuizzes = safeQuizzes.filter(
     (quiz: Quiz) => quiz.status === "active",
   );
+  const scheduledQuizzes = safeQuizzes.filter(
+    (quiz: Quiz) => quiz.status === "scheduled",
+  );
   const draftQuizzes = safeQuizzes.filter(
     (quiz: Quiz) => quiz.status === "draft",
   );
@@ -199,7 +202,10 @@ export default function ProfessorDashboard() {
         <div className="flex justify-between">
           <TabsList>
             <TabsTrigger value="active-quizzes">
-              Active Quizzes ({activeQuizzes.length})
+              Active ({activeQuizzes.length})
+            </TabsTrigger>
+            <TabsTrigger value="scheduled-quizzes">
+              Scheduled ({activeQuizzes.length})
             </TabsTrigger>
             <TabsTrigger value="draft">
               Drafts ({draftQuizzes.length})
@@ -222,6 +228,22 @@ export default function ProfessorDashboard() {
         <TabsContent value="active-quizzes">
           {activeQuizzes.length > 0 ? (
             activeQuizzes.map((quiz: Quiz) => (
+              <QuizCard
+                key={quiz.quiz_id}
+                quiz={quiz}
+                user={user!}
+                onEdit={handleEditQuiz}
+                onDelete={handleDeleteQuiz}
+                nav={navigate}
+              />
+            ))
+          ) : (
+            <p>No active quizzes available.</p>
+          )}
+        </TabsContent>
+        <TabsContent value="scheduled-quizzes">
+          {scheduledQuizzes.length > 0 ? (
+            scheduledQuizzes.map((quiz: Quiz) => (
               <QuizCard
                 key={quiz.quiz_id}
                 quiz={quiz}
