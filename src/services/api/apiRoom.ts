@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LeaderboardEntry, QuizQuestions, Student, User } from "@/lib/types";
+import {
+  LeaderboardEntry,
+  Quiz,
+  QuizQuestions,
+  Student,
+  User,
+} from "@/lib/types";
 import { Dispatch, SetStateAction } from "react";
 import supabase from "../supabase";
-import toast from "react-hot-toast";
 
 // Function to start the game and notify all subscribers
 export async function startGame(
@@ -145,29 +150,54 @@ export async function getParticipants(
   }
 }
 
+interface JoinRoomResponse {
+  success: boolean;
+  status?: string;
+  error?: string;
+  open_time?: string;
+  close_time?: string;
+  title?: string;
+}
+
 export async function joinRoom(
   classCode: string,
   studentId: string,
   user: User,
   username?: string,
-): Promise<boolean> {
+): Promise<JoinRoomResponse> {
   try {
     const { data, error } = await supabase
       .from("quiz")
-      .select("status")
+      .select("status, open_time, close_time, title")
       .eq("class_code", classCode)
       .single();
 
     if (error) {
       console.error("Error fetching quiz status:", error);
-      return false;
+      return {
+        success: false,
+        error: "Error fetching quiz status",
+      };
     }
 
-    if (data && data.status !== "in lobby") {
-      toast.error(
-        "The game hasn't started yet. Please wait for the instructor to start the game.",
-      );
-      return false;
+    const quizData = data as Quiz;
+
+    if (quizData && quizData.status === "scheduled") {
+      return {
+        success: false,
+        status: "scheduled",
+        open_time: quizData.open_time,
+        close_time: quizData.close_time,
+        title: quizData.title,
+      };
+    }
+
+    if (quizData && quizData.status !== "in lobby") {
+      return {
+        success: false,
+        error:
+          "The game hasn't started yet. Please wait for the instructor to start the game.",
+      };
     }
 
     const { data: existingRecord } = await supabase
@@ -181,11 +211,13 @@ export async function joinRoom(
 
     if (existingRecord) {
       console.log("Record already exists:", existingRecord);
-      return true;
+      return {
+        success: true,
+        status: "in lobby",
+      };
     }
 
     const studentName = user.name || username;
-
     await supabase
       .from("temp_room")
       .insert({
@@ -198,10 +230,16 @@ export async function joinRoom(
       .select()
       .single();
 
-    return true;
+    return {
+      success: true,
+      status: "in lobby",
+    };
   } catch (error) {
     console.error("Error joining room:", error);
-    return false;
+    return {
+      success: false,
+      error: "Error joining room",
+    };
   }
 }
 
@@ -621,7 +659,7 @@ export async function getQuizQuestionsStud(
 // }
 
 // Answer checking function
-async function checkAnswer(
+export async function checkAnswer(
   questionId: string,
   answer: string,
 ): Promise<boolean> {
