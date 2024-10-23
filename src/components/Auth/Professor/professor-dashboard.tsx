@@ -3,6 +3,8 @@ import { useGetQuizzes } from "../useGetQuizzes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Quiz, User } from "@/lib/types";
 import {
+  Calendar,
+  Clock,
   Copy,
   EllipsisVertical,
   FileQuestion,
@@ -81,6 +83,24 @@ const QuizCard: React.FC<QuizCardProps> = ({
     nav(`professor/class/${quiz.class_code}/gamelobby`);
   };
 
+  const isScheduledAndStarted = () => {
+    if (quiz.status === "scheduled" && quiz.open_time) {
+      const startTime = new Date(quiz.open_time);
+      return new Date() >= startTime;
+    }
+    return false;
+  };
+
+  const formatScheduledTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <div key={quiz.quiz_id} className="my-2 flex gap-4 rounded border p-3">
       <img
@@ -94,7 +114,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
             className={`w-fit rounded-full px-2 text-[0.6rem] font-semibold uppercase ${
               quiz.status === "draft"
                 ? "bg-red-300 text-red-700"
-                : "bg-green-300 text-green-700"
+                : quiz.status === "scheduled"
+                  ? "bg-yellow-300 text-yellow-700"
+                  : "bg-green-300 text-green-700"
             }`}
           >
             {quiz.status}
@@ -110,8 +132,20 @@ const QuizCard: React.FC<QuizCardProps> = ({
               )}
             </p>
           </div>
+          {quiz.status === "scheduled" && quiz.open_time && (
+            <div className="flex items-center gap-2 text-xs text-yellow-600">
+              <Calendar className="size-4" />
+              <span>Starting at: {formatScheduledTime(quiz.open_time)}</span>
+              {isScheduledAndStarted() && (
+                <span className="flex items-center gap-1 text-green-600">
+                  <Clock className="size-4" />
+                  Ready to start!
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <p className="mt-1 text-xs opacity-50 sm:mt-0">
+        <p className="mt-1 text-xs opacity-50 sm:mt-3">
           <span className="font-semibold">{user?.name}</span> •{" "}
           {formatTimeAgo(new Date(quiz.created_at))}
         </p>
@@ -133,15 +167,14 @@ const QuizCard: React.FC<QuizCardProps> = ({
           </PopoverContent>
         </Popover>
         <div className="flex flex-col items-end gap-1">
-          {quiz.status.toLowerCase() === "active" && (
+          {(quiz.status === "active" ||
+            (quiz.status === "scheduled" && isScheduledAndStarted())) && (
             <Button
               className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
               onClick={handleStartGame}
             >
               {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                </>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <>
                   <Play size={14} />
@@ -150,7 +183,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
               )}
             </Button>
           )}
-          {quiz.status.toLowerCase() === "in lobby" && (
+          {quiz.status === "in lobby" && (
             <Button
               className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
               onClick={handleGoLobby}
@@ -159,7 +192,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
               Go to Lobby
             </Button>
           )}
-          {quiz.status.toLowerCase() === "draft" ? (
+          {quiz.status === "draft" ? (
             <Button className="w-fit" onClick={() => onEdit(quiz.quiz_id)}>
               Continue editing
             </Button>
