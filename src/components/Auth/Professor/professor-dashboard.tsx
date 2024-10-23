@@ -6,6 +6,7 @@ import {
   Copy,
   EllipsisVertical,
   FileQuestion,
+  Loader2,
   Play,
   Plus,
   Trash,
@@ -20,7 +21,11 @@ import {
 } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createQuiz, deleteQuiz } from "@/services/api/apiQuiz";
+import {
+  createQuiz,
+  deleteQuiz,
+  updateQuizStatus,
+} from "@/services/api/apiQuiz";
 import toast from "react-hot-toast";
 
 interface QuizCardProps {
@@ -38,6 +43,19 @@ const QuizCard: React.FC<QuizCardProps> = ({
   onDelete,
   nav,
 }) => {
+  const { mutate: mutateQuizStatus, isPending: isLoading } = useMutation({
+    mutationFn: ({
+      quizId,
+      status,
+    }: {
+      quizId: string;
+      status: "draft" | "active" | "scheduled" | "archived" | "in lobby";
+    }) => updateQuizStatus(quizId, status),
+    onError: (error) => {
+      toast.error(`Failed to update quiz status: ${error.message}`);
+    },
+  });
+
   const handleCopyCode = () => {
     if (quiz.class_code) {
       navigator.clipboard
@@ -56,6 +74,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
 
   const handleStartGame = () => {
     nav(`professor/class/${quiz.class_code}/gamelobby`);
+    mutateQuizStatus({ quizId: quiz.quiz_id, status: "in lobby" });
   };
 
   return (
@@ -115,8 +134,16 @@ const QuizCard: React.FC<QuizCardProps> = ({
               className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
               onClick={handleStartGame}
             >
-              <Play size={14} />
-              Start Game
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                </>
+              ) : (
+                <>
+                  <Play size={14} />
+                  Start Game
+                </>
+              )}
             </Button>
           )}
           {quiz.status.toLowerCase() === "draft" ? (

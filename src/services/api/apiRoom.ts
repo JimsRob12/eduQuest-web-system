@@ -2,6 +2,7 @@
 import { LeaderboardEntry, QuizQuestions, Student, User } from "@/lib/types";
 import { Dispatch, SetStateAction } from "react";
 import supabase from "../supabase";
+import toast from "react-hot-toast";
 
 // Function to start the game and notify all subscribers
 export async function startGame(
@@ -151,20 +152,23 @@ export async function joinRoom(
   username?: string,
 ): Promise<boolean> {
   try {
-    // const { data, error } = await supabase
-    //   .from("quiz")
-    //   .select('status')
-    //   .eq("class_code", classCode)
-    //   .single();
+    const { data, error } = await supabase
+      .from("quiz")
+      .select("status")
+      .eq("class_code", classCode)
+      .single();
 
-    // if (error) {
-    //   console.error("Error fetching quiz status:", error);
-    //   return false;
-    // }
+    if (error) {
+      console.error("Error fetching quiz status:", error);
+      return false;
+    }
 
-    // if (data && data.status !== 'in game') {
-    //   return false
-    // }
+    if (data && data.status !== "in lobby") {
+      toast.error(
+        "The game hasn't started yet. Please wait for the instructor to start the game.",
+      );
+      return false;
+    }
 
     const { data: existingRecord } = await supabase
       .from("temp_room")

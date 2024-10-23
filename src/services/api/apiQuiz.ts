@@ -547,3 +547,22 @@ export async function updateQuizAndQuestions(
     throw error;
   }
 }
+
+export async function updateQuizStatus(
+  quizId: string,
+  status: "draft" | "active" | "scheduled" | "archived" | "in lobby"
+): Promise<Quiz | null> {
+  const { data, error } = await supabase
+    .from("quiz")
+    .update({ status })
+    .eq("quiz_id", quizId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating quiz status:", error);
+    throw new Error(`Failed to update quiz status: ${error.message}`);
+  }
+
+  return data;
+}
