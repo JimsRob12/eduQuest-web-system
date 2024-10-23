@@ -77,6 +77,10 @@ const QuizCard: React.FC<QuizCardProps> = ({
     mutateQuizStatus({ quizId: quiz.quiz_id, status: "in lobby" });
   };
 
+  const handleGoLobby = () => {
+    nav(`professor/class/${quiz.class_code}/gamelobby`);
+  };
+
   return (
     <div key={quiz.quiz_id} className="my-2 flex gap-4 rounded border p-3">
       <img
@@ -146,6 +150,15 @@ const QuizCard: React.FC<QuizCardProps> = ({
               )}
             </Button>
           )}
+          {quiz.status.toLowerCase() === "in lobby" && (
+            <Button
+              className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+              onClick={handleGoLobby}
+            >
+              <Play size={14} />
+              Go to Lobby
+            </Button>
+          )}
           {quiz.status.toLowerCase() === "draft" ? (
             <Button className="w-fit" onClick={() => onEdit(quiz.quiz_id)}>
               Continue editing
@@ -182,6 +195,9 @@ export default function ProfessorDashboard() {
   );
   const draftQuizzes = safeQuizzes.filter(
     (quiz: Quiz) => quiz.status === "draft",
+  );
+  const inLobbyQuizzies = safeQuizzes.filter(
+    (quiz: Quiz) => quiz.status === "in lobby",
   );
 
   const { mutate: createNewQuiz, isPending: isCreatingQuiz } = useMutation({
@@ -232,7 +248,10 @@ export default function ProfessorDashboard() {
               Active ({activeQuizzes.length})
             </TabsTrigger>
             <TabsTrigger value="scheduled-quizzes">
-              Scheduled ({activeQuizzes.length})
+              Scheduled ({scheduledQuizzes.length})
+            </TabsTrigger>
+            <TabsTrigger value="lobbied-quizzes">
+              Started ({inLobbyQuizzies.length})
             </TabsTrigger>
             <TabsTrigger value="draft">
               Drafts ({draftQuizzes.length})
@@ -255,6 +274,22 @@ export default function ProfessorDashboard() {
         <TabsContent value="active-quizzes">
           {activeQuizzes.length > 0 ? (
             activeQuizzes.map((quiz: Quiz) => (
+              <QuizCard
+                key={quiz.quiz_id}
+                quiz={quiz}
+                user={user!}
+                onEdit={handleEditQuiz}
+                onDelete={handleDeleteQuiz}
+                nav={navigate}
+              />
+            ))
+          ) : (
+            <p>No active quizzes available.</p>
+          )}
+        </TabsContent>
+        <TabsContent value="lobbied-quizzes">
+          {inLobbyQuizzies.length > 0 ? (
+            inLobbyQuizzies.map((quiz: Quiz) => (
               <QuizCard
                 key={quiz.quiz_id}
                 quiz={quiz}
