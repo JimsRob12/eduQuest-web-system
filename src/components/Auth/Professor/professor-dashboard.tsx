@@ -19,6 +19,7 @@ import {
   Play,
   Plus,
   Trash,
+  UsersRound,
   XCircle,
 } from "lucide-react";
 import { formatTimeAgo } from "@/lib/helpers";
@@ -77,6 +78,9 @@ const QuizCard: React.FC<QuizCardProps> = ({
     nav(`professor/class/${quiz.class_code}/gamelobby`);
     mutateQuizStatus({ quizId: quiz.quiz_id, status: "in lobby" });
   };
+
+  const handleResponses = () =>
+    nav(`professor/class/${quiz.class_code}/responses`);
 
   const handleGoLobby = () => {
     nav(`professor/class/${quiz.class_code}/gamelobby`);
@@ -192,8 +196,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
           </PopoverContent>
         </Popover>
         <div className="flex flex-col items-end gap-1">
-          {(quiz.status === "active" ||
-            (quiz.status === "scheduled" && timeStatus === "ready")) && (
+          {quiz.status === "active" && (
             <Button
               className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
               onClick={handleStartGame}
@@ -206,6 +209,15 @@ const QuizCard: React.FC<QuizCardProps> = ({
                   Start Game
                 </>
               )}
+            </Button>
+          )}
+          {quiz.status === "scheduled" && timeStatus === "ready" && (
+            <Button
+              className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+              onClick={handleResponses}
+            >
+              <UsersRound size={14} />
+              Check Responses
             </Button>
           )}
           {quiz.status === "in lobby" && (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { LeaderboardEntry, QuizQuestions, Student } from "@/lib/types";
+import { QuizQuestions, Student } from "@/lib/types";
 import supabase from "@/services/supabase";
 import { useLeaderboard } from "./useLeaderboard";
 
@@ -15,6 +15,7 @@ import {
 } from "@/services/api/apiRoom";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { calculateClassAccuracy } from "@/lib/helpers";
 
 const ProfessorGameLobby: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -92,19 +93,6 @@ const ProfessorGameLobby: React.FC = () => {
       };
     }
   }, [classId]);
-
-  const calculateClassAccuracy = (leaderboardData: LeaderboardEntry[]) => {
-    if (leaderboardData.length === 0) return 0;
-    const totalRight = leaderboardData.reduce(
-      (sum, entry) => sum + entry.right_answer,
-      0,
-    );
-    const totalQuestions = leaderboardData.reduce(
-      (sum, entry) => sum + entry.right_answer + entry.wrong_answer,
-      0,
-    );
-    return totalQuestions > 0 ? (totalRight / totalQuestions) * 100 : 0;
-  };
 
   if (!gameStart) {
     return (

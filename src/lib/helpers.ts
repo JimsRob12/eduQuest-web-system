@@ -152,6 +152,19 @@ export function calculateRanks(data: LeaderboardEntry[]): Map<string, number> {
   return ranks;
 }
 
+export const calculateClassAccuracy = (leaderboardData: LeaderboardEntry[]) => {
+  if (leaderboardData.length === 0) return 0;
+  const totalRight = leaderboardData.reduce(
+    (sum, entry) => sum + entry.right_answer,
+    0,
+  );
+  const totalQuestions = leaderboardData.reduce(
+    (sum, entry) => sum + entry.right_answer + entry.wrong_answer,
+    0,
+  );
+  return totalQuestions > 0 ? (totalRight / totalQuestions) * 100 : 0;
+};
+
 export const shuffleArray = <T>(array: T[]): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
