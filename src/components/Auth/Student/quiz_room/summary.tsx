@@ -7,10 +7,10 @@ interface SummaryProps {
   score: number;
   rightAns: number;
   wrongAns: number;
-  totalParticipants: number;
+  totalParticipants?: number;
   totalQuestions: number;
   accuracy: number;
-  rank: number;
+  rank?: number;
   questions: {
     question: string;
     userAnswer: string;
@@ -21,8 +21,8 @@ interface SummaryProps {
 
 interface AccuracySectionProps {
   accuracy: number;
-  rank: number;
-  totalParticipants: number;
+  rank?: number;
+  totalParticipants?: number;
   score: number;
 }
 
@@ -175,13 +175,17 @@ const AccuracySection: React.FC<AccuracySectionProps> = ({
         noHeader
       />
     </div>
-    <div className="grid grid-cols-2 gap-2 text-left">
-      <StatCard
-        title="Rank"
-        value={`${rank}/${totalParticipants}`}
-        icon={<Medal />}
-        bgColor="bg-purple-700"
-      />
+    <div
+      className={`grid ${rank ? "grid-cols-2" : "grid-cols-1"} gap-2 text-left`}
+    >
+      {rank && (
+        <StatCard
+          title="Rank"
+          value={`${rank}/${totalParticipants}`}
+          icon={<Medal />}
+          bgColor="bg-purple-700"
+        />
+      )}
       <StatCard
         title="Score"
         value={score}

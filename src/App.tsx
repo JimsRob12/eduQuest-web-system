@@ -33,6 +33,7 @@ import EmailVerification from "./components/Auth/EmailVerification";
 
 import ProfessorGameLobby from "./components/Auth/Professor/quiz_room/room";
 import SGameLobby from "./components/Auth/Student/quiz_room/room";
+import ScheduledQuizRoute from "./components/Auth/Student/scheduled_room/scheduled-route";
 
 // Define route configurations
 const publicRoutes = [
@@ -79,6 +80,10 @@ const studentRoutes = [
   {
     path: "/student/join/:classId/gamelobby",
     element: <SGameLobby />,
+  },
+  {
+    path: "/student/join/:classId/scheduled",
+    element: <ScheduledQuizRoute />,
   },
 ];
 

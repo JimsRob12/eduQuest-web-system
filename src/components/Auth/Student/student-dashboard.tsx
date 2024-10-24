@@ -5,16 +5,12 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
 import { joinRoom } from "@/services/api/apiRoom";
-import ScheduledQuizDisplay from "./scheduled-quiz-display";
 
 const AnimalIconInput: React.FC = () => {
   const [classCode, setClassCode] = useState<string>("");
   const [isJoining, setIsJoining] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [quizStatus, setQuizStatus] = useState<string | null>(null);
-  const [quizTitle, setQuizTitle] = useState<string | null>(null);
-  const [openTime, setOpenTime] = useState<string | null>(null);
-  const [closeTime, setCloseTime] = useState<string | null>(null);
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -26,6 +22,7 @@ const AnimalIconInput: React.FC = () => {
     }
     setIsJoining(true);
     setError(null);
+
     try {
       const studentId = user?.id ?? "";
       if (!user) {
@@ -33,17 +30,19 @@ const AnimalIconInput: React.FC = () => {
         setIsJoining(false);
         return;
       }
+
       const response = await joinRoom(classCode, studentId, user);
 
       if (response.status === "scheduled") {
-        setQuizStatus("scheduled");
-        setQuizTitle(response.title!);
-        setOpenTime(response.open_time!);
-        setCloseTime(response.close_time!);
-        return;
-      }
-
-      if (response.success) {
+        // Navigate to the scheduled quiz route instead of showing it inline
+        navigate(`/student/join/${classCode}/scheduled`, {
+          state: {
+            title: response.title,
+            openTime: response.open_time,
+            closeTime: response.close_time,
+          },
+        });
+      } else if (response.success) {
         navigate(`/student/join/${classCode}/gamelobby`);
       } else {
         setError(response.error || "Failed to join the room");
@@ -54,20 +53,8 @@ const AnimalIconInput: React.FC = () => {
       );
     } finally {
       setIsJoining(false);
-      setClassCode("");
     }
   };
-
-  // Scheduled quiz view
-  if (quizStatus === "scheduled") {
-    return (
-      <ScheduledQuizDisplay
-        openTime={openTime || ""}
-        closeTime={closeTime || ""}
-        quizTitle={quizTitle || ""}
-      />
-    );
-  }
 
   // Original join view
   return (

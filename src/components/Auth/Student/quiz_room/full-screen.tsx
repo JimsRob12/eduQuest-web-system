@@ -32,7 +32,7 @@ const FullScreenButton = () => {
     <div className="w-full">
       <button
         onClick={toggleFullScreen}
-        className="fixed right-0 top-6 z-10 w-fit rounded-md bg-slate-500 bg-opacity-10 p-1.5 hover:bg-opacity-20 md:right-12 lg:right-16"
+        className="fixed right-6 top-6 z-10 w-fit rounded-md bg-slate-500 bg-opacity-10 p-1.5 hover:bg-opacity-20 md:right-12 lg:right-16"
         aria-label={isFullScreen ? "Exit full screen" : "Enter full screen"}
       >
         {isFullScreen ? <Minimize size={24} /> : <Maximize size={24} />}
