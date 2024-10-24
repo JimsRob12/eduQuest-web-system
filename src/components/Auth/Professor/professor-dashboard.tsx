@@ -19,8 +19,9 @@ import {
   Play,
   Plus,
   Trash,
-  UsersRound,
   XCircle,
+  AlertCircle,
+  UsersRound,
 } from "lucide-react";
 import { formatTimeAgo } from "@/lib/helpers";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -90,16 +91,44 @@ const QuizCard: React.FC<QuizCardProps> = ({
     if (!quiz.open_time || quiz.status !== "scheduled") return null;
 
     const startTime = new Date(quiz.open_time);
+    const endTime = quiz.close_time ? new Date(quiz.close_time) : null;
     const currentTime = new Date();
 
+    if (endTime && currentTime > endTime) {
+      return "closed";
+    }
+
     if (currentTime > startTime) {
-      // If more than 24 hours have passed since scheduled time
-      if (currentTime.getTime() - startTime.getTime() > 24 * 60 * 60 * 1000) {
-        return "expired";
-      }
       return "ready";
     }
+
     return "upcoming";
+  };
+
+  const getRemainingTime = () => {
+    if (!quiz.close_time || quiz.status !== "scheduled") return null;
+
+    const endTime = new Date(quiz.close_time);
+    const currentTime = new Date();
+    const timeRemaining = endTime.getTime() - currentTime.getTime();
+
+    if (timeRemaining <= 0) return "Closed";
+
+    const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+    const minutes = Math.floor(
+      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60),
+    );
+
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      return `${days} day${days > 1 ? "s" : ""} remaining`;
+    }
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`;
+    }
+
+    return `${minutes}m remaining`;
   };
 
   const formatScheduledTime = (dateString: string) => {
@@ -112,6 +141,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
   };
 
   const timeStatus = getQuizTimeStatus();
+  const remainingTime = getRemainingTime();
 
   return (
     <div className="my-2 flex gap-4 rounded border p-3">
@@ -126,14 +156,14 @@ const QuizCard: React.FC<QuizCardProps> = ({
             className={`w-fit rounded-full px-2 text-[0.6rem] font-semibold uppercase ${
               quiz.status === "draft"
                 ? "bg-red-300 text-red-700"
-                : quiz.status === "scheduled" && timeStatus === "expired"
+                : quiz.status === "scheduled" && timeStatus === "closed"
                   ? "bg-gray-300 text-gray-700"
                   : quiz.status === "scheduled"
                     ? "bg-yellow-300 text-yellow-700"
                     : "bg-green-300 text-green-700"
             }`}
           >
-            {timeStatus === "expired" ? "Expired" : quiz.status}
+            {timeStatus === "closed" ? "Closed" : quiz.status}
           </p>
           <h3 className="text-lg font-bold">{quiz.title}</h3>
           <div className="flex items-center gap-1 text-xs opacity-60 md:text-sm">
@@ -147,35 +177,53 @@ const QuizCard: React.FC<QuizCardProps> = ({
             </p>
           </div>
           {quiz.status === "scheduled" && quiz.open_time && (
-            <div className="flex items-center gap-2 text-xs">
-              <Calendar className="size-4" />
-              <span
-                className={
-                  timeStatus === "expired" ? "text-gray-600" : "text-yellow-600"
-                }
-              >
-                {timeStatus === "expired"
-                  ? "Was scheduled for: "
-                  : "Starting at: "}
-                {formatScheduledTime(quiz.open_time)}
-              </span>
-              {timeStatus === "ready" && (
-                <span className="flex items-center gap-1 text-green-600">
-                  <Clock className="size-4" />
-                  Ready to start!
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-xs">
+                <Calendar className="size-4" />
+                <span
+                  className={
+                    timeStatus === "closed"
+                      ? "text-gray-600"
+                      : "text-yellow-600"
+                  }
+                >
+                  {timeStatus === "closed"
+                    ? "Was available from: "
+                    : "Starts: "}
+                  {formatScheduledTime(quiz.open_time)}
                 </span>
+              </div>
+              {quiz.close_time && (
+                <div className="flex items-center gap-2 text-xs">
+                  <Clock className="size-4" />
+                  <span
+                    className={
+                      timeStatus === "closed"
+                        ? "text-gray-600"
+                        : "text-yellow-600"
+                    }
+                  >
+                    Ends: {formatScheduledTime(quiz.close_time)}
+                  </span>
+                </div>
               )}
-              {timeStatus === "expired" && (
-                <span className="flex items-center gap-1 text-gray-600">
+              {timeStatus === "ready" && remainingTime && (
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <AlertCircle className="size-4" />
+                  {remainingTime}
+                </div>
+              )}
+              {timeStatus === "closed" && (
+                <span className="flex items-center gap-1 text-xs text-gray-600">
                   <XCircle className="size-4" />
-                  Past scheduled time
+                  Quiz period has ended
                 </span>
               )}
             </div>
           )}
         </div>
         <p className="mt-1 text-xs opacity-50 sm:mt-3">
-          <span className="font-semibold">{user?.name}</span> •{" "}
+          <span className="font-default font-semibold">{user?.name}</span> •{" "}
           {formatTimeAgo(new Date(quiz.created_at))}
         </p>
       </div>
@@ -211,7 +259,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
               )}
             </Button>
           )}
-          {quiz.status === "scheduled" && timeStatus === "ready" && (
+          {quiz.status === "scheduled" && (
             <Button
               className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
               onClick={handleResponses}
@@ -238,7 +286,7 @@ const QuizCard: React.FC<QuizCardProps> = ({
               variant="secondary"
               className="h-fit gap-1 text-xs md:h-full md:text-sm"
               onClick={handleCopyCode}
-              disabled={timeStatus === "expired"}
+              disabled={timeStatus === "closed"}
             >
               <Copy size={14} />
               Copy Quiz Code
