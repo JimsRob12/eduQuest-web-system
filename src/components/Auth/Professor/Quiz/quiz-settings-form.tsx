@@ -207,9 +207,9 @@ export default function QuizSettingsForm({
     };
 
     // Clear form errors when submitting
-    console.log(submittedValues);
+    // console.log(submittedValues);
     setFormErrors([]);
-    // mutateUpdateQuiz(submittedValues);
+    mutateUpdateQuiz(submittedValues);
   }
 
   return (
