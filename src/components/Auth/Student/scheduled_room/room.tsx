@@ -19,7 +19,10 @@ import Leaderboard from "../quiz_room/leaderboard";
 // Assets
 import soundCorrect from "/sounds/correct-answer.mp3";
 import soundWrong from "/sounds/wrong-answer.mp3";
-import { getQuestionsForScheduledQuiz } from "@/services/api/apiScheduledQuiz";
+import {
+  getQuestionsForScheduledQuiz,
+  updateQuizTaken,
+} from "@/services/api/apiScheduledQuiz";
 
 // Types
 type EffectType = "correct" | "wrong" | "noAnswer" | null;
@@ -172,6 +175,9 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
     finalWrongAns: number,
   ) => {
     if (classCode && user) {
+      // Update the quiz_taken status
+      await updateQuizTaken({ classCode, userId: user.id });
+
       // Use the passed values instead of reading from state
       const finalLeaderboard = await updateLeaderBoard(
         classCode,

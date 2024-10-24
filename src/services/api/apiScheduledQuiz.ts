@@ -1,6 +1,16 @@
-import { QuizQuestions } from "@/lib/types";
+import { QuizQuestions, User } from "@/lib/types";
 import supabase from "../supabase";
-import { checkAnswer } from "./apiRoom";
+
+interface QuizStatusResponse {
+  hasTaken: boolean;
+  canRetake: boolean;
+}
+interface QuizStudentData {
+  quiz_student_id: string;
+  class_code: string;
+  quiz_id: string;
+  quiz_taken: boolean;
+}
 
 export async function getQuestionsForScheduledQuiz(
   classCode: string,
@@ -36,78 +46,123 @@ export async function getQuestionsForScheduledQuiz(
   }
 }
 
-// Modified function for handling scheduled quiz start
-export async function startScheduledQuiz(classCode: string): Promise<void> {
+export async function updateQuizTaken({
+  classCode,
+  userId,
+}: {
+  classCode: string;
+  userId: string;
+}) {
   try {
-    await supabase
+    const { data: quizData, error: quizError } = await supabase
       .from("quiz")
-      .update({ status: "scheduled-in-game" })
-      .eq("class_code", classCode);
+      .select("quiz_id")
+      .eq("class_code", classCode)
+      .single();
 
-    // Notify all enrolled students
-    const channel = supabase.channel("scheduled_quiz");
-    channel.send({
-      type: "broadcast",
-      event: "scheduled-quiz-started",
-      payload: { classCode },
-    });
-    channel.unsubscribe();
+    if (quizError || !quizData) {
+      throw new Error(quizError?.message || "Quiz not found");
+    }
+
+    const { data, error } = await supabase
+      .from("quiz_students")
+      .update({ quiz_taken: true })
+      .eq("class_code", classCode)
+      .eq("quiz_student_id", userId)
+      .select();
+
+    if (error) {
+      throw new Error(`Error updating quiz_taken status: ${error.message}`);
+    }
+
+    return data;
   } catch (error) {
-    console.error("Error starting scheduled quiz:", error);
+    console.error("Error updating quiz_taken status:", error);
     throw error;
   }
 }
 
-// Modified answer submission to handle batch processing
-export async function submitQuizAnswer(
-  questionId: string,
+export async function getQuizById(classCode: string) {
+  const { data: quizData, error: quizError } = await supabase
+    .from("quiz")
+    .select("quiz_id, retake")
+    .eq("class_code", classCode)
+    .single();
+
+  if (quizError) {
+    throw new Error("Quiz not found");
+  }
+
+  return quizData;
+}
+
+export async function getQuizStudent(
+  classCode: string,
   studentId: string,
-  answer: string,
-  timeSpent: number,
-): Promise<void> {
-  try {
-    const isCorrect = await checkAnswer(questionId, answer);
+): Promise<QuizStudentData | null> {
+  const { data, error } = await supabase
+    .from("quiz_students")
+    .select("*")
+    .eq("class_code", classCode)
+    .eq("quiz_student_id", studentId)
+    .single();
 
-    await supabase.from("quiz_answers").insert([
-      {
-        quiz_question_id: questionId,
-        student_id: studentId,
-        answer: answer,
-        is_correct: isCorrect,
-        time_spent: timeSpent,
-      },
-    ]);
-  } catch (error) {
-    console.error("Error submitting answer:", error);
-    throw error;
+  if (error) {
+    console.error("Error fetching quiz student data:", error);
+    return null;
   }
+
+  return data;
 }
 
-// Modified function to end quiz and show final leaderboard
-export async function endScheduledQuiz(classCode: string): Promise<void> {
-  try {
-    // Update quiz status
-    await supabase
-      .from("quiz")
-      .update({ status: "completed" })
-      .eq("class_code", classCode);
+export async function insertQuizStudent(
+  user: User,
+  classCode: string,
+  name?: string,
+) {
+  const { data, error } = await supabase
+    .from("quiz_students")
+    .insert([
+      {
+        quiz_student_id: user.id,
+        class_code: classCode,
+        student_name: name || user.name,
+        student_email: user.email,
+        student_avatar: user.avatar,
+        quiz_taken: false,
+      },
+    ])
+    .select()
+    .single();
 
-    // Calculate final scores and update leaderboard
-    // const { data: answers } = await supabase
-    //   .from("quiz_answers")
-    //   .select("*")
-    //   .eq("class_code", classCode);
-
-    // Notify all participants of quiz completion
-    const channel = supabase.channel("scheduled_quiz");
-    channel.send({
-      type: "broadcast",
-      event: "scheduled-quiz-completed",
-      payload: { classCode },
-    });
-    channel.unsubscribe();
-  } catch (error) {
-    console.error("Error ending scheduled quiz:", error);
+  if (error) {
     throw error;
   }
+
+  return data;
+}
+
+export async function checkQuizStatus(
+  classCode: string,
+  user: User,
+  name?: string,
+): Promise<QuizStatusResponse> {
+  // Get quiz data
+  const quizData = await getQuizById(classCode);
+  if (!quizData) {
+    throw new Error("Quiz not found");
+  }
+
+  // Check if student exists in quiz_students
+  let quizStudent = await getQuizStudent(classCode, user.id);
+
+  // If student doesn't exist, insert them
+  if (!quizStudent) {
+    quizStudent = await insertQuizStudent(user, classCode, name);
+  }
+
+  return {
+    hasTaken: quizStudent?.quiz_taken || false,
+    canRetake: quizData.retake || false,
+  };
 }
