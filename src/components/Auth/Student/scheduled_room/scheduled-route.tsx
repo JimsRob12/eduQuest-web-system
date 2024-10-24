@@ -16,7 +16,6 @@ interface QuizData {
   openTime: string;
   closeTime: string;
   classCode: string;
-  retake?: boolean;
 }
 
 interface QuizStatus {
@@ -118,9 +117,7 @@ const ScheduledQuizRoute: React.FC = () => {
   const { setGameStarted } = useGame();
   const { user } = useAuth();
 
-  const { quiz_id, title, openTime, closeTime, retake } = location.state || {};
-
-  console.log(quiz_id, title, openTime, closeTime, retake);
+  const { quiz_id, title, openTime, closeTime } = location.state || {};
 
   useEffect(() => {
     const checkNameRequirement = async () => {
@@ -178,7 +175,6 @@ const ScheduledQuizRoute: React.FC = () => {
     openTime,
     closeTime,
     classCode: classId,
-    retake,
   };
 
   const handleFormSuccess = async (name: string) => {

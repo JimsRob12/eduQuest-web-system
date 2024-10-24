@@ -24,6 +24,7 @@ import {
   updateQuizTaken,
 } from "@/services/api/apiScheduledQuiz";
 import { getQuizById } from "@/services/api/apiQuiz";
+import { shuffleArray } from "@/lib/helpers";
 
 // Types
 type EffectType = "correct" | "wrong" | "noAnswer" | null;
@@ -57,6 +58,10 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
   const [userAccuracy, setUserAccuracy] = useState(0);
   const [userRank, setUserRank] = useState(0);
   const [isNoTimeQuiz, setIsNoTimeQuiz] = useState(false);
+  const [shuffleSettings, setShuffleSettings] = useState({
+    shuffleQuestions: false,
+    shuffleOptions: false,
+  });
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>(
     [],
   );
@@ -97,10 +102,19 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
         // First get the quiz settings
         const quiz = await getQuizById(quizId);
         setIsNoTimeQuiz(quiz?.no_time || false);
+        setShuffleSettings({
+          shuffleQuestions: quiz?.shuffle || false,
+          shuffleOptions: quiz?.shuffle || false,
+        });
 
         // Then get the questions
         const fetchedQuestions = await getQuestionsForScheduledQuiz(classCode);
-        setQuestions(fetchedQuestions);
+
+        const processedQuestions = quiz?.shuffle
+          ? shuffleArray(fetchedQuestions)
+          : fetchedQuestions;
+
+        setQuestions(processedQuestions);
 
         // Only set timeLeft if it's not a no_time quiz
         if (fetchedQuestions.length > 0 && !quiz?.no_time) {
@@ -350,6 +364,7 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
           answerInput={answerInput}
           setAnswerInput={setAnswerInput}
           inputRefs={inputRefs}
+          shuffleOptions={shuffleSettings.shuffleOptions}
         />
 
         <AnswerStatus

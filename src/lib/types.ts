@@ -35,6 +35,7 @@ export interface Quiz {
   close_time?: string;
   no_time?: boolean;
   retake?: boolean;
+  shuffle?: boolean;
 }
 
 export interface QuizQuestions {
