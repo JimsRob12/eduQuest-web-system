@@ -23,16 +23,19 @@ import {
   getQuestionsForScheduledQuiz,
   updateQuizTaken,
 } from "@/services/api/apiScheduledQuiz";
+import { getQuizById } from "@/services/api/apiQuiz";
 
 // Types
 type EffectType = "correct" | "wrong" | "noAnswer" | null;
 
 interface ScheduledQuizLobbyProps {
+  quizId: string;
   classCode: string;
   onComplete: () => void;
 }
 
 const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
+  quizId,
   classCode,
   onComplete,
 }) => {
@@ -53,6 +56,7 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
   const [effect, setEffect] = useState<EffectType>(null);
   const [userAccuracy, setUserAccuracy] = useState(0);
   const [userRank, setUserRank] = useState(0);
+  const [isNoTimeQuiz, setIsNoTimeQuiz] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>(
     [],
   );
@@ -85,26 +89,37 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Fetch all questions at once
+  // Fetch quiz settings and questions
   useEffect(() => {
-    const fetchQuestions = async () => {
+    const fetchQuizAndQuestions = async () => {
       setIsLoading(true);
-      const fetchedQuestions = await getQuestionsForScheduledQuiz(classCode);
-      setQuestions(fetchedQuestions);
-      if (fetchedQuestions.length > 0) {
-        setTimeLeft(fetchedQuestions[0].time);
+      try {
+        // First get the quiz settings
+        const quiz = await getQuizById(quizId);
+        setIsNoTimeQuiz(quiz?.no_time || false);
+
+        // Then get the questions
+        const fetchedQuestions = await getQuestionsForScheduledQuiz(classCode);
+        setQuestions(fetchedQuestions);
+
+        // Only set timeLeft if it's not a no_time quiz
+        if (fetchedQuestions.length > 0 && !quiz?.no_time) {
+          setTimeLeft(fetchedQuestions[0].time);
+        }
+      } catch (error) {
+        console.error("Error fetching quiz data:", error);
       }
       setIsLoading(false);
     };
 
-    fetchQuestions();
+    fetchQuizAndQuestions();
   }, [classCode]);
 
-  // Timer effect
+  // Timer effect - only run if not a no_time quiz
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (timeLeft > 0 && !hasAnswered) {
+    if (timeLeft > 0 && !hasAnswered && !isNoTimeQuiz) {
       interval = setInterval(() => {
         setTimeLeft((prevTime) => {
           const newTime = Math.max(prevTime - 1, 0);
@@ -121,16 +136,16 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
         clearInterval(interval);
       }
     };
-  }, [timeLeft, hasAnswered]);
+  }, [timeLeft, hasAnswered, isNoTimeQuiz]);
 
   const handleNoAnswer = async () => {
-    if (!hasAnswered && currentQuestion && user) {
+    // Only handle no answer for timed quizzes
+    if (!isNoTimeQuiz && !hasAnswered && currentQuestion && user) {
       setHasAnswered(true);
       setWrongAns((prev) => prev + 1);
       setEffect("noAnswer");
       wrongSound.current.play();
 
-      // Record the no-answer in answered questions
       setAnsweredQuestions([
         ...answeredQuestions,
         {
@@ -140,14 +155,11 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
         },
       ]);
 
-      // Calculate user accuracy
       const newAccuracy = (rightAns / (currentQuestionIndex + 1)) * 100;
       setUserAccuracy(newAccuracy);
 
-      // Submit a blank answer to track the attempt
       await submitAnswer(currentQuestion.quiz_question_id, user.id, "");
 
-      // Move to next question after delay
       setTimeout(handleNextQuestion, 2000);
     }
   };
@@ -155,13 +167,15 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
   const handleNextQuestion = async () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
-      setTimeLeft(questions[currentQuestionIndex + 1].time);
+      // Only set timeLeft if it's not a no_time quiz
+      if (!isNoTimeQuiz) {
+        setTimeLeft(questions[currentQuestionIndex + 1].time);
+      }
       setHasAnswered(false);
       setSelectedAnswer(null);
       setAnswerInput([]);
       setEffect(null);
     } else {
-      // Pass current score values to finishQuiz
       const finalScore = score;
       const finalRightAns = rightAns;
       const finalWrongAns = wrongAns;
@@ -175,10 +189,8 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
     finalWrongAns: number,
   ) => {
     if (classCode && user) {
-      // Update the quiz_taken status
       await updateQuizTaken({ classCode, userId: user.id });
 
-      // Use the passed values instead of reading from state
       const finalLeaderboard = await updateLeaderBoard(
         classCode,
         user.id,
@@ -190,23 +202,19 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
         finalWrongAns,
       );
 
-      // Update all relevant states with final values
       setScore(finalScore);
       setRightAns(finalRightAns);
       setWrongAns(finalWrongAns);
       setLeaderboardData(finalLeaderboard || []);
 
-      // Find user rank
       const userIndex =
         finalLeaderboard?.findIndex(
           (entry) => entry.quiz_student_id === user.id,
         ) ?? -1;
       setUserRank(userIndex + 1);
 
-      // Show leaderboard first
       setShowLeaderboard(true);
 
-      // After 8 seconds, show the summary
       setTimeout(() => {
         setShowLeaderboard(false);
         setShowSummary(true);
@@ -226,12 +234,10 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
       answer,
     );
 
-    // Calculate new values
     const newScore = score + (isCorrect ? currentQuestion.points || 0 : 0);
     const newRightAns = rightAns + (isCorrect ? 1 : 0);
     const newWrongAns = wrongAns + (isCorrect ? 0 : 1);
 
-    // Update states with new values
     setScore(newScore);
     setRightAns(newRightAns);
     setWrongAns(newWrongAns);
@@ -253,14 +259,11 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
       },
     ]);
 
-    // Calculate user accuracy using new values
     const newAccuracy = (newRightAns / (currentQuestionIndex + 1)) * 100;
     setUserAccuracy(newAccuracy);
 
-    // Move to next question after delay
     setTimeout(() => {
       if (currentQuestionIndex === questions.length - 1) {
-        // If this is the last question, pass the final scores directly
         finishQuiz(newScore, newRightAns, newWrongAns);
       } else {
         handleNextQuestion();
@@ -324,12 +327,14 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
           points={currentQuestion.points!}
         />
 
-        <div className="mb-4 w-full">
-          <ProgressBar
-            progress={(timeLeft / currentQuestion.time) * 100}
-            height={24}
-          />
-        </div>
+        {!isNoTimeQuiz && (
+          <div className="mb-4 w-full">
+            <ProgressBar
+              progress={(timeLeft / currentQuestion.time) * 100}
+              height={24}
+            />
+          </div>
+        )}
 
         <QuestionContent
           question={currentQuestion.question}
@@ -350,7 +355,7 @@ const ScheduledQuizLobby: React.FC<ScheduledQuizLobbyProps> = ({
         <AnswerStatus
           hasAnswered={hasAnswered}
           effect={effect}
-          timeLeft={timeLeft}
+          timeLeft={isNoTimeQuiz ? null : timeLeft}
         />
       </div>
     </>

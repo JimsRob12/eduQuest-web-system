@@ -118,7 +118,9 @@ const ScheduledQuizRoute: React.FC = () => {
   const { setGameStarted } = useGame();
   const { user } = useAuth();
 
-  const { title, openTime, closeTime, retake } = location.state || {};
+  const { quiz_id, title, openTime, closeTime, retake } = location.state || {};
+
+  console.log(quiz_id, title, openTime, closeTime, retake);
 
   useEffect(() => {
     const checkNameRequirement = async () => {
@@ -228,7 +230,11 @@ const ScheduledQuizRoute: React.FC = () => {
 
   if (showQuiz) {
     return (
-      <ScheduledQuizLobby classCode={classId} onComplete={handleComplete} />
+      <ScheduledQuizLobby
+        quizId={quiz_id}
+        classCode={classId}
+        onComplete={handleComplete}
+      />
     );
   }
 

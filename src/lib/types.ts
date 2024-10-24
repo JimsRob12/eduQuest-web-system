@@ -33,6 +33,8 @@ export interface Quiz {
   quiz_questions?: QuizQuestions[];
   open_time?: string;
   close_time?: string;
+  no_time?: boolean;
+  retake?: boolean;
 }
 
 export interface QuizQuestions {

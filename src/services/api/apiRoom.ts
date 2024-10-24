@@ -151,6 +151,7 @@ export async function getParticipants(
 }
 
 interface JoinRoomResponse {
+  quiz_id?: string;
   success: boolean;
   status?: string;
   error?: string;
@@ -168,7 +169,7 @@ export async function joinRoom(
   try {
     const { data, error } = await supabase
       .from("quiz")
-      .select("status, open_time, close_time, title")
+      .select("quiz_id, status, open_time, close_time, title, retake")
       .eq("class_code", classCode)
       .single();
 
@@ -184,6 +185,7 @@ export async function joinRoom(
 
     if (quizData && quizData.status === "scheduled") {
       return {
+        quiz_id: quizData.quiz_id,
         success: false,
         status: "scheduled",
         open_time: quizData.open_time,

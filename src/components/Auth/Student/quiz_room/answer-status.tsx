@@ -3,9 +3,9 @@ type EffectType = "correct" | "wrong" | "noAnswer" | null;
 const AnswerStatus: React.FC<{
   hasAnswered: boolean;
   effect: EffectType;
-  timeLeft: number;
+  timeLeft: number | null;
 }> = ({ hasAnswered, effect, timeLeft }) => {
-  if (!hasAnswered) {
+  if (!hasAnswered && timeLeft !== null) {
     return (
       <div className="text-lg font-bold">Time Left: {timeLeft} seconds</div>
     );
@@ -23,17 +23,18 @@ const AnswerStatus: React.FC<{
     noAnswer: "Time's up!",
   };
 
-  return (
-    <div
-      className={`mt-4 text-lg font-bold ${effect ? effectColors[effect] : ""}`}
-    >
-      {effect && effectMessages[effect]}
-      <br />
-      <span className="text-zinc-900 dark:text-white">
-        Answer submitted! Waiting for other player's answer...
-      </span>
-    </div>
-  );
+  if (hasAnswered)
+    return (
+      <div
+        className={`mt-4 text-lg font-bold ${effect ? effectColors[effect] : ""}`}
+      >
+        {effect && effectMessages[effect]}
+        <br />
+        <span className="text-zinc-900 dark:text-white">
+          Answer submitted! Waiting for other player's answer...
+        </span>
+      </div>
+    );
 };
 
 export default AnswerStatus;

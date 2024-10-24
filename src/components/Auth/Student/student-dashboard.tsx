@@ -32,11 +32,13 @@ const AnimalIconInput: React.FC = () => {
       }
 
       const response = await joinRoom(classCode, studentId, user);
+      console.log(response);
 
       if (response.status === "scheduled") {
         // Navigate to the scheduled quiz route instead of showing it inline
         navigate(`/student/join/${classCode}/scheduled`, {
           state: {
+            quiz_id: response.quiz_id,
             title: response.title,
             openTime: response.open_time,
             closeTime: response.close_time,
