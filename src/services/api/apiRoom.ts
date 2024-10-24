@@ -71,14 +71,19 @@ export async function reconnectGame(classCode: string): Promise<boolean> {
 
 export async function endGame(classCode: string): Promise<boolean> {
   try {
+    // Update the quiz status to "active"
     await supabase
       .from("quiz")
       .update({ status: "active" })
       .eq("class_code", classCode)
       .select();
+
+    // Remove all participants from the temp_room table
+    await supabase.from("temp_room").delete().eq("class_code", classCode);
+
     return true;
   } catch (error) {
-    console.error("Error updating quiz status:", error);
+    console.error("Error ending game:", error);
     return false;
   }
 }
