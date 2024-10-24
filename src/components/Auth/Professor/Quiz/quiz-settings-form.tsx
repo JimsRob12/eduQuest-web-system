@@ -65,6 +65,9 @@ const formSchema = z
     is_scheduled: z.boolean().default(false),
     open_time: z.string().optional(),
     close_time: z.string().optional(),
+    shuffle_questions: z.boolean().default(false),
+    allow_retake: z.boolean().default(false),
+    no_time_limit: z.boolean().default(false),
   })
   .refine(
     (data) => {
@@ -139,6 +142,9 @@ export default function QuizSettingsForm({
       is_scheduled: false,
       open_time: "",
       close_time: "",
+      shuffle_questions: false,
+      allow_retake: false,
+      no_time_limit: false,
     },
   });
 
@@ -181,17 +187,29 @@ export default function QuizSettingsForm({
   }, [formErrors, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const { is_scheduled, open_time, close_time, ...restValues } = values;
+    const {
+      is_scheduled,
+      open_time,
+      close_time,
+      allow_retake,
+      shuffle_questions,
+      no_time_limit,
+      ...restValues
+    } = values;
     const submittedValues = {
       quizId: quiz.quiz_id,
       ...restValues,
       open_time: open_time || null,
       close_time: close_time || null,
+      retake: allow_retake,
+      shuffle: shuffle_questions,
+      no_time: no_time_limit,
     };
 
     // Clear form errors when submitting
+    console.log(submittedValues);
     setFormErrors([]);
-    mutateUpdateQuiz(submittedValues);
+    // mutateUpdateQuiz(submittedValues);
   }
 
   return (
@@ -376,7 +394,7 @@ export default function QuizSettingsForm({
               </>
             )}
           </div>
-          <div className="space-y-4 md:justify-self-end">
+          <div className="w-full space-y-4 md:w-52 md:justify-self-end">
             <Controller
               name="cover_image"
               control={form.control}
@@ -433,6 +451,77 @@ export default function QuizSettingsForm({
                 </FormItem>
               )}
             />
+            {isScheduled && (
+              <div className="space-y-4 rounded-md border border-zinc-200 p-4 dark:border-zinc-800">
+                <FormField
+                  control={form.control}
+                  name="shuffle_questions"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Shuffle Questions</FormLabel>
+                        <FormDescription>
+                          Randomize the order of questions for each attempt to
+                          reduce cheating.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="allow_retake"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Allow Retakes</FormLabel>
+                        <FormDescription>
+                          Let students retake the quiz multiple times within the
+                          scheduled window.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="no_time_limit"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isPending}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>No Time Limit</FormLabel>
+                        <FormDescription>
+                          Remove the time limit for quiz completion. Students
+                          can take as long as needed within the scheduled
+                          window.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
           </div>
           <Button
             type="submit"
