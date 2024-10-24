@@ -22,6 +22,7 @@ import {
   XCircle,
   AlertCircle,
   UsersRound,
+  Pen,
 } from "lucide-react";
 import { formatTimeAgo } from "@/lib/helpers";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -245,28 +246,51 @@ const QuizCard: React.FC<QuizCardProps> = ({
         </Popover>
         <div className="flex flex-col items-end gap-1">
           {quiz.status === "active" && (
-            <Button
-              className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
-              onClick={handleStartGame}
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Play size={14} />
-                  Start Game
-                </>
-              )}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+                onClick={() => onEdit(quiz.quiz_id)}
+              >
+                <Pen size={14} />
+                Edit Quiz
+              </Button>
+              <Button
+                className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+                onClick={handleStartGame}
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Play size={14} />
+                    Start Game
+                  </>
+                )}
+              </Button>
+            </>
           )}
           {quiz.status === "scheduled" && (
-            <Button
-              className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
-              onClick={handleResponses}
-            >
-              <UsersRound size={14} />
-              Check Responses
-            </Button>
+            <>
+              {timeStatus === "upcoming" ? (
+                <Button
+                  variant="outline"
+                  className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+                  onClick={() => onEdit(quiz.quiz_id)}
+                >
+                  <Pen size={14} />
+                  Edit Quiz
+                </Button>
+              ) : (
+                <Button
+                  className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+                  onClick={handleResponses}
+                >
+                  <UsersRound size={14} />
+                  Check Responses
+                </Button>
+              )}
+            </>
           )}
           {quiz.status === "in lobby" && (
             <Button
