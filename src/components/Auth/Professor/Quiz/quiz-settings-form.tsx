@@ -276,7 +276,7 @@ export default function QuizSettingsForm({
                           variant="outline"
                           role="combobox"
                           className={cn(
-                            "w-full justify-between border border-zinc-200 dark:border-zinc-800",
+                            "w-full justify-between border border-zinc-200 dark:border-zinc-600",
                             !field.value && "text-muted-foreground",
                           )}
                           disabled={isPending}
@@ -331,7 +331,7 @@ export default function QuizSettingsForm({
               control={form.control}
               name="is_scheduled"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-zinc-200 p-4 dark:border-zinc-800">
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-zinc-200 p-4 dark:border-zinc-600">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -452,7 +452,7 @@ export default function QuizSettingsForm({
               )}
             />
             {isScheduled && (
-              <div className="space-y-4 rounded-md border border-zinc-200 p-4 dark:border-zinc-800">
+              <div className="space-y-4 rounded-md border border-zinc-200 p-4 dark:border-zinc-600">
                 <FormField
                   control={form.control}
                   name="shuffle_questions"
