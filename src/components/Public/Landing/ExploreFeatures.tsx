@@ -6,7 +6,12 @@ const data = [
     description:
       "Upload a PDF, and our AI instantly generates quizzes. Save time and effort.",
     content: (
-      <video autoPlay muted className="rounded-3xl border-8 border-blue-800">
+      <video
+        autoPlay
+        muted
+        loop
+        className="rounded-3xl border-8 border-blue-800"
+      >
         <source src="/videos/snippet-1.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
@@ -17,7 +22,12 @@ const data = [
     description:
       "Choose from multiple formats: True/False, Multiple Choice, Matching, and more. Flexibility for any class.",
     content: (
-      <video autoPlay muted className="rounded-3xl border-8 border-cyan-800">
+      <video
+        autoPlay
+        muted
+        loop
+        className="rounded-3xl border-8 border-cyan-800"
+      >
         <source src="/videos/snippet-2.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
@@ -28,7 +38,12 @@ const data = [
     description:
       "Turn learning into a game. Keep students engaged and motivated with interactive quizzes.",
     content: (
-      <video autoPlay muted className="rounded-3xl border-8 border-yellow-800">
+      <video
+        autoPlay
+        muted
+        loop
+        className="rounded-3xl border-8 border-yellow-800"
+      >
         <source src="/videos/snippet-3.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
@@ -39,7 +54,12 @@ const data = [
     description:
       "Real-time ranking boosts competition. Students compete for top spots, driving continuous improvement.",
     content: (
-      <video autoPlay muted className="rounded-3xl border-8 border-purple-800">
+      <video
+        autoPlay
+        muted
+        loop
+        className="rounded-3xl border-8 border-purple-800"
+      >
         <source src="/videos/snippet-4.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>

@@ -8,8 +8,9 @@ import React, {
 } from "react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { useOutsideClick } from "@/hooks/useOutsideClick";
+import { createPortal } from "react-dom";
 
 interface CarouselProps {
   items: JSX.Element[];
@@ -87,7 +88,7 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
     >
       <div className="relative w-full">
         <div
-          className="flex w-full overflow-x-scroll overscroll-x-auto scroll-smooth py-5 [scrollbar-width:none] md:py-10"
+          className="flex w-full overflow-x-scroll overscroll-x-auto scroll-smooth py-10 [scrollbar-width:none] md:py-20"
           ref={carouselRef}
           onScroll={checkScrollability}
         >
@@ -127,7 +128,7 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
             ))}
           </div>
         </div>
-        <div className="flex justify-end gap-2">
+        <div className="mr-10 flex justify-end gap-2">
           <button
             className="relative z-40 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 disabled:opacity-50"
             onClick={scrollLeft}
@@ -189,48 +190,50 @@ export const Card = ({
     onCardClose(index);
   };
 
+  const modal = open ? (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 h-screen overflow-auto">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 h-full w-full bg-black/80 backdrop-blur-lg"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          ref={containerRef}
+          layoutId={layout ? `card-${card.title}` : undefined}
+          className="relative z-[60] mx-auto my-10 h-fit max-w-5xl rounded-3xl bg-white p-4 font-sans dark:bg-neutral-900 md:p-10"
+        >
+          <button
+            className="sticky right-0 top-4 ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-black dark:bg-white"
+            onClick={handleClose}
+          >
+            <X className="h-6 w-6 text-neutral-100 dark:text-neutral-900" />
+          </button>
+          <motion.p
+            layoutId={layout ? `category-${card.title}` : undefined}
+            className="text-base font-medium text-black dark:text-white"
+          >
+            {card.category}
+          </motion.p>
+          <motion.p
+            layoutId={layout ? `title-${card.title}` : undefined}
+            className="mt-4 text-2xl font-semibold text-neutral-700 dark:text-white md:text-5xl"
+          >
+            {card.title}
+          </motion.p>
+          <div className="py-10">{card.content}</div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  ) : null;
+
   return (
     <>
-      <AnimatePresence>
-        {open && (
-          <div className="fixed inset-0 z-50 h-screen overflow-auto">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 h-full w-full bg-black/80 backdrop-blur-lg"
-            />
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              ref={containerRef}
-              layoutId={layout ? `card-${card.title}` : undefined}
-              className="relative z-[60] mx-auto my-10 h-fit max-w-5xl rounded-3xl bg-white p-4 font-sans dark:bg-neutral-900 md:p-10"
-            >
-              <button
-                className="sticky right-0 top-4 ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-black dark:bg-white"
-                onClick={handleClose}
-              >
-                <X className="h-6 w-6 text-neutral-100 dark:text-neutral-900" />
-              </button>
-              <motion.p
-                layoutId={layout ? `category-${card.title}` : undefined}
-                className="text-base font-medium text-black dark:text-white"
-              >
-                {card.category}
-              </motion.p>
-              <motion.p
-                layoutId={layout ? `title-${card.title}` : undefined}
-                className="mt-4 text-2xl font-semibold text-neutral-700 dark:text-white md:text-5xl"
-              >
-                {card.title}
-              </motion.p>
-              <div className="py-10">{card.content}</div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {createPortal(modal, document.body)}
       <motion.button
         layoutId={layout ? `card-${card.title}` : undefined}
         onClick={handleOpen}
@@ -262,15 +265,6 @@ export const Card = ({
   );
 };
 
-interface BlurImageProps {
-  height?: number;
-  width?: number;
-  src: string;
-  className?: string;
-  alt?: string;
-  [key: string]: any;
-}
-
 export const BlurImage = ({
   height,
   width,
@@ -278,21 +272,22 @@ export const BlurImage = ({
   className,
   alt,
   ...rest
-}: BlurImageProps) => {
+}: any) => {
   const [isLoading, setLoading] = useState(true);
   return (
     <img
       className={cn(
-        `h-full transition duration-300`,
+        "h-full object-cover transition duration-300",
         isLoading ? "blur-sm" : "blur-0",
         className,
       )}
       onLoad={() => setLoading(false)}
       src={src}
       width={width}
-      //   height={height}
+      height={height}
       loading="lazy"
       decoding="async"
+      blurDataURL={typeof src === "string" ? src : undefined}
       alt={alt ? alt : "Background of a beautiful view"}
       {...rest}
     />
