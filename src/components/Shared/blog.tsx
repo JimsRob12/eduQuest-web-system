@@ -22,7 +22,7 @@ type SubjectSectionProps = {
 };
 
 const Section: React.FC<SectionProps> = ({ children, className = "" }) => (
-  <Card className="my-4 dark:bg-neutral-800">
+  <Card className="my-4 border-none dark:bg-neutral-800">
     <CardContent className={cn("space-y-4 p-8", className)}>
       {children}
     </CardContent>

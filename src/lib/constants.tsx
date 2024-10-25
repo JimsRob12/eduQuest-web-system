@@ -1,4 +1,5 @@
 import Blog1 from "@/components/Public/Landing/Blogs/blog-1";
+import Blog2 from "@/components/Public/Landing/Blogs/blog-2";
 import { DummyContent } from "@/components/Public/Landing/BlogsCarousel";
 
 type GameColors = {
@@ -20,10 +21,10 @@ export const BLOGS = [
     content: <Blog1 />,
   },
   {
-    category: "Productivity",
-    title: "Enhance your productivity.",
-    src: "https://images.unsplash.com/photo-1531554694128-c4c6665f59c2?q=80&w=3387&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
+    category: "Education",
+    title: "From Classroom to Game Room: Making Quizzes Fun with 8-Bit Style",
+    src: "/images/blog-2.2.png",
+    content: <Blog2 />,
   },
   {
     category: "Product",
