@@ -1,7 +1,6 @@
 import Blog1 from "@/components/Public/Landing/Blogs/blog-1";
 import Blog2 from "@/components/Public/Landing/Blogs/blog-2";
 import Blog3 from "@/components/Public/Landing/Blogs/blog-3";
-import { DummyContent } from "@/components/Public/Landing/BlogsCarousel";
 
 type GameColors = {
   light: string[];
@@ -18,7 +17,7 @@ export const BLOGS = [
     category: "Artificial Intelligence",
     title:
       "Revolutionizing Education with AI: How NLP Powers Seamless Question Generation",
-    src: "/images/blog-1.1.jpg",
+    src: "/images/blog-1.3.png",
     content: <Blog1 />,
   },
   {
@@ -33,24 +32,5 @@ export const BLOGS = [
       "Customizing Quizzes: How Professors Can Tailor Assessments to Fit Any Curriculum",
     src: "/images/blog-3.7.png",
     content: <Blog3 />,
-  },
-
-  {
-    category: "Product",
-    title: "Maps for your iPhone 15 Pro Max.",
-    src: "https://images.unsplash.com/photo-1599202860130-f600f4948364?q=80&w=2515&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
-  },
-  {
-    category: "iOS",
-    title: "Photography just got better.",
-    src: "https://images.unsplash.com/photo-1602081957921-9137a5d6eaee?q=80&w=2793&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
-  },
-  {
-    category: "Hiring",
-    title: "Hiring for a Staff Software Engineer",
-    src: "https://images.unsplash.com/photo-1511984804822-e16ba72f5848?q=80&w=2048&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
   },
 ];
