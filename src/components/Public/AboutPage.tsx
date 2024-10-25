@@ -95,14 +95,14 @@ const AboutPage: React.FC = () => {
         </motion.div>
         <motion.div variants={itemVariants}>
           <Image
-            src="https://placehold.co/600x400"
+            src="/images/about-1.png"
             alt="Learning transformation"
             className="rounded-br-[5rem]"
           />
         </motion.div>
         <motion.div variants={itemVariants}>
           <Image
-            src="https://placehold.co/600x400"
+            src="/images/about-2.png"
             alt="Learning transformation"
             className="h-full rounded-br-[5rem] object-cover"
           />
@@ -147,7 +147,7 @@ const AboutPage: React.FC = () => {
       >
         <motion.div variants={itemVariants}>
           <Image
-            src="https://placehold.co/600x400"
+            src="/images/about-3.png"
             alt="Creating quizzes"
             className="rounded-br-[5rem]"
           />
