@@ -1,5 +1,6 @@
 import Blog1 from "@/components/Public/Landing/Blogs/blog-1";
 import Blog2 from "@/components/Public/Landing/Blogs/blog-2";
+import Blog3 from "@/components/Public/Landing/Blogs/blog-3";
 import { DummyContent } from "@/components/Public/Landing/BlogsCarousel";
 
 type GameColors = {
@@ -21,16 +22,17 @@ export const BLOGS = [
     content: <Blog1 />,
   },
   {
-    category: "Education",
+    category: "EdTech",
     title: "From Classroom to Game Room: Making Quizzes Fun with 8-Bit Style",
-    src: "/images/blog-2.2.png",
+    src: "/images/blog-2.3.png",
     content: <Blog2 />,
   },
   {
-    category: "Product",
-    title: "Launching the new Apple Vision Pro.",
-    src: "https://images.unsplash.com/photo-1713869791518-a770879e60dc?q=80&w=2333&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
+    category: "Teaching Strategies",
+    title:
+      "Customizing Quizzes: How Professors Can Tailor Assessments to Fit Any Curriculum",
+    src: "/images/blog-3.7.png",
+    content: <Blog3 />,
   },
 
   {

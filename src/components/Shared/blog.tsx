@@ -9,6 +9,7 @@ type SectionProps = {
 
 type ListItem = {
   title?: string;
+  image?: string;
   content: React.ReactNode;
 };
 
@@ -32,9 +33,12 @@ const Section: React.FC<SectionProps> = ({ children, className = "" }) => (
 const BulletList: React.FC<ListProps> = ({ items }) => (
   <ul className="space-y-4">
     {items.map((item, index) => (
-      <li key={index} className="ml-8 list-disc">
-        {item.title && <span className="font-bold">{item.title}: </span>}
-        {item.content}
+      <li key={index} className="ml-8 list-disc space-y-4">
+        <p>
+          {item.title && <span className="font-bold">{item.title}: </span>}
+          {item.content}
+        </p>
+        {item.image && <img src={item.image} />}
       </li>
     ))}
   </ul>
@@ -43,9 +47,12 @@ const BulletList: React.FC<ListProps> = ({ items }) => (
 const NumberedList: React.FC<ListProps> = ({ items }) => (
   <ul className="space-y-4">
     {items.map((item, index) => (
-      <li key={index} className="ml-8 list-decimal">
-        {item.title && <span className="font-bold">{item.title}: </span>}
-        {item.content}
+      <li key={index} className="ml-8 list-decimal space-y-4">
+        <p>
+          {item.title && <span className="font-bold">{item.title}: </span>}
+          {item.content}
+        </p>
+        {item.image && <img src={item.image} className="w-full object-cover" />}
       </li>
     ))}
   </ul>

@@ -10,7 +10,7 @@ export default function Blog2() {
         of gaming with the rigor of academics, creating a space where students
         look forward to quizzes and professors enjoy more engaged classrooms.
       </p>
-      <Section className="grid grid-cols-2 gap-4">
+      <Section className="grid gap-4 md:grid-cols-2">
         <div className="space-y-4">
           <p>
             Gamification has proven to increase{" "}

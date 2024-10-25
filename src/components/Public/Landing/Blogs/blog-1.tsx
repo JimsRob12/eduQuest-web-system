@@ -43,7 +43,7 @@ export default function Blog1() {
         />
       </Section>
 
-      <Section className="grid grid-cols-2 gap-4">
+      <Section className="grid gap-4 md:grid-cols-2">
         <div>
           <h2 className="my-4 font-bold">
             How Does AI-Powered Question Generation Work?
