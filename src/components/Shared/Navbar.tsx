@@ -38,7 +38,6 @@ const AUTH_NAV_ITEMS2 = (role: "professor" | "student" | null) => [
     path: role === "professor" ? "/professor/profile" : "/student/profile",
     label: "Profile",
   },
-  { path: "/settings", label: "Settings" },
 ];
 
 const AUTH_ITEMS: {
@@ -186,18 +185,15 @@ export default function Navbar() {
                       </p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <NavLink
-                        to={
-                          user.role === "professor"
-                            ? "/professor/profile"
-                            : "/student/profile"
-                        }
-                      >
-                        Profile
-                      </NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
+                    <NavLink
+                      to={
+                        user.role === "professor"
+                          ? "/professor/profile"
+                          : "/student/profile"
+                      }
+                    >
+                      <DropdownMenuItem>Profile</DropdownMenuItem>
+                    </NavLink>
                     <DropdownMenuItem onClick={handleLogout}>
                       {isLoggingOut ? "Logging out.." : "Log out"}
                     </DropdownMenuItem>
