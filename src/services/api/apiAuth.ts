@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Session } from "@supabase/supabase-js";
 import supabase from "../supabase";
 import { checkEmailExists } from "../util/checkEmail";
@@ -72,44 +73,60 @@ export const signOut = async () => {
   return true;
 };
 
-export const updateUser = async ({
-  full_name,
+export async function updateUser({
+  password,
+  fullname,
   school,
-  avatar_url,
+  avatar,
 }: {
-  full_name: string;
-  school: string;
-  avatar_url: string;
-}) => {
-  const { data, error } = await supabase.auth.updateUser({
-    data: {
-      full_name: full_name,
-      school: school,
-      avatar_url: avatar_url,
-    },
-  });
-  // di nagsasave yung file
-  if (error) throw new Error(error.message);
+  password?: string;
+  fullname?: string;
+  school?: string;
+  avatar?: File;
+}) {
+  let updateData: any = {};
 
-  return data;
-};
+  if (password) updateData = { password };
+  if (fullname || school) {
+    updateData = {
+      data: {
+        ...(fullname && { name: fullname }),
+        ...(school && { school }),
+      },
+    };
+  }
+
+  const { data, error } = await supabase.auth.updateUser(updateData);
+  if (error) throw new Error(error.message);
+  if (!avatar) return data;
+
+  const filename = `avatar-${data?.user.id}-${Math.random()}`;
+  const { error: storageError } = await supabase.storage
+    .from("images")
+    .upload(filename, avatar);
+  if (storageError) throw new Error(storageError.message);
+
+  const { data: updatedUser, error: urlError } = await supabase.auth.updateUser(
+    {
+      data: {
+        picture: `${
+          import.meta.env.VITE_SUPABASE_URL
+        }/storage/v1/object/public/images/${filename}`,
+        avatar: `${
+          import.meta.env.VITE_SUPABASE_URL
+        }/storage/v1/object/public/images/${filename}`,
+      },
+    },
+  );
+  if (urlError) throw new Error(urlError.message);
+  return updatedUser;
+}
 
 export const updateRole = async ({ role }: { role: string }) => {
   const { data, error } = await supabase.auth.updateUser({
     data: {
       role: role,
     },
-  });
-
-  if (error) throw new Error(error.message);
-
-  return data;
-};
-
-export const updatePassword = async ({ password }: { password: string }) => {
-  const { data, error } = await supabase.auth.updateUser({
-    password: password,
-    nonce: "123456",
   });
 
   if (error) throw new Error(error.message);

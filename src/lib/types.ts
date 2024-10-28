@@ -4,6 +4,7 @@ export interface User {
   name: string;
   avatar: string;
   role: "professor" | "student" | null;
+  school?: string;
 }
 
 export interface Student {

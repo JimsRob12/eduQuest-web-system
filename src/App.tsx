@@ -35,6 +35,7 @@ import ProfessorGameLobby from "./components/Auth/Professor/quiz_room/room";
 import SGameLobby from "./components/Auth/Student/quiz_room/room";
 import ScheduledQuizRoute from "./components/Auth/Student/scheduled_room/scheduled-route";
 import Responses from "./components/Auth/Professor/scheduled_room/responses";
+import ProfileSettings from "./components/Auth/ProfileSettings";
 
 // Define route configurations
 const publicRoutes = [
@@ -77,6 +78,7 @@ const professorRoutes = [
     path: "/professor/dashboard/professor/class/:classId/responses",
     element: <Responses />,
   },
+  { path: "/professor/profile", element: <ProfileSettings /> },
 ];
 
 const studentRoutes = [
@@ -90,6 +92,7 @@ const studentRoutes = [
     path: "/student/join/:classId/scheduled",
     element: <ScheduledQuizRoute />,
   },
+  { path: "/student/profile", element: <ProfileSettings /> },
 ];
 
 const App: React.FC = () => {

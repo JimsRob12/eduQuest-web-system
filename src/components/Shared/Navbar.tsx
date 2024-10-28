@@ -33,8 +33,11 @@ const getAuthNavItems = (role: "professor" | "student" | null) => [
   { path: "/reports", label: "Reports" },
 ];
 
-const AUTH_NAV_ITEMS2 = [
-  { path: "/profile", label: "Profile" },
+const AUTH_NAV_ITEMS2 = (role: "professor" | "student" | null) => [
+  {
+    path: role === "professor" ? "/professor/profile" : "/student/profile",
+    label: "Profile",
+  },
   { path: "/settings", label: "Settings" },
 ];
 
@@ -183,7 +186,17 @@ export default function Navbar() {
                       </p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <NavLink
+                        to={
+                          user.role === "professor"
+                            ? "/professor/profile"
+                            : "/student/profile"
+                        }
+                      >
+                        Profile
+                      </NavLink>
+                    </DropdownMenuItem>
                     <DropdownMenuItem>Settings</DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
                       {isLoggingOut ? "Logging out.." : "Log out"}
@@ -231,7 +244,7 @@ export default function Navbar() {
           >
             {user ? (
               <>
-                {AUTH_NAV_ITEMS2.map(({ path, label }) => (
+                {AUTH_NAV_ITEMS2(user?.role).map(({ path, label }) => (
                   <NavLink key={path} to={path}>
                     {label}
                   </NavLink>
