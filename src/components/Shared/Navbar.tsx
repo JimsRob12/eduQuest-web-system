@@ -66,6 +66,11 @@ export default function Navbar() {
 
   const navItems = user ? getAuthNavItems(user.role) : PUBLIC_NAV_ITEMS;
 
+  // Close menu when route changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     const index = navItems.findIndex((item) => item.path === location.pathname);
     setActiveIndex(index);
@@ -117,7 +122,7 @@ export default function Navbar() {
   }) => (
     <NavLink
       to={to}
-      onClick={closeMenu}
+      onClick={closeMenu} // Close menu when clicked
       className={({ isActive }) =>
         `relative font-bold md:px-4 md:py-2 ${isActive ? "md:text-purple-600" : "md:text-gray-600"}`
       }
@@ -132,7 +137,6 @@ export default function Navbar() {
   return (
     <>
       <nav className="relative z-50 flex w-full items-center justify-between bg-zinc-50 py-4 dark:bg-zinc-900">
-        {" "}
         <ul className="flex items-center gap-8">
           <NavLink to="/" onClick={closeMenu}>
             <img src="/edu-quest-logo.png" alt="Logo" className="w-14" />
@@ -241,13 +245,16 @@ export default function Navbar() {
             {user ? (
               <>
                 {AUTH_NAV_ITEMS2(user?.role).map(({ path, label }) => (
-                  <NavLink key={path} to={path}>
+                  <NavLink key={path} to={path} onClick={closeMenu}>
                     {label}
                   </NavLink>
                 ))}
                 <button
                   className="flex w-fit items-center gap-1"
-                  onClick={() => logout()}
+                  onClick={() => {
+                    closeMenu();
+                    handleLogout();
+                  }}
                 >
                   {isLoggingOut ? (
                     <>
