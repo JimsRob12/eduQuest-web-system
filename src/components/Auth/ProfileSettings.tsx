@@ -148,6 +148,7 @@ export default function ProfileSettings() {
     }
 
     if (isPasswordDirty && values.newPassword) {
+      updateData.currentPassword = values.currentPassword;
       updateData.password = values.newPassword;
     }
 

@@ -74,11 +74,13 @@ export const signOut = async () => {
 };
 
 export async function updateUser({
+  currentPassword,
   password,
   fullname,
   school,
   avatar,
 }: {
+  currentPassword?: string;
   password?: string;
   fullname?: string;
   school?: string;
@@ -86,7 +88,26 @@ export async function updateUser({
 }) {
   let updateData: any = {};
 
-  if (password) updateData = { password };
+  // If attempting to change password, verify current password first
+  if (password) {
+    if (!currentPassword) {
+      throw new Error("Current password is required to change password");
+    }
+
+    // Verify current password using signInWithPassword
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: (await supabase.auth.getUser()).data.user?.email || "",
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      throw new Error("Current password is incorrect");
+    }
+
+    updateData = { password };
+  }
+
+  // Handle profile data updates
   if (fullname || school) {
     updateData = {
       data: {
@@ -96,16 +117,20 @@ export async function updateUser({
     };
   }
 
+  // Update user data
   const { data, error } = await supabase.auth.updateUser(updateData);
   if (error) throw new Error(error.message);
   if (!avatar) return data;
 
+  // Handle avatar upload
   const filename = `avatar-${data?.user.id}-${Math.random()}`;
   const { error: storageError } = await supabase.storage
     .from("images")
     .upload(filename, avatar);
+
   if (storageError) throw new Error(storageError.message);
 
+  // Update user with new avatar URL
   const { data: updatedUser, error: urlError } = await supabase.auth.updateUser(
     {
       data: {
@@ -118,6 +143,7 @@ export async function updateUser({
       },
     },
   );
+
   if (urlError) throw new Error(urlError.message);
   return updatedUser;
 }
