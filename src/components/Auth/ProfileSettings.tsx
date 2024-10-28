@@ -24,18 +24,14 @@ import { updateUser } from "@/services/api/apiAuth";
 
 const profileFormSchema = z
   .object({
-    fullname: z
-      .string()
-      .min(2, {
-        message: "Name must be at least 2 characters.",
-      })
-      .optional(),
-    school: z
-      .string()
-      .min(2, {
-        message: "School name must be at least 2 characters.",
-      })
-      .optional(),
+    fullname: z.string().optional(),
+    //   .min(2, {
+    //     message: "Name must be at least 2 characters.",
+    //   })
+    school: z.string().optional(),
+    //   .min(2, {
+    //     message: "School name must be at least 2 characters.",
+    //   })
     email: z.string().email().optional(),
     currentPassword: z.string().optional(),
     newPassword: z.string().optional(),
@@ -81,8 +77,6 @@ export default function ProfileSettings() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  console.log(user);
 
   const updateUserMutation = useMutation({
     mutationFn: updateUser,
@@ -174,15 +168,13 @@ export default function ProfileSettings() {
     show: boolean;
     onToggle: () => void;
   }) => (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      size="icon"
-      className="absolute right-2 top-1/2 -translate-y-1/2"
+      className="absolute right-4 top-1/2 -translate-y-1/2"
       onClick={onToggle}
     >
       {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-    </Button>
+    </button>
   );
 
   return (
