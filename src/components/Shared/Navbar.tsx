@@ -29,8 +29,6 @@ const getAuthNavItems = (role: "professor" | "student" | null) => [
     path: role === "professor" ? "/professor/dashboard" : "/student/dashboard",
     label: "Home",
   },
-  { path: "/activity", label: "Activity" },
-  { path: "/reports", label: "Reports" },
 ];
 
 const AUTH_NAV_ITEMS2 = (role: "professor" | "student" | null) => [
