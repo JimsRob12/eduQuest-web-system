@@ -44,7 +44,7 @@ export function useQuizData(quizId: string) {
       }));
       return { previousQuiz };
     },
-    onError: (err, newTitle, context) => {
+    onError: (context: { previousQuiz: Quiz | undefined }) => {
       queryClient.setQueryData(["quiz", quizId], context?.previousQuiz);
     },
     onSettled: () => {

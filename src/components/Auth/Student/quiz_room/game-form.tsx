@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
+import { User } from "@/lib/types";
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -51,10 +52,16 @@ export default function GameForm({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (classId && user) {
+      const userWithName: User = {
+        ...user,
+        name: user.name || values.username,
+        role: user.role as "professor" | "student" | null,
+      };
+
       const success = await joinRoom(
         classId,
         user.id ?? "",
-        user,
+        userWithName,
         values.username,
       );
 

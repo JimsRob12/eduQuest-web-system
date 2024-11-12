@@ -299,7 +299,7 @@ export async function kickStudent(
 
 // Game event handling functions
 export function gameEventHandler(
-  classCode: string,
+  _classCode: string,
   setGameStart: (value: boolean) => void,
 ): () => void {
   const channel = supabase
@@ -767,7 +767,7 @@ export async function updateLeaderBoard(
 // Answer submission function
 export async function submitAnswer(
   questionId: string,
-  studentId: string,
+  _studentId: string,
   answer: string,
 ): Promise<boolean> {
   const isCorrect = await checkAnswer(questionId, answer);

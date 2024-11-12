@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import Footer from "@/components/Shared/Footer";
+// import Footer from "@/components/Shared/Footer";
 import Navbar from "@/components/Shared/Navbar";
 import { useAuth } from "@/contexts/AuthProvider";
 import QuizNavbar from "@/components/Auth/Professor/Quiz/quiz-navbar";

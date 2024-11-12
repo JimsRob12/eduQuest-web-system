@@ -77,6 +77,24 @@ export interface TempQuizQuestionPayload {
   end_time: string;
 }
 
+interface UserMetadata {
+  name?: string;
+  role?: string | null;
+  school?: string;
+  avatar?: string;
+  picture?: string;
+}
+
+interface SessionUser {
+  id: string;
+  email: string | null;
+  user_metadata: UserMetadata;
+}
+
+export interface Session {
+  user: SessionUser;
+}
+
 export enum Subject {
   Math = "Math",
   English = "English",
