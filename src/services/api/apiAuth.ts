@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Session } from "@supabase/supabase-js";
 import supabase from "../supabase";
 import { checkEmailExists } from "../util/checkEmail";
@@ -72,44 +73,86 @@ export const signOut = async () => {
   return true;
 };
 
-export const updateUser = async ({
-  full_name,
+export async function updateUser({
+  currentPassword,
+  password,
+  fullname,
   school,
-  avatar_url,
+  avatar,
 }: {
-  full_name: string;
-  school: string;
-  avatar_url: string;
-}) => {
-  const { data, error } = await supabase.auth.updateUser({
-    data: {
-      full_name: full_name,
-      school: school,
-      avatar_url: avatar_url,
-    },
-  });
-  // di nagsasave yung file
-  if (error) throw new Error(error.message);
+  currentPassword?: string;
+  password?: string;
+  fullname?: string;
+  school?: string;
+  avatar?: File;
+}) {
+  let updateData: any = {};
 
-  return data;
-};
+  // If attempting to change password, verify current password first
+  if (password) {
+    if (!currentPassword) {
+      throw new Error("Current password is required to change password");
+    }
+
+    // Verify current password using signInWithPassword
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: (await supabase.auth.getUser()).data.user?.email || "",
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      throw new Error("Current password is incorrect");
+    }
+
+    updateData = { password };
+  }
+
+  // Handle profile data updates
+  if (fullname || school) {
+    updateData = {
+      data: {
+        ...(fullname && { name: fullname }),
+        ...(school && { school }),
+      },
+    };
+  }
+
+  // Update user data
+  const { data, error } = await supabase.auth.updateUser(updateData);
+  if (error) throw new Error(error.message);
+  if (!avatar) return data;
+
+  // Handle avatar upload
+  const filename = `avatar-${data?.user.id}-${Math.random()}`;
+  const { error: storageError } = await supabase.storage
+    .from("images")
+    .upload(filename, avatar);
+
+  if (storageError) throw new Error(storageError.message);
+
+  // Update user with new avatar URL
+  const { data: updatedUser, error: urlError } = await supabase.auth.updateUser(
+    {
+      data: {
+        picture: `${
+          import.meta.env.VITE_SUPABASE_URL
+        }/storage/v1/object/public/images/${filename}`,
+        avatar: `${
+          import.meta.env.VITE_SUPABASE_URL
+        }/storage/v1/object/public/images/${filename}`,
+      },
+    },
+  );
+
+  if (urlError) throw new Error(urlError.message);
+  return updatedUser;
+}
 
 export const updateRole = async ({ role }: { role: string }) => {
   const { data, error } = await supabase.auth.updateUser({
     data: {
       role: role,
     },
-  });
-
-  if (error) throw new Error(error.message);
-
-  return data;
-};
-
-export const updatePassword = async ({ password }: { password: string }) => {
-  const { data, error } = await supabase.auth.updateUser({
-    password: password,
-    nonce: "123456",
   });
 
   if (error) throw new Error(error.message);

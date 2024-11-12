@@ -108,11 +108,11 @@ const Signup: React.FC = () => {
       variants={containerVariants}
       className="mt-8 grid h-[calc(100%-8rem)] items-center gap-8 md:mt-14 md:grid-cols-[1fr_0.8fr] md:gap-16"
     >
-      <motion.div className="h-full w-full" variants={itemVariants}>
+      <motion.div className="mt-24 h-full w-full" variants={itemVariants}>
         <motion.img
-          src="https://placehold.co/600x400"
+          src="/images/sign-up.png"
           alt="Signup visual"
-          className="hidden h-full w-full rounded-xl object-cover md:block"
+          className="hidden w-full rounded-xl object-cover md:block"
           variants={itemVariants}
         />
       </motion.div>

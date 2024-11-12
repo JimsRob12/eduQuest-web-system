@@ -4,6 +4,7 @@ export interface User {
   name: string;
   avatar: string;
   role: "professor" | "student" | null;
+  school?: string;
 }
 
 export interface Student {
@@ -33,6 +34,9 @@ export interface Quiz {
   quiz_questions?: QuizQuestions[];
   open_time?: string;
   close_time?: string;
+  no_time?: boolean;
+  retake?: boolean;
+  shuffle?: boolean;
 }
 
 export interface QuizQuestions {
@@ -71,6 +75,24 @@ export interface TempQuizQuestionPayload {
   order: number;
   start_time: string;
   end_time: string;
+}
+
+interface UserMetadata {
+  name?: string;
+  role?: string | null;
+  school?: string;
+  avatar?: string;
+  picture?: string;
+}
+
+interface SessionUser {
+  id: string;
+  email: string | null;
+  user_metadata: UserMetadata;
+}
+
+export interface Session {
+  user: SessionUser;
 }
 
 export enum Subject {

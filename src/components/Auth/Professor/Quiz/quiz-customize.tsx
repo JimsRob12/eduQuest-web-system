@@ -255,7 +255,7 @@ export default function CustomizeQuiz() {
 
   return (
     <>
-      <div className="mx-auto mt-8 grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-[300px_1fr]">
+      <div className="mx-auto grid h-full max-w-7xl grid-cols-1 gap-4 pt-8 md:grid-cols-[300px_1fr]">
         <div className="h-fit rounded-lg bg-zinc-50 p-5 dark:bg-zinc-900">
           <h2 className="mb-4 text-lg font-bold">Bulk Update Questions</h2>
           <div className="space-y-4">

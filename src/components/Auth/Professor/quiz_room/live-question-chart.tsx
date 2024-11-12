@@ -20,8 +20,8 @@ import {
 import { LeaderboardEntry } from "@/lib/types";
 
 interface LiveQuestionChartProps {
-  currentQuestionIndex: number;
-  questions: { question: string }[];
+  currentQuestionIndex?: number;
+  questions?: { question: string }[];
   leaderboardData: LeaderboardEntry[];
 }
 
@@ -69,9 +69,15 @@ const LiveQuestionChart: React.FC<LiveQuestionChartProps> = ({
   return (
     <Card className="mb-4 h-fit w-full max-w-4xl dark:bg-zinc-800">
       <CardHeader>
-        <CardTitle>Question {currentQuestionIndex + 1} Results</CardTitle>
+        <CardTitle>
+          {questions && currentQuestionIndex
+            ? `Question ${currentQuestionIndex + 1} Results`
+            : "Question Responses"}
+        </CardTitle>
         <CardDescription>
-          {questions[currentQuestionIndex]?.question || "Loading..."}
+          {questions && currentQuestionIndex
+            ? `${questions[currentQuestionIndex]?.question || "Loading..."}`
+            : "Review the responses to the questions below to understand how participants answered."}
         </CardDescription>
       </CardHeader>
       <CardContent>

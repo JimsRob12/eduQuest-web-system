@@ -71,7 +71,7 @@ export default function QuizGenerate() {
   }
 
   const removeFile = () => {
-    form.setValue("pdf", undefined);
+    form.setValue("pdf", null as unknown as File);
     setQuizData((prevData) => ({ ...prevData, file: null }));
   };
 

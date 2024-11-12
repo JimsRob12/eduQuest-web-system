@@ -1,6 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useRef, useState } from "react";
 
+interface PixelShape {
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+}
+interface PixelElement {
+  x: number;
+  y: number;
+  color: string;
+  speed: number;
+  size: number;
+  shape?: PixelShape[];
+  type: "pixel" | "character" | "shootingStar";
+  directionX?: number;
+  directionY?: number;
+}
+
 // Helper function to create predefined 8-bit characters using pixel shapes
 const createCharacterShape = (type: string) => {
   switch (type) {
@@ -53,26 +71,14 @@ export const PixelatedBackground = ({
   isDarkMode: boolean;
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [elements, setElements] = useState<
-    {
-      x: number;
-      y: number;
-      color: string;
-      speed: number;
-      size: number;
-      shape?: { x: number; y: number; size: number; color: string }[];
-      type: string;
-      directionX?: number;
-      directionY?: number;
-    }[]
-  >([]);
+  const [elements, setElements] = useState<PixelElement[]>([]);
 
   const generateElements = useCallback(() => {
     const colors = isDarkMode
       ? ["#1a2639", "#1e3a5f", "#3d5a80", "#98c1d9"]
       : ["#e0f0e3", "#c6dea6", "#7ebdc3", "#b7d3f2"];
 
-    const newElements = [];
+    const newElements: PixelElement[] = [];
 
     // Add pixels for the background
     for (let i = 0; i < PIXEL_COUNT; i++) {
@@ -92,6 +98,7 @@ export const PixelatedBackground = ({
       newElements.push({
         x: Math.random() * 100,
         y: Math.random() * 100,
+        color: colors[Math.floor(Math.random() * colors.length)], // Add default color
         shape: createCharacterShape(characterType),
         type: "character",
         speed: Math.random() * 0.02 + 0.005,
@@ -104,6 +111,7 @@ export const PixelatedBackground = ({
       newElements.push({
         x: Math.random() * 100,
         y: Math.random() * 100,
+        color: "#ffffff", // Add default color
         shape: createShootingStar(),
         type: "shootingStar",
         speed: Math.random() * 0.05 + 0.02,

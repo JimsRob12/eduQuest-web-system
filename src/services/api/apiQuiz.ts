@@ -424,6 +424,12 @@ export async function updateQuizAndQuestions(
     const max_items = questions.length;
     const total_points = questions.reduce((sum, q) => sum + (q.points || 0), 0);
 
+    // Determine quiz status based on open_time and close_time
+    let status = "active";
+    if (quizData.open_time && quizData.close_time) {
+      status = "scheduled";
+    }
+
     // Prepare the quiz update object
     const quizUpdateData: Partial<Quiz> = {
       title: quizData.title,
@@ -432,7 +438,7 @@ export async function updateQuizAndQuestions(
       max_items,
       total_points,
       question_type: quizData.question_type,
-      status: "active",
+      status,
       cover_image: quizData.cover_image,
       open_time: quizData.open_time,
       close_time: quizData.close_time,
@@ -516,8 +522,8 @@ export async function updateQuizAndQuestions(
 
     // Execute all question operations
     const questionResults = await Promise.all(questionOps);
-
     const questionErrors = questionResults.filter((result) => result.error);
+
     if (questionErrors.length > 0) {
       throw new Error("Failed to update one or more questions");
     }
@@ -540,4 +546,23 @@ export async function updateQuizAndQuestions(
     console.error("Error updating quiz and questions:", error);
     throw error;
   }
+}
+
+export async function updateQuizStatus(
+  quizId: string,
+  status: "draft" | "active" | "scheduled" | "archived" | "in lobby"
+): Promise<Quiz | null> {
+  const { data, error } = await supabase
+    .from("quiz")
+    .update({ status })
+    .eq("quiz_id", quizId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating quiz status:", error);
+    throw new Error(`Failed to update quiz status: ${error.message}`);
+  }
+
+  return data;
 }

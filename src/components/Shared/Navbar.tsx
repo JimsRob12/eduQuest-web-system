@@ -29,13 +29,13 @@ const getAuthNavItems = (role: "professor" | "student" | null) => [
     path: role === "professor" ? "/professor/dashboard" : "/student/dashboard",
     label: "Home",
   },
-  { path: "/activity", label: "Activity" },
-  { path: "/reports", label: "Reports" },
 ];
 
-const AUTH_NAV_ITEMS2 = [
-  { path: "/profile", label: "Profile" },
-  { path: "/settings", label: "Settings" },
+const AUTH_NAV_ITEMS2 = (role: "professor" | "student" | null) => [
+  {
+    path: role === "professor" ? "/professor/profile" : "/student/profile",
+    label: "Profile",
+  },
 ];
 
 const AUTH_ITEMS: {
@@ -63,6 +63,11 @@ export default function Navbar() {
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const navItems = user ? getAuthNavItems(user.role) : PUBLIC_NAV_ITEMS;
+
+  // Close menu when route changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const index = navItems.findIndex((item) => item.path === location.pathname);
@@ -115,7 +120,7 @@ export default function Navbar() {
   }) => (
     <NavLink
       to={to}
-      onClick={closeMenu}
+      onClick={closeMenu} // Close menu when clicked
       className={({ isActive }) =>
         `relative font-bold md:px-4 md:py-2 ${isActive ? "md:text-purple-600" : "md:text-gray-600"}`
       }
@@ -182,8 +187,15 @@ export default function Navbar() {
                       </p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Profile</DropdownMenuItem>
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
+                    <NavLink
+                      to={
+                        user.role === "professor"
+                          ? "/professor/profile"
+                          : "/student/profile"
+                      }
+                    >
+                      <DropdownMenuItem>Profile</DropdownMenuItem>
+                    </NavLink>
                     <DropdownMenuItem onClick={handleLogout}>
                       {isLoggingOut ? "Logging out.." : "Log out"}
                     </DropdownMenuItem>
@@ -211,12 +223,14 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div
-        className={`absolute left-0 top-[5rem] z-40 h-full w-full bg-zinc-50 text-zinc-900 transition-transform duration-500 ease-in-out dark:bg-zinc-900 dark:text-zinc-50 ${
-          isMenuOpen ? "translate-y-0" : "-translate-y-full"
+        className={`absolute left-0 top-[5rem] z-40 w-full bg-zinc-50 text-zinc-900 transition-transform duration-500 ease-in-out dark:bg-zinc-900 dark:text-zinc-50 ${
+          isMenuOpen ? "h-[100vh] translate-y-0" : "-translate-y-full"
         }`}
       >
         <div
-          className={`mx-8 mt-2 border-t-2 pt-8 md:mx-12 lg:mx-16 ${!user ? "space-y-8" : "space-y-4"}`}
+          className={`mx-8 mt-2 border-t-2 pt-8 md:mx-12 lg:mx-16 ${
+            !user ? "space-y-8" : "space-y-4"
+          }`}
         >
           <ul className="flex flex-col gap-4">
             {navItems.map(({ path, label }) => (
@@ -228,14 +242,17 @@ export default function Navbar() {
           >
             {user ? (
               <>
-                {AUTH_NAV_ITEMS2.map(({ path, label }) => (
-                  <NavLink key={path} to={path}>
+                {AUTH_NAV_ITEMS2(user?.role).map(({ path, label }) => (
+                  <NavLink key={path} to={path} onClick={closeMenu}>
                     {label}
                   </NavLink>
                 ))}
                 <button
                   className="flex w-fit items-center gap-1"
-                  onClick={() => logout()}
+                  onClick={() => {
+                    closeMenu();
+                    handleLogout();
+                  }}
                 >
                   {isLoggingOut ? (
                     <>

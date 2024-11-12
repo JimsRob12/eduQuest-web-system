@@ -7,38 +7,47 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { joinRoom } from "@/services/api/apiRoom";
 
 const AnimalIconInput: React.FC = () => {
-  const [classCode, setClassCode] = useState("");
-  const [isJoining, setIsJoining] = useState(false);
+  const [classCode, setClassCode] = useState<string>("");
+  const [isJoining, setIsJoining] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleJoin = async (event: React.FormEvent) => {
+  const handleJoin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (classCode.length < 36) {
       setError("Please enter a valid class code (36 characters)");
       return;
     }
-
     setIsJoining(true);
     setError(null);
 
     try {
       const studentId = user?.id ?? "";
-      // const name = user?.name || user?.email || "";
-
       if (!user) {
         setError("User is not authenticated");
         setIsJoining(false);
         return;
       }
-      const success = await joinRoom(classCode, studentId, user);
 
-      if (success) {
+      const response = await joinRoom(classCode, studentId, user);
+      console.log(response);
+
+      if (response.status === "scheduled") {
+        // Navigate to the scheduled quiz route instead of showing it inline
+        navigate(`/student/join/${classCode}/scheduled`, {
+          state: {
+            quiz_id: response.quiz_id,
+            title: response.title,
+            openTime: response.open_time,
+            closeTime: response.close_time,
+          },
+        });
+      } else if (response.success) {
         navigate(`/student/join/${classCode}/gamelobby`);
       } else {
-        setError("Failed to join the room");
+        setError(response.error || "Failed to join the room");
       }
     } catch (err) {
       setError(
@@ -46,10 +55,10 @@ const AnimalIconInput: React.FC = () => {
       );
     } finally {
       setIsJoining(false);
-      setClassCode("");
     }
   };
 
+  // Original join view
   return (
     <div className="flex h-[calc(100%-10rem)] flex-col items-center justify-center">
       <div className="text-purple-500">
@@ -79,7 +88,9 @@ const AnimalIconInput: React.FC = () => {
         <Input
           type="text"
           value={classCode}
-          onChange={(e) => setClassCode(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setClassCode(e.target.value)
+          }
           placeholder="Enter class code"
           className="w-64"
         />
@@ -91,10 +102,12 @@ const AnimalIconInput: React.FC = () => {
   );
 };
 
-export default function StudentDashboard() {
+const StudentDashboard: React.FC = () => {
   return (
     <div className="flex h-[calc(100%-5rem)] items-center justify-center">
       <AnimalIconInput />
     </div>
   );
-}
+};
+
+export default StudentDashboard;

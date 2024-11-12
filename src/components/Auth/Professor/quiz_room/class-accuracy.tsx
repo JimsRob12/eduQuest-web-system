@@ -3,9 +3,17 @@ import { motion } from "framer-motion";
 
 interface ClassAccuracyProps {
   accuracy: number;
+  noHeader?: boolean;
+  height?: number;
+  bgColor?: string;
 }
 
-const ClassAccuracy: React.FC<ClassAccuracyProps> = ({ accuracy }) => {
+const ClassAccuracy: React.FC<ClassAccuracyProps> = ({
+  accuracy,
+  noHeader = false,
+  height = 12,
+  bgColor = "bg-gray-700",
+}) => {
   const [prevAccuracy, setPrevAccuracy] = useState(accuracy);
 
   useEffect(() => {
@@ -16,10 +24,12 @@ const ClassAccuracy: React.FC<ClassAccuracyProps> = ({ accuracy }) => {
 
   return (
     <div className="mb-4 flex w-full flex-col items-center justify-center">
-      <div className="mb-2 text-xl font-bold">Class Accuracy</div>
-      <div className="relative h-12 w-full">
+      {!noHeader && (
+        <div className="mb-2 text-xl font-bold">Class Accuracy</div>
+      )}
+      <div className={`relative h-${height} w-full`}>
         {/* Background bar */}
-        <div className="absolute h-full w-full rounded bg-gray-700"></div>
+        <div className={`absolute h-full w-full rounded ${bgColor}`}></div>
 
         {/* Accuracy fill */}
         <motion.div

@@ -65,7 +65,7 @@ export default function QuizEditQuestion() {
       : [...distractors, ...Array(2 - distractors.length).fill("")];
 
   return (
-    <div className="mt-8 flex w-full items-center justify-center md:h-[calc(100%-8rem)]">
+    <div className="flex w-full items-center justify-center pt-8 md:h-[calc(100%-8rem)]">
       <div className="w-[70vw] rounded-xl bg-slate-300 p-4 dark:bg-zinc-900">
         <Textarea
           value={question}

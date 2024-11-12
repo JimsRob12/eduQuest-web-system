@@ -223,9 +223,9 @@ const Login: React.FC = () => {
       </motion.div>
 
       <motion.img
-        src="https://placehold.co/600x400"
+        src="/images/log-in.png"
         alt="Login visual"
-        className="hidden h-full w-full rounded-xl object-cover md:block"
+        className="hidden w-full rounded-xl object-cover md:block"
         variants={itemVariants}
       />
     </motion.div>

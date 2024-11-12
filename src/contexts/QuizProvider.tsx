@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext } from "react";
 import { generateQuestions } from "@/services/api/apiQuiz";
 import supabase from "@/services/supabase";
+import toast from "react-hot-toast";
 interface QuizProviderProps {
   children: React.ReactNode;
 }
@@ -58,7 +59,15 @@ export const QuizProvider: React.FC<QuizProviderProps> = ({ children }) => {
         maxQuestions.toString(),
       );
 
-      // console.log("Generated questions:", generatedQuestions);
+      if (Array.isArray(generatedQuestions)) {
+        if (generatedQuestions.length < maxQuestions) {
+          toast.error(
+            `Only ${generatedQuestions.length} questions were generated. Please try to generate again or you can customize the quiz by adding questions manually.`,
+            { duration: 7000 },
+          );
+        }
+      }
+
       // Step 3: Delete existing questions for this quiz
       const { error: deleteError } = await supabase
         .from("quiz_questions")

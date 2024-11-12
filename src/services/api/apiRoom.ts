@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LeaderboardEntry, QuizQuestions, Student, User } from "@/lib/types";
+import {
+  LeaderboardEntry,
+  Quiz,
+  QuizQuestions,
+  Student,
+  User,
+} from "@/lib/types";
 import { Dispatch, SetStateAction } from "react";
 import supabase from "../supabase";
 
@@ -65,14 +71,19 @@ export async function reconnectGame(classCode: string): Promise<boolean> {
 
 export async function endGame(classCode: string): Promise<boolean> {
   try {
+    // Update the quiz status to "active"
     await supabase
       .from("quiz")
       .update({ status: "active" })
       .eq("class_code", classCode)
       .select();
+
+    // Remove all participants from the temp_room table
+    await supabase.from("temp_room").delete().eq("class_code", classCode);
+
     return true;
   } catch (error) {
-    console.error("Error updating quiz status:", error);
+    console.error("Error ending game:", error);
     return false;
   }
 }
@@ -144,27 +155,57 @@ export async function getParticipants(
   }
 }
 
+interface JoinRoomResponse {
+  quiz_id?: string;
+  success: boolean;
+  status?: string;
+  error?: string;
+  open_time?: string;
+  close_time?: string;
+  title?: string;
+}
+
 export async function joinRoom(
   classCode: string,
   studentId: string,
   user: User,
   username?: string,
-): Promise<boolean> {
+): Promise<JoinRoomResponse> {
   try {
-    // const { data, error } = await supabase
-    //   .from("quiz")
-    //   .select('status')
-    //   .eq("class_code", classCode)
-    //   .single();
+    const { data, error } = await supabase
+      .from("quiz")
+      .select("quiz_id, status, open_time, close_time, title, retake")
+      .eq("class_code", classCode)
+      .single();
 
-    // if (error) {
-    //   console.error("Error fetching quiz status:", error);
-    //   return false;
-    // }
+    if (error) {
+      console.error("Error fetching quiz status:", error);
+      return {
+        success: false,
+        error: "Error fetching quiz status",
+      };
+    }
 
-    // if (data && data.status !== 'in game') {
-    //   return false
-    // }
+    const quizData = data as Quiz;
+
+    if (quizData && quizData.status === "scheduled") {
+      return {
+        quiz_id: quizData.quiz_id,
+        success: false,
+        status: "scheduled",
+        open_time: quizData.open_time,
+        close_time: quizData.close_time,
+        title: quizData.title,
+      };
+    }
+
+    if (quizData && quizData.status !== "in lobby") {
+      return {
+        success: false,
+        error:
+          "The game hasn't started yet. Please wait for the instructor to start the game.",
+      };
+    }
 
     const { data: existingRecord } = await supabase
       .from("temp_room")
@@ -177,11 +218,13 @@ export async function joinRoom(
 
     if (existingRecord) {
       console.log("Record already exists:", existingRecord);
-      return true;
+      return {
+        success: true,
+        status: "in lobby",
+      };
     }
 
     const studentName = user.name || username;
-
     await supabase
       .from("temp_room")
       .insert({
@@ -194,10 +237,16 @@ export async function joinRoom(
       .select()
       .single();
 
-    return true;
+    return {
+      success: true,
+      status: "in lobby",
+    };
   } catch (error) {
     console.error("Error joining room:", error);
-    return false;
+    return {
+      success: false,
+      error: "Error joining room",
+    };
   }
 }
 
@@ -250,7 +299,7 @@ export async function kickStudent(
 
 // Game event handling functions
 export function gameEventHandler(
-  classCode: string,
+  _classCode: string,
   setGameStart: (value: boolean) => void,
 ): () => void {
   const channel = supabase
@@ -617,7 +666,7 @@ export async function getQuizQuestionsStud(
 // }
 
 // Answer checking function
-async function checkAnswer(
+export async function checkAnswer(
   questionId: string,
   answer: string,
 ): Promise<boolean> {
@@ -718,7 +767,7 @@ export async function updateLeaderBoard(
 // Answer submission function
 export async function submitAnswer(
   questionId: string,
-  studentId: string,
+  _studentId: string,
   answer: string,
 ): Promise<boolean> {
   const isCorrect = await checkAnswer(questionId, answer);

@@ -1,26 +1,38 @@
-import Loader from "@/components/Shared/Loader";
-import { useGetQuizzes } from "../useGetQuizzes";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Quiz, User } from "@/lib/types";
-import {
-  Copy,
-  EllipsisVertical,
-  FileQuestion,
-  Play,
-  Plus,
-  Trash,
-} from "lucide-react";
-import { formatTimeAgo } from "@/lib/helpers";
-import { useAuth } from "@/contexts/AuthProvider";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createQuiz, deleteQuiz } from "@/services/api/apiQuiz";
+import Loader from "@/components/Shared/Loader";
+import {
+  Calendar,
+  Clock,
+  Copy,
+  EllipsisVertical,
+  FileQuestion,
+  Loader2,
+  Play,
+  Plus,
+  Trash,
+  XCircle,
+  AlertCircle,
+  UsersRound,
+  Pen,
+} from "lucide-react";
+import { formatTimeAgo } from "@/lib/helpers";
+import { useAuth } from "@/contexts/AuthProvider";
+import { useGetQuizzes } from "../useGetQuizzes";
+import {
+  createQuiz,
+  deleteQuiz,
+  updateQuizStatus,
+} from "@/services/api/apiQuiz";
+import { Quiz, User } from "@/lib/types";
 import toast from "react-hot-toast";
 
 interface QuizCardProps {
@@ -38,17 +50,27 @@ const QuizCard: React.FC<QuizCardProps> = ({
   onDelete,
   nav,
 }) => {
+  const { mutate: mutateQuizStatus, isPending: isLoading } = useMutation({
+    mutationFn: ({
+      quizId,
+      status,
+    }: {
+      quizId: string;
+      status: "draft" | "active" | "scheduled" | "archived" | "in lobby";
+    }) => updateQuizStatus(quizId, status),
+    onError: (error) => {
+      toast.error(`Failed to update quiz status: ${error.message}`);
+    },
+  });
+
   const handleCopyCode = () => {
     if (quiz.class_code) {
       navigator.clipboard
         .writeText(quiz.class_code)
-        .then(() => {
-          toast.success("Quiz code copied to clipboard!");
-        })
-        .catch((err) => {
-          console.error("Failed to copy quiz code:", err);
-          toast.error("Failed to copy quiz code. Please try again.");
-        });
+        .then(() => toast.success("Quiz code copied to clipboard!"))
+        .catch(() =>
+          toast.error("Failed to copy quiz code. Please try again."),
+        );
     } else {
       toast.error("No quiz code available.");
     }
@@ -56,10 +78,74 @@ const QuizCard: React.FC<QuizCardProps> = ({
 
   const handleStartGame = () => {
     nav(`professor/class/${quiz.class_code}/gamelobby`);
+    mutateQuizStatus({ quizId: quiz.quiz_id, status: "in lobby" });
   };
 
+  const handleResponses = () =>
+    nav(`professor/class/${quiz.class_code}/responses`);
+
+  const handleGoLobby = () => {
+    nav(`professor/class/${quiz.class_code}/gamelobby`);
+  };
+
+  const getQuizTimeStatus = () => {
+    if (!quiz.open_time || quiz.status !== "scheduled") return null;
+
+    const startTime = new Date(quiz.open_time);
+    const endTime = quiz.close_time ? new Date(quiz.close_time) : null;
+    const currentTime = new Date();
+
+    if (endTime && currentTime > endTime) {
+      return "closed";
+    }
+
+    if (currentTime > startTime) {
+      return "ready";
+    }
+
+    return "upcoming";
+  };
+
+  const getRemainingTime = () => {
+    if (!quiz.close_time || quiz.status !== "scheduled") return null;
+
+    const endTime = new Date(quiz.close_time);
+    const currentTime = new Date();
+    const timeRemaining = endTime.getTime() - currentTime.getTime();
+
+    if (timeRemaining <= 0) return "Closed";
+
+    const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+    const minutes = Math.floor(
+      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60),
+    );
+
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      return `${days} day${days > 1 ? "s" : ""} remaining`;
+    }
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`;
+    }
+
+    return `${minutes}m remaining`;
+  };
+
+  const formatScheduledTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const timeStatus = getQuizTimeStatus();
+  const remainingTime = getRemainingTime();
+
   return (
-    <div key={quiz.quiz_id} className="my-2 flex gap-4 rounded border p-3">
+    <div className="my-2 flex gap-4 rounded border p-3">
       <img
         src={quiz.cover_image || "/edu-quest-logo.png"}
         alt={quiz.title}
@@ -71,10 +157,14 @@ const QuizCard: React.FC<QuizCardProps> = ({
             className={`w-fit rounded-full px-2 text-[0.6rem] font-semibold uppercase ${
               quiz.status === "draft"
                 ? "bg-red-300 text-red-700"
-                : "bg-green-300 text-green-700"
+                : quiz.status === "scheduled" && timeStatus === "closed"
+                  ? "bg-gray-300 text-gray-700"
+                  : quiz.status === "scheduled"
+                    ? "bg-yellow-300 text-yellow-700"
+                    : "bg-green-300 text-green-700"
             }`}
           >
-            {quiz.status}
+            {timeStatus === "closed" ? "Closed" : quiz.status}
           </p>
           <h3 className="text-lg font-bold">{quiz.title}</h3>
           <div className="flex items-center gap-1 text-xs opacity-60 md:text-sm">
@@ -87,9 +177,54 @@ const QuizCard: React.FC<QuizCardProps> = ({
               )}
             </p>
           </div>
+          {quiz.status === "scheduled" && quiz.open_time && (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-xs">
+                <Calendar className="size-4" />
+                <span
+                  className={
+                    timeStatus === "closed"
+                      ? "text-gray-600"
+                      : "text-yellow-600"
+                  }
+                >
+                  {timeStatus === "closed"
+                    ? "Was available from: "
+                    : "Starts: "}
+                  {formatScheduledTime(quiz.open_time)}
+                </span>
+              </div>
+              {quiz.close_time && (
+                <div className="flex items-center gap-2 text-xs">
+                  <Clock className="size-4" />
+                  <span
+                    className={
+                      timeStatus === "closed"
+                        ? "text-gray-600"
+                        : "text-yellow-600"
+                    }
+                  >
+                    Ends: {formatScheduledTime(quiz.close_time)}
+                  </span>
+                </div>
+              )}
+              {timeStatus === "ready" && remainingTime && (
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <AlertCircle className="size-4" />
+                  {remainingTime}
+                </div>
+              )}
+              {timeStatus === "closed" && (
+                <span className="flex items-center gap-1 text-xs text-gray-600">
+                  <XCircle className="size-4" />
+                  Quiz period has ended
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <p className="text-xs opacity-50">
-          <span className="font-semibold">{user?.name}</span> •{" "}
+        <p className="mt-1 text-xs opacity-50 sm:mt-3">
+          <span className="font-default font-semibold">{user?.name}</span> •{" "}
           {formatTimeAgo(new Date(quiz.created_at))}
         </p>
       </div>
@@ -109,27 +244,79 @@ const QuizCard: React.FC<QuizCardProps> = ({
             </Button>
           </PopoverContent>
         </Popover>
-        {quiz.status.toLowerCase() === "active" && (
-          <Button
-            className="h-fit gap-1 text-xs md:h-full md:text-sm"
-            onClick={handleStartGame}
-          >
-            <Play size={14} />
-            Start Game
-          </Button>
-        )}
-        {quiz.status.toLowerCase() === "draft" ? (
-          <Button onClick={() => onEdit(quiz.quiz_id)}>Continue editing</Button>
-        ) : (
-          <Button
-            variant="secondary"
-            className="h-fit gap-1 text-xs md:h-full md:text-sm"
-            onClick={handleCopyCode}
-          >
-            <Copy size={14} />
-            Copy Quiz Code
-          </Button>
-        )}
+        <div className="flex flex-col items-end gap-1">
+          {quiz.status === "active" && (
+            <>
+              <Button
+                variant="outline"
+                className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+                onClick={() => onEdit(quiz.quiz_id)}
+              >
+                <Pen size={14} />
+                Edit Quiz
+              </Button>
+              <Button
+                className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+                onClick={handleStartGame}
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Play size={14} />
+                    Start Game
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+          {quiz.status === "scheduled" && (
+            <>
+              {timeStatus === "upcoming" ? (
+                <Button
+                  variant="outline"
+                  className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+                  onClick={() => onEdit(quiz.quiz_id)}
+                >
+                  <Pen size={14} />
+                  Edit Quiz
+                </Button>
+              ) : (
+                <Button
+                  className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+                  onClick={handleResponses}
+                >
+                  <UsersRound size={14} />
+                  Check Responses
+                </Button>
+              )}
+            </>
+          )}
+          {quiz.status === "in lobby" && (
+            <Button
+              className="h-fit w-fit gap-1 text-xs md:h-full md:text-sm"
+              onClick={handleGoLobby}
+            >
+              <Play size={14} />
+              Go to Lobby
+            </Button>
+          )}
+          {quiz.status === "draft" ? (
+            <Button className="w-fit" onClick={() => onEdit(quiz.quiz_id)}>
+              Continue editing
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              className="h-fit gap-1 text-xs md:h-full md:text-sm"
+              onClick={handleCopyCode}
+              disabled={timeStatus === "closed"}
+            >
+              <Copy size={14} />
+              Copy Quiz Code
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -143,24 +330,23 @@ export default function ProfessorDashboard() {
 
   const safeQuizzes: Quiz[] = Array.isArray(quizzes) ? quizzes : [quizzes];
 
-  const activeQuizzes = safeQuizzes.filter(
-    (quiz: Quiz) => quiz.status === "active",
+  // Filter quizzes by status
+  const activeQuizzes = safeQuizzes.filter((quiz) => quiz.status === "active");
+  const scheduledQuizzes = safeQuizzes.filter(
+    (quiz) => quiz.status === "scheduled",
   );
-  const draftQuizzes = safeQuizzes.filter(
-    (quiz: Quiz) => quiz.status === "draft",
+  const draftQuizzes = safeQuizzes.filter((quiz) => quiz.status === "draft");
+  const inLobbyQuizzes = safeQuizzes.filter(
+    (quiz) => quiz.status === "in lobby",
   );
 
   const { mutate: createNewQuiz, isPending: isCreatingQuiz } = useMutation({
     mutationFn: () => {
-      if (user) {
-        return createQuiz(user.id);
-      }
-      throw new Error("User is not authenticated");
+      if (!user) throw new Error("User is not authenticated");
+      return createQuiz(user.id);
     },
     onSuccess: (data) => {
-      if (data) {
-        navigate(`/professor/quiz/${data.quiz_id}/generate-quiz`);
-      }
+      if (data) navigate(`/professor/quiz/${data.quiz_id}/generate-quiz`);
     },
     onError: (error) => {
       toast.error(`Failed to create quiz: ${error.message}`);
@@ -168,7 +354,7 @@ export default function ProfessorDashboard() {
   });
 
   const { mutate: mutateDeleteQuiz } = useMutation({
-    mutationFn: async (quizId: string) => deleteQuiz(user!.id, quizId),
+    mutationFn: (quizId: string) => deleteQuiz(user!.id, quizId),
     onSuccess: () => {
       toast.success("Quiz deleted successfully.");
       queryClient.invalidateQueries({ queryKey: ["quizzes", user!.id] });
@@ -177,14 +363,6 @@ export default function ProfessorDashboard() {
       toast.error(error.message);
     },
   });
-
-  const handleEditQuiz = (quizId: string) => {
-    navigate(`/professor/quiz/${quizId}/customize`);
-  };
-
-  const handleDeleteQuiz = (quizId: string) => {
-    mutateDeleteQuiz(quizId);
-  };
 
   if (isPending) return <Loader />;
   if (isError) return <p>Error loading quizzes.</p>;
@@ -195,7 +373,13 @@ export default function ProfessorDashboard() {
         <div className="flex justify-between">
           <TabsList>
             <TabsTrigger value="active-quizzes">
-              Active Quizzes ({activeQuizzes.length})
+              Active ({activeQuizzes.length})
+            </TabsTrigger>
+            <TabsTrigger value="scheduled-quizzes">
+              Scheduled ({scheduledQuizzes.length})
+            </TabsTrigger>
+            <TabsTrigger value="lobbied-quizzes">
+              Started ({inLobbyQuizzes.length})
             </TabsTrigger>
             <TabsTrigger value="draft">
               Drafts ({draftQuizzes.length})
@@ -222,13 +406,51 @@ export default function ProfessorDashboard() {
                 key={quiz.quiz_id}
                 quiz={quiz}
                 user={user!}
-                onEdit={handleEditQuiz}
-                onDelete={handleDeleteQuiz}
+                onEdit={() =>
+                  navigate(`/professor/quiz/${quiz.quiz_id}/customize`)
+                }
+                onDelete={mutateDeleteQuiz}
                 nav={navigate}
               />
             ))
           ) : (
             <p>No active quizzes available.</p>
+          )}
+        </TabsContent>
+        <TabsContent value="lobbied-quizzes">
+          {inLobbyQuizzes.length > 0 ? (
+            inLobbyQuizzes.map((quiz: Quiz) => (
+              <QuizCard
+                key={quiz.quiz_id}
+                quiz={quiz}
+                user={user!}
+                onEdit={() =>
+                  navigate(`/professor/quiz/${quiz.quiz_id}/customize`)
+                }
+                onDelete={mutateDeleteQuiz}
+                nav={navigate}
+              />
+            ))
+          ) : (
+            <p>No started quizzes available.</p>
+          )}
+        </TabsContent>
+        <TabsContent value="scheduled-quizzes">
+          {scheduledQuizzes.length > 0 ? (
+            scheduledQuizzes.map((quiz: Quiz) => (
+              <QuizCard
+                key={quiz.quiz_id}
+                quiz={quiz}
+                user={user!}
+                onEdit={() =>
+                  navigate(`/professor/quiz/${quiz.quiz_id}/customize`)
+                }
+                onDelete={mutateDeleteQuiz}
+                nav={navigate}
+              />
+            ))
+          ) : (
+            <p>No scheduled quizzes available.</p>
           )}
         </TabsContent>
         <TabsContent value="draft">
@@ -238,8 +460,10 @@ export default function ProfessorDashboard() {
                 key={quiz.quiz_id}
                 quiz={quiz}
                 user={user!}
-                onEdit={handleEditQuiz}
-                onDelete={handleDeleteQuiz}
+                onEdit={() =>
+                  navigate(`/professor/quiz/${quiz.quiz_id}/customize`)
+                }
+                onDelete={mutateDeleteQuiz}
                 nav={navigate}
               />
             ))
