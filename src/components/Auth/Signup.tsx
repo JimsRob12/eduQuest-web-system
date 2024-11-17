@@ -63,6 +63,25 @@ const Signup: React.FC = () => {
     setRecaptchaToken(token);
   };
 
+  const verifyEmail = async (email: string) => {
+    const url = `https://mailcheck.p.rapidapi.com/?domain=${email}`;
+    const options = {
+      method: 'GET',
+      headers: {
+        'x-rapidapi-key': '24f12200c7msh7d0d5cd9a7fd31fp16b86djsn50244593c1af',
+        'x-rapidapi-host': 'mailcheck.p.rapidapi.com'
+      }
+    };
+
+    try {
+      const response = await fetch(url, options);
+      const result = await response.json();
+      return result.valid === true;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (!recaptchaToken) {
       toast.error("Please complete the reCAPTCHA verification.");
@@ -70,8 +89,15 @@ const Signup: React.FC = () => {
     }
 
     setIsSigningUp(true);
-
+    
     try {
+      const response = await verifyEmail(data.email)
+                  
+      if (!response) {
+        toast.error("The provided email is fake or disposable.");
+        setIsSigningUp(false);
+        return;
+      }
       await signUp(data.email, data.password);
       toast.success(
         "Successfully signed up! Please check your email for confirmation.",
