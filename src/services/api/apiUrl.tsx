@@ -1,1 +1,1 @@
-export const qgen = "http://127.0.0.1:5000/generate-questions"
+export const qgen = "https://88.222.212.236/generate-questions";

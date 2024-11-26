@@ -4,6 +4,7 @@ import supabase from "../supabase";
 import { v4 as uuidv4 } from "uuid";
 import { qgen } from "./apiUrl";
 import axios from "axios";
+import https from "https";
 import { Quiz, QuizQuestions } from "@/lib/types";
 
 export async function createQuiz(ownerId: string): Promise<Quiz | null> {
@@ -195,35 +196,19 @@ export async function generateQuestions(
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: false, // This disables SSL certificate validation
+      }),
     });
 
     if (generateQuestions.status === 200) {
-      // const response_data = { sample response for T/F and Q&A
-      //   "questions": [
-      //     {
-      //       "right_answer": "false",
-      //       "id": 1,
-      //       "question": "Is there a class for reading visual arts?",
-      //       "question_type": "boolean",
-      //       "distractor" : ["1", "2", "3"] // if multiple choices
-      //     },
-      //     {
-      //       "right_answer": "false",
-      //       "id": 2,
-      //       "question": "Is there a class in reading visual arts?",
-      //       "question_type": "boolean"
-      //       "distractor" : ["1", "2", "3"]
-      //     },
-      //   ]
-      // }
       console.log(generateQuestions.data.questions);
-
       return generateQuestions.data.questions;
     } else {
       throw new Error("Something went wrong! Please try again later.");
     }
-  } catch {
-    console.log("Error generating questions:", generateQuestions);
+  } catch (error) {
+    console.log("Error generating questions:", error);
     throw new Error("Something went wrong! Please try again later.");
   }
 }
@@ -550,7 +535,7 @@ export async function updateQuizAndQuestions(
 
 export async function updateQuizStatus(
   quizId: string,
-  status: "draft" | "active" | "scheduled" | "archived" | "in lobby"
+  status: "draft" | "active" | "scheduled" | "archived" | "in lobby",
 ): Promise<Quiz | null> {
   const { data, error } = await supabase
     .from("quiz")
