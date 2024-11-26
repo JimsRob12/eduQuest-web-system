@@ -4,7 +4,7 @@ import supabase from "../supabase";
 import { v4 as uuidv4 } from "uuid";
 import { qgen } from "./apiUrl";
 import axios from "axios";
-import https from "https";
+import { Agent as HttpsAgent } from "https";
 import { Quiz, QuizQuestions } from "@/lib/types";
 
 export async function createQuiz(ownerId: string): Promise<Quiz | null> {
@@ -196,9 +196,11 @@ export async function generateQuestions(
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      httpsAgent: new https.Agent({
+      httpsAgent: new HttpsAgent({
         rejectUnauthorized: false, // This disables SSL certificate validation
       }),
+      // For axios specifically, you might also need this:
+      proxy: false,
     });
 
     if (generateQuestions.status === 200) {
