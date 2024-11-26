@@ -4,7 +4,6 @@ import supabase from "../supabase";
 import { v4 as uuidv4 } from "uuid";
 import { qgen } from "./apiUrl";
 import axios from "axios";
-import { Agent as HttpsAgent } from "https";
 import { Quiz, QuizQuestions } from "@/lib/types";
 
 export async function createQuiz(ownerId: string): Promise<Quiz | null> {
@@ -196,21 +195,35 @@ export async function generateQuestions(
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      httpsAgent: new HttpsAgent({
-        rejectUnauthorized: false, // This disables SSL certificate validation
-      }),
-      // For axios specifically, you might also need this:
-      proxy: false,
     });
 
     if (generateQuestions.status === 200) {
+      // const response_data = { sample response for T/F and Q&A
+      //   "questions": [
+      //     {
+      //       "right_answer": "false",
+      //       "id": 1,
+      //       "question": "Is there a class for reading visual arts?",
+      //       "question_type": "boolean",
+      //       "distractor" : ["1", "2", "3"] // if multiple choices
+      //     },
+      //     {
+      //       "right_answer": "false",
+      //       "id": 2,
+      //       "question": "Is there a class in reading visual arts?",
+      //       "question_type": "boolean"
+      //       "distractor" : ["1", "2", "3"]
+      //     },
+      //   ]
+      // }
       console.log(generateQuestions.data.questions);
+
       return generateQuestions.data.questions;
     } else {
       throw new Error("Something went wrong! Please try again later.");
     }
-  } catch (error) {
-    console.log("Error generating questions:", error);
+  } catch {
+    console.log("Error generating questions:", generateQuestions);
     throw new Error("Something went wrong! Please try again later.");
   }
 }
