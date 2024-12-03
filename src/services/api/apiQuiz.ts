@@ -216,7 +216,7 @@ export async function generateQuestions(
       //     },
       //   ]
       // }
-      console.log(generateQuestions.data.questions);
+      // console.log(generateQuestions.data.questions);
 
       return generateQuestions.data.questions;
     } else {

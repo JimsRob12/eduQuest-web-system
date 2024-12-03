@@ -18,7 +18,7 @@ const formSchema = z.object({
 });
 
 export default function RoleAssignment() {
-  const { setUserRole, loading } = useAuth();
+  const { setUserRole, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -32,6 +32,7 @@ export default function RoleAssignment() {
     try {
       await setUserRole(data.role);
       toast.success(`User role set to: ${data.role}`);
+      refreshUser();
       navigate(
         data.role === "professor"
           ? "/professor/dashboard"
