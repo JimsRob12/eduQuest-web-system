@@ -216,7 +216,7 @@ export async function generateQuestions(
       //     },
       //   ]
       // }
-      console.log(generateQuestions.data.questions);
+      // console.log(generateQuestions.data.questions);
 
       return generateQuestions.data.questions;
     } else {
@@ -550,7 +550,7 @@ export async function updateQuizAndQuestions(
 
 export async function updateQuizStatus(
   quizId: string,
-  status: "draft" | "active" | "scheduled" | "archived" | "in lobby"
+  status: "draft" | "active" | "scheduled" | "archived" | "in lobby",
 ): Promise<Quiz | null> {
   const { data, error } = await supabase
     .from("quiz")

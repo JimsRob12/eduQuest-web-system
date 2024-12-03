@@ -31,6 +31,7 @@ interface AuthContextProps {
   login: (email: string, password: string) => Promise<void>;
   googleLogin: () => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextProps | null>(null);
@@ -123,6 +124,23 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     },
   });
 
+  const refreshUser = async () => {
+    const session = await getInitialSession();
+    if (session) {
+      setUser({
+        id: session.user.id,
+        email: session.user.email!,
+        name: session.user.user_metadata.name || "",
+        role: session.user.user_metadata.role || null,
+        school: session.user.user_metadata.school || "",
+        avatar:
+          session.user.user_metadata.avatar ||
+          session.user.user_metadata.picture ||
+          "https://cdn.vectorstock.com/i/1000v/95/74/graduation-cap-student-avatar-pixel-art-cartoon-vector-17509574.jpg",
+      });
+    }
+  };
+
   // Fetch initial session when component mounts
   useEffect(() => {
     const fetchInitialSession = async () => {
@@ -210,6 +228,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         login,
         googleLogin,
         logout,
+        refreshUser,
       }}
     >
       {children}
